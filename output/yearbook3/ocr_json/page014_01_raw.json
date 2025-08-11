@@ -1,0 +1,174 @@
+{
+    "input_path": "output\\yearbook3\\preproc\\page014.png",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_textline_orientation": true
+    },
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "dt_polys": [
+        [
+            [
+                1694,
+                674
+            ],
+            [
+                2013,
+                671
+            ],
+            [
+                2019,
+                1240
+            ],
+            [
+                1700,
+                1243
+            ]
+        ],
+        [
+            [
+                230,
+                696
+            ],
+            [
+                245,
+                696
+            ],
+            [
+                245,
+                709
+            ],
+            [
+                230,
+                709
+            ]
+        ],
+        [
+            [
+                1565,
+                1986
+            ],
+            [
+                1575,
+                1986
+            ],
+            [
+                1575,
+                1994
+            ],
+            [
+                1565,
+                1994
+            ]
+        ]
+    ],
+    "text_det_params": {
+        "limit_side_len": 64,
+        "limit_type": "min",
+        "thresh": 0.3,
+        "max_side_limit": 4000,
+        "box_thresh": 0.6,
+        "unclip_ratio": 1.5
+    },
+    "text_type": "general",
+    "textline_orientation_angles": [
+        0,
+        0,
+        0
+    ],
+    "text_rec_score_thresh": 0.0,
+    "rec_texts": [
+        "",
+        "=",
+        "4"
+    ],
+    "rec_scores": [
+        0.0,
+        0.37003594636917114,
+        0.2288638800382614
+    ],
+    "rec_polys": [
+        [
+            [
+                1694,
+                674
+            ],
+            [
+                2013,
+                671
+            ],
+            [
+                2019,
+                1240
+            ],
+            [
+                1700,
+                1243
+            ]
+        ],
+        [
+            [
+                230,
+                696
+            ],
+            [
+                245,
+                696
+            ],
+            [
+                245,
+                709
+            ],
+            [
+                230,
+                709
+            ]
+        ],
+        [
+            [
+                1565,
+                1986
+            ],
+            [
+                1575,
+                1986
+            ],
+            [
+                1575,
+                1994
+            ],
+            [
+                1565,
+                1994
+            ]
+        ]
+    ],
+    "rec_boxes": [
+        [
+            1694,
+            671,
+            2019,
+            1243
+        ],
+        [
+            230,
+            696,
+            245,
+            709
+        ],
+        [
+            1565,
+            1986,
+            1575,
+            1994
+        ]
+    ]
+}

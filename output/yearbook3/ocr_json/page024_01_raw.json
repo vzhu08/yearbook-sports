@@ -1,0 +1,84 @@
+{
+    "input_path": "output\\yearbook3\\preproc\\page024.png",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_textline_orientation": true
+    },
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "dt_polys": [
+        [
+            [
+                1558,
+                1951
+            ],
+            [
+                1570,
+                1951
+            ],
+            [
+                1570,
+                1958
+            ],
+            [
+                1558,
+                1958
+            ]
+        ]
+    ],
+    "text_det_params": {
+        "limit_side_len": 64,
+        "limit_type": "min",
+        "thresh": 0.3,
+        "max_side_limit": 4000,
+        "box_thresh": 0.6,
+        "unclip_ratio": 1.5
+    },
+    "text_type": "general",
+    "textline_orientation_angles": [
+        0
+    ],
+    "text_rec_score_thresh": 0.0,
+    "rec_texts": [
+        "1"
+    ],
+    "rec_scores": [
+        0.19877004623413086
+    ],
+    "rec_polys": [
+        [
+            [
+                1558,
+                1951
+            ],
+            [
+                1570,
+                1951
+            ],
+            [
+                1570,
+                1958
+            ],
+            [
+                1558,
+                1958
+            ]
+        ]
+    ],
+    "rec_boxes": [
+        [
+            1558,
+            1951,
+            1570,
+            1958
+        ]
+    ]
+}

@@ -1,0 +1,174 @@
+{
+    "input_path": "output\\yearbook3\\preproc\\page026.png",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_textline_orientation": true
+    },
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "dt_polys": [
+        [
+            [
+                226,
+                673
+            ],
+            [
+                238,
+                673
+            ],
+            [
+                238,
+                681
+            ],
+            [
+                226,
+                681
+            ]
+        ],
+        [
+            [
+                1567,
+                1955
+            ],
+            [
+                1577,
+                1955
+            ],
+            [
+                1577,
+                1963
+            ],
+            [
+                1567,
+                1963
+            ]
+        ],
+        [
+            [
+                1879,
+                2638
+            ],
+            [
+                1902,
+                2638
+            ],
+            [
+                1902,
+                2677
+            ],
+            [
+                1879,
+                2677
+            ]
+        ]
+    ],
+    "text_det_params": {
+        "limit_side_len": 64,
+        "limit_type": "min",
+        "thresh": 0.3,
+        "max_side_limit": 4000,
+        "box_thresh": 0.6,
+        "unclip_ratio": 1.5
+    },
+    "text_type": "general",
+    "textline_orientation_angles": [
+        0,
+        0,
+        0
+    ],
+    "text_rec_score_thresh": 0.0,
+    "rec_texts": [
+        "一",
+        "1",
+        "-"
+    ],
+    "rec_scores": [
+        0.1625823974609375,
+        0.18120348453521729,
+        0.32870787382125854
+    ],
+    "rec_polys": [
+        [
+            [
+                226,
+                673
+            ],
+            [
+                238,
+                673
+            ],
+            [
+                238,
+                681
+            ],
+            [
+                226,
+                681
+            ]
+        ],
+        [
+            [
+                1567,
+                1955
+            ],
+            [
+                1577,
+                1955
+            ],
+            [
+                1577,
+                1963
+            ],
+            [
+                1567,
+                1963
+            ]
+        ],
+        [
+            [
+                1879,
+                2638
+            ],
+            [
+                1902,
+                2638
+            ],
+            [
+                1902,
+                2677
+            ],
+            [
+                1879,
+                2677
+            ]
+        ]
+    ],
+    "rec_boxes": [
+        [
+            226,
+            673,
+            238,
+            681
+        ],
+        [
+            1567,
+            1955,
+            1577,
+            1963
+        ],
+        [
+            1879,
+            2638,
+            1902,
+            2677
+        ]
+    ]
+}

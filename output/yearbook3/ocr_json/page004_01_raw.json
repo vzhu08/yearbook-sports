@@ -1,0 +1,129 @@
+{
+    "input_path": "output\\yearbook3\\preproc\\page004.png",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_textline_orientation": true
+    },
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "dt_polys": [
+        [
+            [
+                1399,
+                1359
+            ],
+            [
+                1438,
+                1397
+            ],
+            [
+                1400,
+                1434
+            ],
+            [
+                1362,
+                1396
+            ]
+        ],
+        [
+            [
+                1567,
+                1982
+            ],
+            [
+                1576,
+                1982
+            ],
+            [
+                1576,
+                1990
+            ],
+            [
+                1567,
+                1990
+            ]
+        ]
+    ],
+    "text_det_params": {
+        "limit_side_len": 64,
+        "limit_type": "min",
+        "thresh": 0.3,
+        "max_side_limit": 4000,
+        "box_thresh": 0.6,
+        "unclip_ratio": 1.5
+    },
+    "text_type": "general",
+    "textline_orientation_angles": [
+        1,
+        0
+    ],
+    "text_rec_score_thresh": 0.0,
+    "rec_texts": [
+        "舞",
+        "4"
+    ],
+    "rec_scores": [
+        0.07330457866191864,
+        0.3319748640060425
+    ],
+    "rec_polys": [
+        [
+            [
+                1399,
+                1359
+            ],
+            [
+                1438,
+                1397
+            ],
+            [
+                1400,
+                1434
+            ],
+            [
+                1362,
+                1396
+            ]
+        ],
+        [
+            [
+                1567,
+                1982
+            ],
+            [
+                1576,
+                1982
+            ],
+            [
+                1576,
+                1990
+            ],
+            [
+                1567,
+                1990
+            ]
+        ]
+    ],
+    "rec_boxes": [
+        [
+            1362,
+            1359,
+            1438,
+            1434
+        ],
+        [
+            1567,
+            1982,
+            1576,
+            1990
+        ]
+    ]
+}
