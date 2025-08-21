@@ -80,9 +80,29 @@ def clean_and_group_names_by_decade(data_dir: str, output_json: str) -> None:
 
     print(f"[SAVED] grouped name counts by decade → {output_json}")
 
-
+'''
 # Run it
 clean_and_group_names_by_decade(
     data_dir="name_data/first",
     output_json="name_data/first_names_by_decade.json"
 )
+'''
+
+import paddle
+
+print("Paddle:", paddle.__version__)
+print("CUDA build:", paddle.version.cuda())     # e.g. '12.6'
+print("cuDNN:", paddle.version.cudnn())         # e.g. '9.x'
+print("GPU build?", paddle.device.is_compiled_with_cuda())
+
+from paddleocr import PaddleOCR
+# Initialize PaddleOCR with GPU support
+ocr = PaddleOCR(use_doc_orientation_classify=False,
+                    use_doc_unwarping=False,
+                    use_textline_orientation=True,
+                    lang='en',
+                )
+img_path = 'output/turkeytail197000glen/pages/page012.png'
+result = ocr.predict(img_path)
+print(result)
+
