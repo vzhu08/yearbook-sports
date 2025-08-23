@@ -22,8 +22,8 @@ def main():
         extract_yearbook_ocr(
             pdf_path=pdf_path,
             output_dir=output_dir,
-            start_page=12,
-            end_page=31,
+            start_page=64,
+            end_page=71,
             year=1950,
             name_correction=False
         )
