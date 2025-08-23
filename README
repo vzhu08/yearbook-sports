@@ -1,0 +1,2 @@
+PaddleOCR install: https://www.paddlepaddle.org.cn/en/install/quick?docurl=/documentation/docs/en/develop/install/pip/windows-pip_en.html
+Then use "pip install paddleocr" in cmd
