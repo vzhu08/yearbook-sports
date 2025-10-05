@@ -23,7 +23,7 @@ def main():
             pdf_path=pdf_path,
             output_dir=output_dir,
             year=1980,
-            name_correction_enabled=False,
+            name_correction_enabled=True,
         )
 
     print("Pipeline complete for all yearbooks.")

@@ -11,6 +11,7 @@ Optional name correction utilities.
 from __future__ import annotations
 import json
 import re
+import os
 from typing import Any, Dict, List, Tuple, Protocol
 
 from rapidfuzz import process
@@ -28,17 +29,30 @@ class Corrector(Protocol):
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-def _substitution_similarity(a: str, b: str) -> float:
+def _substitution_similarity(a: str, b: str, *, processor=None, score_cutoff: float = 0.0, **kwargs) -> float:
     """
     Custom similarity that penalizes length differences a bit more than plain edit distance.
-    Returns 0..100 like RapidFuzz scorers.
+    Returns 0..100 like RapidFuzz scorers and supports RapidFuzz's scorer API:
+      - accepts `processor` and `score_cutoff` (and extra **kwargs)
+      - returns 0 when the score is below `score_cutoff`
     """
+    # Apply optional processor if RapidFuzz supplies one
+    if processor is not None:
+        a = processor(a)
+        b = processor(b)
+
+    a = a or ""
+    b = b or ""
+
     dist = Levenshtein.distance(a, b)
     diff = abs(len(a) - len(b))
     weighted = dist + diff
     min_len = max(1, min(len(a), len(b)))
-    sim = (1 - weighted / min_len) * 100
-    return max(0.0, sim)
+    sim = (1 - weighted / min_len) * 100.0
+    sim = max(0.0, sim)
+
+    # Enforce the cutoff contract RapidFuzz expects
+    return sim if sim >= score_cutoff else 0.0
 
 
 def _normalize(s: str) -> str:
