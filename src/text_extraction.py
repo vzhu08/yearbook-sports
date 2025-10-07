@@ -1,513 +1,334 @@
-#!/usr/bin/env python3
+# src/text_extraction.py
 """
-Yearbook OCR extraction (PaddleOCR via subprocess), header grouping (spillover across pages),
-and optional name correction.
+Step 1 — Text Extraction (OCR).
 
-Pipeline:
-1) Parallel PDF render + preproc (thread pool; JPG I/O).
-2) Batched PaddleOCR.predict(...) -> save res JSONs/overlays AFTER inference.
-3) Build compiled RAW json (normalized + lowercased).
-4) Build compiled CLEAN json (remove non-alnum-only boxes and very short text).
-5) Identify headers using book-wide median text height (>150%) with NO keyword filter.
-6) Run spaCy PERSON NER over all spans (multi-entity per span, names must have ≥2 words)
-   and assign names to the PREVIOUS header globally (spills across pages until the next header).
-7) Write final headers_with_names.json.
-
-Notes:
-- RAW/CLEAN JSON use ensure_ascii=True so non-ASCII shows as \\uXXXX (safe for viewing).
-- Name correction is optional; no seniors/sports split in the final output.
+Pipeline per PDF:
+  1) Render pages to RGB and GRAY images.
+  2) Run PaddleOCR on all GRAY images in one batch (predict) and, for each page,
+     call res.save_to_json(...) into ocr_json/.
+  3) Compile the saved Paddle JSONs into:
+        - compiled_ocr.json  (just concatenated per-page Paddle JSON)
+        - compiled_ocr_clean.json  (same, but entries with empty text removed)
 """
 
 from __future__ import annotations
-import os
-import re
-import json
+
 import time
-import unicodedata
-from typing import Any, Dict, List, Optional
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from statistics import median
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List
 
-import cv2
 import fitz  # PyMuPDF
-import spacy
+from PIL import Image
 
-from .ocr_helper import run_paddle_ocr
-from .name_correction import maybe_load_corrector
+from paddleocr import PPStructureV3
 
-
-# -----------------------
-# Geometry / text helpers
-# -----------------------
-
-def _normalize_text(s: str) -> str:
-    """Unicode-normalize, collapse whitespace, strip; caller lowercases afterward."""
-    s = unicodedata.normalize("NFKC", s or "")
-    s = re.sub(r"\s+", " ", s).strip()
-    return s
-
-def _to_lower_ascii(s: str) -> str:
-    """Lowercase for logic; JSON writing uses ensure_ascii=True so \\uXXXX is fine."""
-    return (s or "").lower()
-
-def _box_height_from_poly(poly: List[List[float]]) -> float:
-    try:
-        ys = [float(p[1]) for p in poly[:4]]
-        return max(ys) - min(ys)
-    except Exception:
-        return 0.0
-
-def _box_center_y_from_poly(poly: List[List[float]]) -> float:
-    try:
-        ys = [float(p[1]) for p in poly[:4]]
-        return min(ys) + (max(ys) - min(ys)) / 2.0
-    except Exception:
-        return 0.0
-
-def _has_any_alnum(s: str) -> bool:
-    return bool(re.search(r"[a-z0-9]", s))
-
-def _two_or_more_words(s: str) -> bool:
-    """At least two word tokens that contain letters (handles commas/extra spaces)."""
-    tokens = [t for t in re.split(r"\s+", s.strip()) if re.search(r"[A-Za-z]", t)]
-    return len(tokens) >= 2
-
-def _extract_persons(text: str, nlp) -> List[str]:
-    """Extract multiple PERSON entities from a span; keep only names with ≥2 words."""
-    if not text:
-        return []
-    doc = nlp(text)
-    out: List[str] = []
-    for ent in doc.ents:
-        if ent.label_ == "PERSON":
-            nm = ent.text.strip()
-            # require at least 2 words and at least one ASCII letter overall
-            if _two_or_more_words(nm) and re.search(r"[A-Za-z]", nm):
-                out.append(nm)
-    # de-dup preserving order
-    seen = set()
-    uniq: List[str] = []
-    for n in out:
-        k = n.lower()
-        if k not in seen:
-            uniq.append(n)
-            seen.add(k)
-    return uniq
-
-# position compare helpers (page index + cy within page)
-def _pos_lt(a_pi: int, a_cy: float, b_pi: int, b_cy: float) -> bool:
-    return (a_pi < b_pi) or (a_pi == b_pi and a_cy < b_cy)
-
-def _pos_le(a_pi: int, a_cy: float, b_pi: int, b_cy: float) -> bool:
-    return (a_pi < b_pi) or (a_pi == b_pi and a_cy <= b_cy)
+from src.common.io_utils import ensure_dir, write_json, read_json
 
 
-# -----------------------
-# Main extraction
-# -----------------------
+# ----------------------------- Data -----------------------------
 
-def extract_yearbook_ocr(
-    *,
+@dataclass
+class PageImageMeta:
+    index: int
+    width: int
+    height: int
+    rgb_path: Path
+    gray_path: Path
+
+
+# --------------------------- Rendering --------------------------
+
+def _save_pil(img: Image.Image, out_path: Path, fmt: str, quality: int) -> None:
+    ensure_dir(out_path.parent)
+    if fmt.lower() == "jpg":
+        img.convert("RGB").save(out_path, "JPEG", quality=quality, optimize=True, progressive=False)
+    else:
+        img.save(out_path, "PNG", optimize=True)
+
+
+def _render_pdf_to_images(pdf_path: Path, pages_dir: Path, gray_dir: Path,
+                          dpi: int, fmt: str, jpeg_quality: int) -> List[PageImageMeta]:
+    import time as _t
+
+    doc = fitz.open(pdf_path)
+    scale = dpi / 72.0
+    metas: List[PageImageMeta] = []
+    total_pages = len(doc)
+
+    for i in range(total_pages):
+        t0 = _t.time()
+        page = doc.load_page(i)
+        mat = fitz.Matrix(scale, scale)
+
+        # RGB render
+        rgb = page.get_pixmap(matrix=mat, colorspace=fitz.csRGB, alpha=False)
+        img_rgb = Image.frombytes("RGB", [rgb.width, rgb.height], rgb.samples)
+
+        # GRAY render
+        gry = page.get_pixmap(matrix=mat, colorspace=fitz.csGRAY, alpha=False)
+        img_gray = Image.frombytes("L", [gry.width, gry.height], gry.samples)
+
+        stem = f"page{(i + 1):04d}"
+        rgb_path = pages_dir / f"{stem}.{fmt}"
+        gray_path = gray_dir / f"{stem}.{fmt}"
+
+        _save_pil(img_rgb, rgb_path, fmt, jpeg_quality)
+        _save_pil(img_gray, gray_path, fmt, jpeg_quality)
+
+        metas.append(PageImageMeta(index=i, width=gry.width, height=gry.height,
+                                   rgb_path=rgb_path, gray_path=gray_path))
+
+        # Per-page printout
+        dt = _t.time() - t0
+        try:
+            rgb_kb = rgb_path.stat().st_size // 1024
+            gray_kb = gray_path.stat().st_size // 1024
+            size_str = f"{rgb_kb}KB/{gray_kb}KB"
+        except Exception:
+            size_str = "n/a"
+
+        print(f"[text] page {i+1}/{total_pages}: {gry.width}x{gry.height} -> {rgb_path.name}, {gray_path.name} ({size_str}) time={dt:.2f}s",
+              flush=True)
+
+    doc.close()
+    return metas
+
+
+# ----------------------------- OCR ------------------------------
+
+def _run_paddleocr_batch(gray_paths: List[Path], use_gpu: bool, lang: str, batch_size: int = 64) -> List[Any]:
+    ocr = PPStructureV3(
+        lang=lang,
+        device=("gpu" if use_gpu else "cpu"),
+        text_recognition_batch_size=batch_size,
+        text_det_limit_side_len=3000,
+        text_det_limit_type="max",
+        text_det_box_thresh=0.60,
+        text_rec_score_thresh=0.70,
+        use_doc_orientation_classify=False,
+        use_doc_unwarping=False,
+        use_textline_orientation=False,
+        use_seal_recognition=False,
+        use_table_recognition=False,
+        use_formula_recognition=False,
+        use_chart_recognition=False,
+    )
+    return ocr.predict([str(p) for p in gray_paths])
+
+
+def _save_paddle_jsons(book_dir: Path, results: List[Any], page_count: int) -> None:
+    """
+    Use OCRResult.save_to_json(dir). Normalize filenames to pageNNNN.json.
+    """
+    ocr_dir = book_dir / "ocr_json"
+    ensure_dir(ocr_dir)
+
+    def _json_set() -> set[Path]:
+        return set(ocr_dir.glob("*.json"))
+
+    before_all = _json_set()
+    created = 0
+
+    for i, res in enumerate(results):
+        pre = _json_set()
+        if hasattr(res, "save_to_json"):
+            res.save_to_json(str(ocr_dir))
+        else:
+            write_json({"result": res}, ocr_dir / f"page{(i+1):04d}.json")
+
+        post = _json_set()
+        new_files = list(post - pre)
+        target = ocr_dir / f"page{(i+1):04d}.json"
+
+        if len(new_files) == 1:
+            src = new_files[0]
+            if src != target:
+                try:
+                    src.replace(target)
+                except Exception:
+                    obj = read_json(src)
+                    write_json(obj, target)
+            print(f"[text] ocr_json: saved {target.name}")
+            created += 1
+        elif target.exists():
+            print(f"[text] ocr_json: found existing {target.name}")
+            created += 1
+        else:
+            candidates = sorted(post - before_all, key=lambda p: p.stat().st_mtime, reverse=True)
+            if candidates:
+                src = candidates[0]
+                if src != target:
+                    try:
+                        src.replace(target)
+                    except Exception:
+                        obj = read_json(src)
+                        write_json(obj, target)
+                print(f"[text] ocr_json: normalized {target.name}")
+                created += 1
+            else:
+                print(f"[text] ocr_json: WARN could not determine JSON for page {i+1}")
+
+    if created != page_count:
+        print(f"[text] ocr_json: WARN created/confirmed {created}/{page_count} files")
+
+
+# ------------------------ Compile + Clean ------------------------
+
+def _compile_from_saved(ocr_json_dir: Path, metas: List[PageImageMeta]) -> Dict[str, Any]:
+    """
+    compiled_ocr.json = {"pages": [<raw paddle json for page1>, <raw for page2>, ...]}
+    """
+    pages: List[Dict[str, Any]] = []
+    for meta in metas:
+        fname = ocr_json_dir / f"page{(meta.index + 1):04d}.json"
+        if fname.exists():
+            pages.append(read_json(fname))
+        else:
+            pages.append({"page_index": meta.index})
+    return {"pages": pages, "note": "concatenated Paddle JSONs by page"}
+
+
+def _clean_page_json(page_obj: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Only remove entries with empty text strings. Keep everything else.
+    Supports either {rec_texts, rec_scores, rec_polys, rec_boxes} or {texts, scores, polys, boxes}.
+    """
+    obj = dict(page_obj)  # shallow copy
+
+    def _filter_parallel(text_key: str, score_key: str, poly_key: str, box_key: str):
+        if text_key not in obj or not isinstance(obj[text_key], list):
+            return
+        texts = obj.get(text_key, [])
+        mask = [(t is not None) and (str(t).strip() != "") for t in texts]
+
+        def _apply(key: str):
+            arr = obj.get(key, None)
+            if isinstance(arr, list):
+                new = [arr[i] for i, keep in enumerate(mask) if i < len(arr) and keep]
+                obj[key] = new
+
+        obj[text_key] = [t for t in texts if (t is not None and str(t).strip() != "")]
+        _apply(score_key)
+        _apply(poly_key)
+        _apply(box_key)
+
+    # Try modern rec_* keys first
+    _filter_parallel("rec_texts", "rec_scores", "rec_polys", "rec_boxes")
+    # Also support generic keys
+    _filter_parallel("texts", "scores", "polys", "boxes")
+
+    return obj
+
+
+def _compile_clean_from_saved(ocr_json_dir: Path, metas: List[PageImageMeta]) -> Dict[str, Any]:
+    pages: List[Dict[str, Any]] = []
+    for meta in metas:
+        fname = ocr_json_dir / f"page{(meta.index + 1):04d}.json"
+        if fname.exists():
+            raw = read_json(fname)
+            pages.append(_clean_page_json(raw))
+        else:
+            pages.append({"page_index": meta.index})
+    return {"pages": pages, "note": "concatenated + cleaned (empty texts removed)"}
+
+
+# -------------------------- Public API --------------------------
+
+def extract_text(
     pdf_path: str,
-    output_dir: str,
-    year: int,
+    out_dir: str,
     dpi: int = 300,
-    start_page: int = 1,
-    end_page: Optional[int] = None,
-    resize_max_side: Optional[int] = 2400,
-    use_otsu: bool = True,
-    header_thresh = 2,
-    fuzz_threshold: int = 85,
-    name_correction_enabled: bool = False,
-    first_name_corpus_path: str = "name_data/first_names_by_decade.json",
-    last_name_corpus_path: str  = "name_data/last_names_by_decade.json",
-    paddle_device: str = "gpu",
-    paddle_batch_size: int = 64,
-    save_overlays: bool = False,
-    preproc_workers: Optional[int] = None,   # None -> (cores-2); provided -> capped at (cores-2)
+    fmt: str = "jpg",
+    jpeg_quality: int = 95,
+    use_gpu: bool = True,
+    lang: str = "en",
+    batch_size: int = 64,
 ) -> None:
     """
-    See module docstring for the full pipeline description.
+    Integrated run function for Step 1. Minimal cleaning: drop empty text entries only.
     """
-    # Decide worker count up-front
-    hw = os.cpu_count() or 4
-    max_allowed = max(1, hw - 2)
-    if preproc_workers is None:
-        num_workers = max_allowed
+    t0 = time.time()
+
+    pdf = Path(pdf_path)
+    out_root = Path(out_dir)
+    book_dir = out_root / pdf.stem
+    pages_dir = book_dir / "pages"
+    gray_dir = book_dir / "pages_gray"
+    ocr_json_dir = book_dir / "ocr_json"
+
+    ensure_dir(book_dir)
+    ensure_dir(pages_dir)
+    ensure_dir(gray_dir)
+    ensure_dir(ocr_json_dir)
+
+    def _expected_stem(i: int) -> str:
+        return f"page{(i + 1):04d}"
+
+    def _metas_from_existing(n_pages: int) -> List[PageImageMeta]:
+        metas_: List[PageImageMeta] = []
+        for i in range(n_pages):
+            stem = _expected_stem(i)
+            rgb_path = pages_dir / f"{stem}.{fmt}"
+            gray_path = gray_dir / f"{stem}.{fmt}"
+            with Image.open(gray_path) as im:
+                w, h = im.size
+            metas_.append(PageImageMeta(index=i, width=w, height=h,
+                                        rgb_path=rgb_path, gray_path=gray_path))
+        return metas_
+
+    with fitz.open(pdf) as _doc:
+        page_count = len(_doc)
+
+    print(f"[text] start: {pdf.name} -> {book_dir} (pages={page_count})")
+    print(f"[text] settings: dpi={dpi}, fmt={fmt}, quality={jpeg_quality}, device={'gpu' if use_gpu else 'cpu'}, lang={lang}, batch={batch_size}")
+
+    # ---- Step 1: render ----
+    have_rgb = sum((pages_dir / f"{_expected_stem(i)}.{fmt}").exists() for i in range(page_count))
+    have_gray = sum((gray_dir / f"{_expected_stem(i)}.{fmt}").exists() for i in range(page_count))
+    if have_rgb == page_count and have_gray == page_count:
+        print(f"[text] render: skip (found {page_count} RGB and {page_count} GRAY images)")
+        metas = _metas_from_existing(page_count)
     else:
-        num_workers = max(1, min(int(preproc_workers), max_allowed))
+        print(f"[text] render: generating images...")
+        t_render = time.time()
+        metas = _render_pdf_to_images(pdf, pages_dir, gray_dir, dpi, fmt, jpeg_quality)
+        print(f"[text] render: done pages={len(metas)} time={time.time() - t_render:.2f}s")
 
-    print(f"\n========== [START] OCR extract ==========")
-    print(f"[CONFIG] pdf='{pdf_path}'  out='{output_dir}'  year={year}")
-    print(f"[CONFIG] dpi={dpi}  pages={start_page}..{('end' if end_page is None else end_page)}")
-    print(f"[CONFIG] preproc: otsu={use_otsu}  threads={num_workers} (cpu={hw}, cap={max_allowed})")
-    print(f"[CONFIG] paddle: device='{paddle_device}'  batch_size={paddle_batch_size}  overlays={save_overlays}")
-    print("=========================================\n")
-
-    t0 = time.perf_counter()
-
-    # Dirs
-    os.makedirs(output_dir, exist_ok=True)
-    pages_dir   = os.path.join(output_dir, "pages")
-    pre_dir     = os.path.join(output_dir, "preproc")
-    json_dir    = os.path.join(output_dir, "ocr_json")     # Paddle's save_to_json output
-    overlay_dir = os.path.join(output_dir, "ocr_images")   # Paddle's save_to_img output
-    for d in (pages_dir, pre_dir, json_dir, overlay_dir):
-        os.makedirs(d, exist_ok=True)
-
-    compiled_raw_path   = os.path.join(output_dir, "compiled_ocr.json")        # RAW (normalized+lower)
-    compiled_clean_path = os.path.join(output_dir, "compiled_ocr_clean.json")  # CLEAN (filtered)
-    final_headers_path  = os.path.join(output_dir, "headers_with_names.json")  # FINAL
-
-    # spaCy
-    print("[NLP] Loading spaCy models...")
-    try:
-        nlp = spacy.load("en_core_web_trf")
-        print("[NLP] Loaded en_core_web_trf")
-    except Exception:
-        try:
-            from spacy.cli import download
-            print("[NLP] Downloading en_core_web_trf...")
-            download("en_core_web_trf")
-            nlp = spacy.load("en_core_web_trf")
-            print("[NLP] Loaded en_core_web_trf after download")
-        except Exception as e:
-            print(f"[NLP][WARN] transformer failed ({type(e).__name__}: {e}); falling back to en_core_web_sm.")
-            nlp = spacy.load("en_core_web_sm")
-            print("[NLP] Loaded en_core_web_sm")
-
-    print(f"[NLP] Name correction enabled? {name_correction_enabled}")
-    corrector = maybe_load_corrector(
-        enabled=name_correction_enabled,
-        first_name_corpus_path=first_name_corpus_path,
-        last_name_corpus_path=last_name_corpus_path,
-        year=year,
-        nlp=nlp,
-    )
-
-    # Page keys
-    print("[PDF] Opening PDF and enumerating pages...")
-    doc = fitz.open(pdf_path)
-    total = len(doc)
-    last_pg = total if end_page is None or end_page > total else end_page
-    keys = [f"page{i:03d}" for i in range(start_page, last_pg + 1)]
-    print(f"[PDF] Total pages in doc: {total} | Processing keys: {keys[0]}..{keys[-1]} (count={len(keys)})")
-
-    # --------- PREPROC ----------
-    print("\n---------- [STAGE] PREPROC ----------")
-    t_pre0 = time.perf_counter()
-
-    JPEG_QUALITY = 95  # save both original & preproc as JPG
-
-    def _prep_one(key: str) -> str:
-        page_jpg = os.path.join(pages_dir, f"{key}.jpg")
-        pre_jpg  = os.path.join(pre_dir,   f"{key}.jpg")
-
-        if not os.path.exists(page_jpg):
-            pg_idx = int(key[-3:]) - 1
-            # Pixmap.save infers JPEG from .jpg extension
-            doc.load_page(pg_idx).get_pixmap(dpi=dpi).save(page_jpg)
-
-        if not os.path.exists(pre_jpg):
-            img = cv2.imread(page_jpg, cv2.IMREAD_GRAYSCALE)
-            if img is None:
-                raise RuntimeError(f"Failed to read {page_jpg}")
-            if use_otsu:
-                _, bw = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            else:
-                bw = img
-            # Downscale if requested
-            if resize_max_side and resize_max_side > 0:
-                h, w = bw.shape[:2]
-                long_side = max(h, w)
-                if long_side > resize_max_side:
-                    scale = resize_max_side / float(long_side)
-                    new_w = max(1, int(w * scale))
-                    new_h = max(1, int(h * scale))
-                    bw = cv2.resize(bw, (new_w, new_h), interpolation=cv2.INTER_AREA)
-            cv2.imwrite(pre_jpg, bw, [int(cv2.IMWRITE_JPEG_QUALITY), JPEG_QUALITY])
-
-        return pre_jpg
-
-    pre_imgs: List[str] = []
-    print(f"[PREPROC] Using {num_workers} worker threads")
-    with ThreadPoolExecutor(max_workers=num_workers) as ex:
-        futs = {ex.submit(_prep_one, key): key for key in keys}
-        for i, fut in enumerate(as_completed(futs), start=1):
-            try:
-                pre_imgs.append(fut.result())
-            except Exception as e:
-                k = futs[fut]
-                print(f"[PREPROC][WARN] {k}: {type(e).__name__}: {e}")
-            if i % 5 == 0 or i == len(keys):
-                print(f"[PREPROC] progress: {i}/{len(keys)} pages ready")
-
-    pre_imgs.sort()  # ensure page order
-    print(f"[PREPROC] Completed. Images ready: {len(pre_imgs)} | First: {os.path.basename(pre_imgs[0])}  Last: {os.path.basename(pre_imgs[-1])}")
-    t_pre1 = time.perf_counter()
-    print(f"[PREPROC][TIMING] {t_pre1 - t_pre0:.2f}s\n")
-
-    # --------- OCR ----------
-    print("---------- [STAGE] OCR INFERENCE ----------")
-
-    existing_jsons = set(fn for fn in os.listdir(json_dir) if fn.endswith(".json"))
-
-    def _has_res_json(key: str) -> bool:
-        if f"{key}.json" in existing_jsons:
-            return True
-        for fn in existing_jsons:
-            if fn.startswith(key) and fn.endswith(".json"):
-                return True
-        return False
-
-    todo_pairs = [(k, img) for k, img in zip(keys, pre_imgs) if not _has_res_json(k)]
-    todo_imgs = [img for _, img in todo_pairs]
-
-    skipped = len(keys) - len(todo_imgs)
-    print(f"[OCR] cached pages: {skipped}  | to_run: {len(todo_imgs)}  | device='{paddle_device}'  batch_size={paddle_batch_size}  overlays={save_overlays}")
-
-    # guard timing vars in case OCR is skipped
-    t_ocr0 = t_ocr1 = time.perf_counter()
-
-    if not todo_imgs:
-        print("[OCR] All pages already have res JSON; skipping OCR call.\n")
+    # ---- Step 2: OCR ----
+    existing_ocr_pages = sum((ocr_json_dir / f"{_expected_stem(i)}.json").exists() for i in range(page_count))
+    if existing_ocr_pages == page_count:
+        print(f"[text] ocr: skip (found {page_count} ocr_json pages)")
     else:
-        t_ocr0 = time.perf_counter()
-        srv = run_paddle_ocr(
-            todo_imgs,
-            device=paddle_device,
-            lang="en",
-            batch_size=paddle_batch_size,
-            save_json_dir=json_dir,
-            save_img_dir=(overlay_dir if save_overlays else None),
-        )
-        if srv.get("errors"):
-            print(f"[OCR][WARN] service reported errors ({len(srv['errors'])}): {srv['errors']}")
-        res_map = srv.get("results", {}) or {}
-        print(f"[OCR] Service returned summaries for {len(res_map)}/{len(todo_imgs)} new images")
-        for _, img in todo_pairs:
-            base = os.path.basename(img)
-            info = res_map.get(img) or {}
-            print(f"[OCR][{base}] count={info.get('count')} device={info.get('device')}")
-        t_ocr1 = time.perf_counter()
-        print(f"[OCR][TIMING] {t_ocr1 - t_ocr0:.2f}s\n")
+        print(f"[text] ocr: running Paddle on {len(metas)} images...")
+        t_ocr = time.time()
+        results = _run_paddleocr_batch([m.gray_path for m in metas], use_gpu=use_gpu, lang=lang, batch_size=batch_size)
+        print(f"[text] ocr: done time={time.time() - t_ocr:.2f}s")
+        _save_paddle_jsons(book_dir, results, page_count)
 
-    # --------- COMPILE (RAW + CLEAN) ----------
-    print("---------- [STAGE] COMPILE OCR JSON (RAW & CLEAN) ----------")
-    t_cmp0 = time.perf_counter()
+    # ---- Step 3: compile ----
+    compiled_path = book_dir / "compiled_ocr.json"
+    clean_path = book_dir / "compiled_ocr_clean.json"
 
-    def _choose_polys(d: Dict[str, Any]) -> List[List[List[float]]]:
-        for k in ("rec_polys", "dt_polys", "polys", "boxes"):
-            v = d.get(k)
-            if isinstance(v, list) and v:
-                return v
-        return []
+    print("[text] compile: building compiled_ocr.json from ocr_json...")
+    t_save = time.time()
+    compiled = _compile_from_saved(ocr_json_dir, metas)
+    write_json(compiled, compiled_path)
 
-    # Build RAW (normalized + lower); CLEAN (filtered)
-    raw_pages: Dict[str, Dict[str, Any]] = {}
-    clean_pages: Dict[str, Dict[str, Any]] = {}
+    print("[text] compile: building compiled_ocr_clean.json (drop empty texts)...")
+    cleaned = _compile_clean_from_saved(ocr_json_dir, metas)
+    write_json(cleaned, clean_path)
 
-    total_texts_raw = 0
-    total_texts_clean = 0
-    total_polys_raw = 0
-    total_polys_clean = 0
-    missing_pages = 0
+    # Stats: count texts
+    def _count_texts(bundle: Dict[str, Any]) -> int:
+        total = 0
+        for pg in bundle.get("pages", []):
+            if isinstance(pg, dict):
+                total += len(pg.get("rec_texts", pg.get("texts", [])) or [])
+        return total
 
-    for key in keys:
-        pj = os.path.join(json_dir, f"{key}.json")
-        if not os.path.exists(pj):
-            matches = [fn for fn in os.listdir(json_dir) if fn.startswith(key) and fn.endswith(".json")]
-            if matches:
-                pj = os.path.join(json_dir, sorted(matches)[0])
-            else:
-                print(f"[COMPILE][WARN] Missing res JSON for {key}; skipping this page.")
-                missing_pages += 1
-                continue
+    total_raw = _count_texts(compiled)
+    total_clean = _count_texts(cleaned)
+    print(f"[text] stats: texts_raw={total_raw}, texts_clean={total_clean} time={time.time() - t_save:.2f}s")
 
-        try:
-            with open(pj, "r", encoding="utf-8") as f:
-                jd = json.load(f)
-            res = jd.get("res", jd) or {}
-        except Exception as e:
-            print(f"[COMPILE][WARN] Bad res JSON for {key}: {type(e).__name__}: {e}")
-            continue
-
-        rec_texts_src  = res.get("rec_texts") or []
-        rec_scores     = [float(s) for s in (res.get("rec_scores") or [])]
-        polys          = _choose_polys(res)
-
-        # Normalize + lowercase for RAW
-        texts_norm_lower = [_to_lower_ascii(_normalize_text(t)) for t in rec_texts_src]
-
-        raw_pages[key] = {"polys": polys, "rec_texts": texts_norm_lower, "rec_scores": rec_scores}
-        total_texts_raw  += len(texts_norm_lower)
-        total_polys_raw  += len(polys)
-
-        # CLEAN: remove boxes with no letters/digits OR with <= 2 non-space chars
-        texts_clean: List[str] = []
-        polys_clean: List[List[List[float]]] = []
-        scores_clean: List[float] = []
-
-        for t, p, sc in zip(texts_norm_lower, polys, rec_scores):
-            no_space_len = len(t.replace(" ", ""))
-            if not _has_any_alnum(t) or no_space_len <= 2:
-                continue
-            texts_clean.append(t)
-            polys_clean.append(p)
-            scores_clean.append(sc)
-
-        clean_pages[key] = {"polys": polys_clean, "rec_texts": texts_clean, "rec_scores": scores_clean}
-        total_texts_clean += len(texts_clean)
-        total_polys_clean += len(polys_clean)
-
-    # Write RAW and CLEAN (ASCII-escaped)
-    with open(compiled_raw_path, "w", encoding="utf-8") as f:
-        json.dump({"pages": raw_pages}, f, indent=2, ensure_ascii=True)
-    with open(compiled_clean_path, "w", encoding="utf-8") as f:
-        json.dump({"pages": clean_pages}, f, indent=2, ensure_ascii=True)
-
-    print(f"[WRITE] RAW   -> {compiled_raw_path}   (pages={len(raw_pages)}  texts={total_texts_raw}  polys={total_polys_raw})")
-    print(f"[WRITE] CLEAN -> {compiled_clean_path} (pages={len(clean_pages)} texts={total_texts_clean} polys={total_polys_clean})")
-    t_cmp1 = time.perf_counter()
-    print(f"[COMPILE][TIMING] {t_cmp1 - t_cmp0:.2f}s\n")
-
-    # --------- HEADERS + NAMES (GLOBAL SPILLOVER) ----------
-    print("---------- [STAGE] HEADERS & NAMES (spillover) ----------")
-    t_post0 = time.perf_counter()
-
-    # 1) Compute book-wide median text height using CLEAN pages
-    heights: List[float] = []
-    for page in clean_pages.values():
-        for poly in page.get("polys", []):
-            h = _box_height_from_poly(poly)
-            if h > 0:
-                heights.append(h)
-    med_h = median(heights) if heights else 0.0
-    thresh_h = header_thresh * med_h if med_h > 0 else float("inf")
-    print(f"[HEADERS] median_h={med_h:.2f}  threshold(>150%)={thresh_h:.2f}")
-
-    # 2) Find headers per page (height > 1.5 * median). No keyword filtering.
-    headers_by_page: Dict[str, List[Dict[str, Any]]] = {}
-    for key, page in clean_pages.items():
-        texts = page.get("rec_texts", []) or []
-        polys = page.get("polys", []) or []
-        headers: List[Dict[str, Any]] = []
-        for t, poly in zip(texts, polys):
-            h = _box_height_from_poly(poly)
-            if h > thresh_h:
-                headers.append({"text": t, "poly": poly, "h": h, "cy": _box_center_y_from_poly(poly)})
-        headers.sort(key=lambda x: x["cy"])  # top → bottom
-        headers_by_page[key] = headers
-        print(f"[HEADERS][{key}] found={len(headers)}")
-
-    # ---- Build GLOBAL header markers (sorted across the whole book) ----
-    page_index = {k: i for i, k in enumerate(keys)}
-
-    header_markers: List[Dict[str, Any]] = []
-    for k, headers in headers_by_page.items():
-        for h in headers:
-            header_markers.append({
-                "page_key": k,
-                "page_index": page_index[k],
-                "cy": float(h["cy"]),
-                "text": h["text"],
-                "poly": h["poly"],  # same object as in clean_pages -> identity works
-            })
-    header_markers.sort(key=lambda m: (m["page_index"], m["cy"]))
-
-    # Prepare header groups with page-span boundaries
-    groups: List[Dict[str, Any]] = []
-    if header_markers:
-        for i, hm in enumerate(header_markers):
-            start_pk, start_pi, start_cy = hm["page_key"], hm["page_index"], hm["cy"]
-            if i + 1 < len(header_markers):
-                end_hm = header_markers[i + 1]
-                end_pk, end_pi, end_cy = end_hm["page_key"], end_hm["page_index"], end_hm["cy"]
-            else:
-                end_pk, end_pi, end_cy = (keys[-1], page_index[keys[-1]], float("inf"))
-
-            # Human-friendly span label like: "knitting club (page015–page020)"
-            label = f"{hm['text']} ({start_pk}\u2013{end_pk})"
-
-            groups.append({
-                "header": hm["text"],
-                "label": label,                  # includes full span
-                "start_page": start_pk,
-                "start_index": start_pi,
-                "start_cy": start_cy,
-                "end_page": end_pk,              # boundary page
-                "end_index": end_pi,
-                "end_cy": end_cy,
-                "poly": hm["poly"],
-                "names": [],
-            })
-
-        # Walk all spans in reading order and route to current header group
-        hdr_i = 0
-        first = groups[0]
-        first_pi, first_cy = first["start_index"], first["start_cy"]
-
-        for pk in keys:
-            page = clean_pages.get(pk) or {}
-            texts = page.get("rec_texts", []) or []
-            polys = page.get("polys", []) or []
-
-            # sort spans by vertical position within the page
-            spans = []
-            for t, poly in zip(texts, polys):
-                ys = [float(p[1]) for p in poly[:4]] if poly else [0.0, 0.0]
-                cy = min(ys) + (max(ys) - min(ys)) / 2.0
-                spans.append((cy, t, poly))
-            spans.sort(key=lambda x: x[0])
-
-            for cy, t, poly in spans:
-                pi = page_index[pk]
-
-                # Skip anything before the very first header start
-                if _pos_lt(pi, cy, first_pi, first_cy):
-                    continue
-
-                # Advance header pointer while the next header starts before/equal current span
-                while hdr_i + 1 < len(groups) and _pos_le(groups[hdr_i + 1]["start_index"],
-                                                          groups[hdr_i + 1]["start_cy"],
-                                                          pi, cy):
-                    hdr_i += 1
-
-                # Skip the header line itself
-                if poly is groups[hdr_i]["poly"]:
-                    continue
-
-                # Extract persons (multi-entity per span) and require ≥2 words
-                persons = _extract_persons(t, nlp)
-                if not persons:
-                    continue
-                if name_correction_enabled:
-                    persons = [maybe for maybe in (corrector.correct(p) for p in persons)]
-                for p in persons:
-                    if p and p not in groups[hdr_i]["names"]:
-                        groups[hdr_i]["names"].append(p)
-
-    # 5) Write final JSON (headers list with spans & names)
-    final_out = {
-        "meta": {
-            "median_height": med_h,
-            "threshold": thresh_h,
-            "header_rule": "height > 150% of book-wide median (no keyword filter)",
-            "year": year,
-            "pdf": os.path.basename(pdf_path),
-            "spillover": "names assigned to previous header until the next header begins",
-        },
-        "headers": groups
-    }
-    with open(final_headers_path, "w", encoding="utf-8") as f:
-        json.dump(final_out, f, indent=2, ensure_ascii=True)
-    print(f"[WRITE] FINAL  -> {final_headers_path}")
-
-    t_post1 = time.perf_counter()
-    print(f"[HEADERS+NAMES][TIMING] {t_post1 - t_post0:.2f}s\n")
-
-    # --------- Final timing summary ----------
-    t1 = time.perf_counter()
-    print("========== [DONE] ==========")
-    print(f"[TIMING] preproc={t_pre1 - t_pre0:.2f}s  infer={t_ocr1 - t_ocr0:.2f}s  compile={t_cmp1 - t_cmp0:.2f}s  headers+names={t_post1 - t_post0:.2f}s  total={t1 - t0:.2f}s")
-    print("=========================================\n")
+    print(f"[text] done: {pdf.name} total_time={time.time() - t0:.2f}s")
