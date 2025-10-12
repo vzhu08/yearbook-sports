@@ -1,0 +1,253 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0067.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "header",
+            "block_content": "DEBATE CLUB ",
+            "block_bbox": [
+                809,
+                99,
+                1609,
+                193
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                105,
+                355,
+                2316,
+                1725
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "Tim Davidson, President; James Simpson, Vice-President; Frances Whitener, Secretary; Sarah Miller, Treasurer.",
+            "block_bbox": [
+                281,
+                1766,
+                2120,
+                1808
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                1,
+                1958,
+                2586,
+                3521
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9823445081710815,
+                "coordinate": [
+                    105.096923828125,
+                    355.74462890625,
+                    2316.524169921875,
+                    1725.3544921875
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9712488055229187,
+                "coordinate": [
+                    1.62451171875,
+                    1958.9332275390625,
+                    2586.885986328125,
+                    3521
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.8448697924613953,
+                "coordinate": [
+                    281.7652587890625,
+                    1766.687744140625,
+                    2120.0029296875,
+                    1808.726318359375
+                ]
+            },
+            {
+                "cls_id": 12,
+                "label": "header",
+                "score": 0.5803227424621582,
+                "coordinate": [
+                    809.0689086914062,
+                    99.1417236328125,
+                    1609.0947265625,
+                    193.86019897460938
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    806,
+                    96
+                ],
+                [
+                    1617,
+                    103
+                ],
+                [
+                    1616,
+                    206
+                ],
+                [
+                    805,
+                    198
+                ]
+            ],
+            [
+                [
+                    285,
+                    1769
+                ],
+                [
+                    2125,
+                    1771
+                ],
+                [
+                    2125,
+                    1812
+                ],
+                [
+                    285,
+                    1810
+                ]
+            ],
+            [
+                [
+                    174,
+                    2933
+                ],
+                [
+                    1738,
+                    2901
+                ],
+                [
+                    1748,
+                    3387
+                ],
+                [
+                    184,
+                    3419
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "DEBATE CLUB",
+            "Tim Davidson, President; James Simpson, Vice-President; Frances Whitener, Secretary; Sarah Miller, Treasurer."
+        ],
+        "rec_scores": [
+            0.9591625332832336,
+            0.8879932165145874
+        ],
+        "rec_polys": [
+            [
+                [
+                    806,
+                    96
+                ],
+                [
+                    1617,
+                    103
+                ],
+                [
+                    1616,
+                    206
+                ],
+                [
+                    805,
+                    198
+                ]
+            ],
+            [
+                [
+                    285,
+                    1769
+                ],
+                [
+                    2125,
+                    1771
+                ],
+                [
+                    2125,
+                    1812
+                ],
+                [
+                    285,
+                    1810
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                805,
+                96,
+                1617,
+                206
+            ],
+            [
+                285,
+                1769,
+                2125,
+                1812
+            ]
+        ]
+    }
+}

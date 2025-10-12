@@ -1,0 +1,524 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0070.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "header",
+            "block_content": "F.T.A.",
+            "block_bbox": [
+                1232,
+                99,
+                1539,
+                191
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                21,
+                357,
+                2578,
+                3241
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "Mrs. Nina LaFevers,Advisor; Wayne Clontz,President; Betsy Gibbs, Vice-President; Sandra Pits and Carolyn Carpenter, Secretaries;SusanLeonard,Treasurer;DebraFox,Reporter.\n",
+            "block_bbox": [
+                264,
+                3285,
+                2493,
+                3366
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.8574586510658264,
+                "coordinate": [
+                    264.7802734375,
+                    3285.092041015625,
+                    2493.7275390625,
+                    3366.434326171875
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.6550092697143555,
+                "coordinate": [
+                    21.0657958984375,
+                    357.720703125,
+                    2578.7861328125,
+                    3241.70654296875
+                ]
+            },
+            {
+                "cls_id": 12,
+                "label": "header",
+                "score": 0.5293843150138855,
+                "coordinate": [
+                    1232.245849609375,
+                    99.42427062988281,
+                    1539.678466796875,
+                    191.45777893066406
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    1222,
+                    88
+                ],
+                [
+                    1557,
+                    95
+                ],
+                [
+                    1555,
+                    210
+                ],
+                [
+                    1220,
+                    203
+                ]
+            ],
+            [
+                [
+                    2087,
+                    457
+                ],
+                [
+                    2108,
+                    449
+                ],
+                [
+                    2116,
+                    467
+                ],
+                [
+                    2094,
+                    476
+                ]
+            ],
+            [
+                [
+                    2076,
+                    490
+                ],
+                [
+                    2120,
+                    473
+                ],
+                [
+                    2129,
+                    494
+                ],
+                [
+                    2085,
+                    511
+                ]
+            ],
+            [
+                [
+                    2088,
+                    554
+                ],
+                [
+                    2097,
+                    554
+                ],
+                [
+                    2097,
+                    563
+                ],
+                [
+                    2088,
+                    563
+                ]
+            ],
+            [
+                [
+                    2038,
+                    651
+                ],
+                [
+                    2135,
+                    624
+                ],
+                [
+                    2143,
+                    654
+                ],
+                [
+                    2046,
+                    681
+                ]
+            ],
+            [
+                [
+                    2100,
+                    670
+                ],
+                [
+                    2145,
+                    661
+                ],
+                [
+                    2149,
+                    682
+                ],
+                [
+                    2105,
+                    692
+                ]
+            ],
+            [
+                [
+                    2211,
+                    745
+                ],
+                [
+                    2305,
+                    732
+                ],
+                [
+                    2309,
+                    764
+                ],
+                [
+                    2215,
+                    777
+                ]
+            ],
+            [
+                [
+                    2165,
+                    854
+                ],
+                [
+                    2303,
+                    848
+                ],
+                [
+                    2305,
+                    878
+                ],
+                [
+                    2166,
+                    884
+                ]
+            ],
+            [
+                [
+                    2209,
+                    887
+                ],
+                [
+                    2306,
+                    887
+                ],
+                [
+                    2306,
+                    919
+                ],
+                [
+                    2209,
+                    919
+                ]
+            ],
+            [
+                [
+                    2232,
+                    928
+                ],
+                [
+                    2301,
+                    928
+                ],
+                [
+                    2301,
+                    955
+                ],
+                [
+                    2232,
+                    955
+                ]
+            ],
+            [
+                [
+                    2222,
+                    958
+                ],
+                [
+                    2307,
+                    964
+                ],
+                [
+                    2304,
+                    998
+                ],
+                [
+                    2219,
+                    991
+                ]
+            ],
+            [
+                [
+                    257,
+                    1004
+                ],
+                [
+                    274,
+                    1004
+                ],
+                [
+                    274,
+                    1159
+                ],
+                [
+                    257,
+                    1159
+                ]
+            ],
+            [
+                [
+                    2445,
+                    1372
+                ],
+                [
+                    2469,
+                    1372
+                ],
+                [
+                    2469,
+                    1397
+                ],
+                [
+                    2445,
+                    1397
+                ]
+            ],
+            [
+                [
+                    2501,
+                    1539
+                ],
+                [
+                    2545,
+                    1539
+                ],
+                [
+                    2545,
+                    1558
+                ],
+                [
+                    2501,
+                    1558
+                ]
+            ],
+            [
+                [
+                    297,
+                    2037
+                ],
+                [
+                    454,
+                    2037
+                ],
+                [
+                    454,
+                    2527
+                ],
+                [
+                    297,
+                    2527
+                ]
+            ],
+            [
+                [
+                    271,
+                    3285
+                ],
+                [
+                    2498,
+                    3294
+                ],
+                [
+                    2497,
+                    3335
+                ],
+                [
+                    271,
+                    3326
+                ]
+            ],
+            [
+                [
+                    273,
+                    3329
+                ],
+                [
+                    1076,
+                    3335
+                ],
+                [
+                    1076,
+                    3372
+                ],
+                [
+                    273,
+                    3367
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "F.T.A.",
+            "Mrs. Nina LaFevers,Advisor; Wayne Clontz,President; Betsy Gibbs, Vice-President; Sandra Pits and Carolyn Carpenter, Secretaries;",
+            "SusanLeonard,Treasurer;DebraFox,Reporter."
+        ],
+        "rec_scores": [
+            0.9951627850532532,
+            0.9182753562927246,
+            0.9874942898750305
+        ],
+        "rec_polys": [
+            [
+                [
+                    1222,
+                    88
+                ],
+                [
+                    1557,
+                    95
+                ],
+                [
+                    1555,
+                    210
+                ],
+                [
+                    1220,
+                    203
+                ]
+            ],
+            [
+                [
+                    271,
+                    3285
+                ],
+                [
+                    2498,
+                    3294
+                ],
+                [
+                    2497,
+                    3335
+                ],
+                [
+                    271,
+                    3326
+                ]
+            ],
+            [
+                [
+                    273,
+                    3329
+                ],
+                [
+                    1076,
+                    3335
+                ],
+                [
+                    1076,
+                    3372
+                ],
+                [
+                    273,
+                    3367
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                1220,
+                88,
+                1557,
+                210
+            ],
+            [
+                271,
+                3285,
+                2498,
+                3335
+            ],
+            [
+                273,
+                3329,
+                1076,
+                3372
+            ]
+        ]
+    }
+}

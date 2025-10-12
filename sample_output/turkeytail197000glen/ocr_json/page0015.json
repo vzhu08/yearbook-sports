@@ -1,0 +1,402 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0015.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                167,
+                1173,
+                1710
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "and a time to refrain from embracing;",
+            "block_bbox": [
+                273,
+                2458,
+                985,
+                2658
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "a time to embrace,",
+            "block_bbox": [
+                1473,
+                622,
+                2101,
+                698
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                1247,
+                1952,
+                2572,
+                3230
+            ]
+        },
+        {
+            "block_label": "number",
+            "block_content": "9",
+            "block_bbox": [
+                1204,
+                3315,
+                1225,
+                3345
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9811939597129822,
+                "coordinate": [
+                    1247.306884765625,
+                    1952.5865478515625,
+                    2572.257080078125,
+                    3230.52783203125
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9726282954216003,
+                "coordinate": [
+                    0.22607421875,
+                    167.98834228515625,
+                    1173.7490234375,
+                    1710.305908203125
+                ]
+            },
+            {
+                "cls_id": 3,
+                "label": "number",
+                "score": 0.7958110570907593,
+                "coordinate": [
+                    1204.040771484375,
+                    3315.12353515625,
+                    1225.367919921875,
+                    3345.85498046875
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.5387141108512878,
+                "coordinate": [
+                    273.2908630371094,
+                    2458.90576171875,
+                    985.0985107421875,
+                    2658.8291015625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.5333199501037598,
+                "coordinate": [
+                    1473.46728515625,
+                    622.501953125,
+                    2101.97509765625,
+                    698.869140625
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    1477,
+                    618
+                ],
+                [
+                    2109,
+                    631
+                ],
+                [
+                    2108,
+                    710
+                ],
+                [
+                    1475,
+                    697
+                ]
+            ],
+            [
+                [
+                    528,
+                    1014
+                ],
+                [
+                    542,
+                    1014
+                ],
+                [
+                    542,
+                    1030
+                ],
+                [
+                    528,
+                    1030
+                ]
+            ],
+            [
+                [
+                    1655,
+                    2386
+                ],
+                [
+                    2303,
+                    2527
+                ],
+                [
+                    2240,
+                    2819
+                ],
+                [
+                    1592,
+                    2678
+                ]
+            ],
+            [
+                [
+                    283,
+                    2460
+                ],
+                [
+                    989,
+                    2449
+                ],
+                [
+                    990,
+                    2540
+                ],
+                [
+                    284,
+                    2551
+                ]
+            ],
+            [
+                [
+                    271,
+                    2574
+                ],
+                [
+                    868,
+                    2566
+                ],
+                [
+                    869,
+                    2663
+                ],
+                [
+                    272,
+                    2670
+                ]
+            ],
+            [
+                [
+                    2271,
+                    2609
+                ],
+                [
+                    2531,
+                    2781
+                ],
+                [
+                    2421,
+                    2947
+                ],
+                [
+                    2161,
+                    2776
+                ]
+            ],
+            [
+                [
+                    1205,
+                    3317
+                ],
+                [
+                    1228,
+                    3317
+                ],
+                [
+                    1228,
+                    3350
+                ],
+                [
+                    1205,
+                    3350
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "a time to embrace,",
+            "and a time to refrain",
+            "from embracing;",
+            "9"
+        ],
+        "rec_scores": [
+            0.9611714482307434,
+            0.9878352880477905,
+            0.9691135287284851,
+            0.9992247819900513
+        ],
+        "rec_polys": [
+            [
+                [
+                    1477,
+                    618
+                ],
+                [
+                    2109,
+                    631
+                ],
+                [
+                    2108,
+                    710
+                ],
+                [
+                    1475,
+                    697
+                ]
+            ],
+            [
+                [
+                    283,
+                    2460
+                ],
+                [
+                    989,
+                    2449
+                ],
+                [
+                    990,
+                    2540
+                ],
+                [
+                    284,
+                    2551
+                ]
+            ],
+            [
+                [
+                    271,
+                    2574
+                ],
+                [
+                    868,
+                    2566
+                ],
+                [
+                    869,
+                    2663
+                ],
+                [
+                    272,
+                    2670
+                ]
+            ],
+            [
+                [
+                    1205,
+                    3317
+                ],
+                [
+                    1228,
+                    3317
+                ],
+                [
+                    1228,
+                    3350
+                ],
+                [
+                    1205,
+                    3350
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                1475,
+                618,
+                2109,
+                710
+            ],
+            [
+                283,
+                2449,
+                990,
+                2551
+            ],
+            [
+                271,
+                2566,
+                869,
+                2670
+            ],
+            [
+                1205,
+                3317,
+                1228,
+                3350
+            ]
+        ]
+    }
+}

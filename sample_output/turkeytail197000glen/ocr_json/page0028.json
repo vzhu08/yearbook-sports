@@ -1,0 +1,519 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0028.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                240,
+                1211,
+                1346
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "\"Really Mrs. Spurling! Isn't P.E. supposed to be for the students?'",
+            "block_bbox": [
+                224,
+                1387,
+                1192,
+                1467
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                1369,
+                235,
+                2539,
+                1346
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "Hardworking,studious,underclassmen?",
+            "block_bbox": [
+                1652,
+                1386,
+                2313,
+                1429
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "\"Goodwork,Mr.McKinney!",
+            "block_bbox": [
+                346,
+                2094,
+                843,
+                2141
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                2172,
+                1208,
+                3287
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "A future Math teacher?",
+            "block_bbox": [
+                1798,
+                2095,
+                2191,
+                2140
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                1361,
+                2168,
+                2539,
+                3302
+            ]
+        },
+        {
+            "block_label": "number",
+            "block_content": "22",
+            "block_bbox": [
+                1312,
+                3370,
+                1354,
+                3401
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.953673243522644,
+                "coordinate": [
+                    0.32867431640625,
+                    240.94281005859375,
+                    1211.343994140625,
+                    1346.57373046875
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.935854971408844,
+                "coordinate": [
+                    1369.176513671875,
+                    235.3636474609375,
+                    2539,
+                    1346.524658203125
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.8574286103248596,
+                "coordinate": [
+                    0.07208251953125,
+                    2172.6201171875,
+                    1208.162841796875,
+                    3287.8193359375
+                ]
+            },
+            {
+                "cls_id": 3,
+                "label": "number",
+                "score": 0.835503101348877,
+                "coordinate": [
+                    1312.550048828125,
+                    3370.74365234375,
+                    1354.610107421875,
+                    3401.11083984375
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.7964957356452942,
+                "coordinate": [
+                    1361.986083984375,
+                    2168.82275390625,
+                    2539,
+                    3302.20703125
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.7512423396110535,
+                "coordinate": [
+                    1652.608642578125,
+                    1386.8426513671875,
+                    2313.35302734375,
+                    1429.5889892578125
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.7345618605613708,
+                "coordinate": [
+                    224.28616333007812,
+                    1387.95166015625,
+                    1192.2452392578125,
+                    1467.308837890625
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.6571869850158691,
+                "coordinate": [
+                    346.38330078125,
+                    2094.26806640625,
+                    843.8858642578125,
+                    2141.1650390625
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.5561223030090332,
+                "coordinate": [
+                    1798.84521484375,
+                    2095.135986328125,
+                    2191.67822265625,
+                    2140.649658203125
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    228,
+                    1386
+                ],
+                [
+                    1194,
+                    1390
+                ],
+                [
+                    1194,
+                    1433
+                ],
+                [
+                    227,
+                    1429
+                ]
+            ],
+            [
+                [
+                    1656,
+                    1390
+                ],
+                [
+                    2317,
+                    1390
+                ],
+                [
+                    2317,
+                    1431
+                ],
+                [
+                    1656,
+                    1431
+                ]
+            ],
+            [
+                [
+                    224,
+                    1429
+                ],
+                [
+                    414,
+                    1425
+                ],
+                [
+                    415,
+                    1468
+                ],
+                [
+                    225,
+                    1472
+                ]
+            ],
+            [
+                [
+                    349,
+                    2097
+                ],
+                [
+                    841,
+                    2097
+                ],
+                [
+                    841,
+                    2137
+                ],
+                [
+                    349,
+                    2137
+                ]
+            ],
+            [
+                [
+                    1800,
+                    2098
+                ],
+                [
+                    2188,
+                    2098
+                ],
+                [
+                    2188,
+                    2134
+                ],
+                [
+                    1800,
+                    2134
+                ]
+            ],
+            [
+                [
+                    1312,
+                    3369
+                ],
+                [
+                    1361,
+                    3369
+                ],
+                [
+                    1361,
+                    3408
+                ],
+                [
+                    1312,
+                    3408
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "\"Really Mrs. Spurling! Isn't P.E. supposed to be for the",
+            "Hardworking,studious,underclassmen?",
+            "students?'",
+            "\"Goodwork,Mr.McKinney!",
+            "A future Math teacher?",
+            "22"
+        ],
+        "rec_scores": [
+            0.9394680857658386,
+            0.9694907069206238,
+            0.9785767793655396,
+            0.9762777090072632,
+            0.9907366037368774,
+            0.9998080134391785
+        ],
+        "rec_polys": [
+            [
+                [
+                    228,
+                    1386
+                ],
+                [
+                    1194,
+                    1390
+                ],
+                [
+                    1194,
+                    1433
+                ],
+                [
+                    227,
+                    1429
+                ]
+            ],
+            [
+                [
+                    1656,
+                    1390
+                ],
+                [
+                    2317,
+                    1390
+                ],
+                [
+                    2317,
+                    1431
+                ],
+                [
+                    1656,
+                    1431
+                ]
+            ],
+            [
+                [
+                    224,
+                    1429
+                ],
+                [
+                    414,
+                    1425
+                ],
+                [
+                    415,
+                    1468
+                ],
+                [
+                    225,
+                    1472
+                ]
+            ],
+            [
+                [
+                    349,
+                    2097
+                ],
+                [
+                    841,
+                    2097
+                ],
+                [
+                    841,
+                    2137
+                ],
+                [
+                    349,
+                    2137
+                ]
+            ],
+            [
+                [
+                    1800,
+                    2098
+                ],
+                [
+                    2188,
+                    2098
+                ],
+                [
+                    2188,
+                    2134
+                ],
+                [
+                    1800,
+                    2134
+                ]
+            ],
+            [
+                [
+                    1312,
+                    3369
+                ],
+                [
+                    1361,
+                    3369
+                ],
+                [
+                    1361,
+                    3408
+                ],
+                [
+                    1312,
+                    3408
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                227,
+                1386,
+                1194,
+                1433
+            ],
+            [
+                1656,
+                1390,
+                2317,
+                1431
+            ],
+            [
+                224,
+                1425,
+                415,
+                1472
+            ],
+            [
+                349,
+                2097,
+                841,
+                2137
+            ],
+            [
+                1800,
+                2098,
+                2188,
+                2134
+            ],
+            [
+                1312,
+                3369,
+                1361,
+                3408
+            ]
+        ]
+    }
+}

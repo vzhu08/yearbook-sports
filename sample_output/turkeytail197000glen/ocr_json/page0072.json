@@ -1,0 +1,343 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0072.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "header",
+            "block_content": "F.H.A.",
+            "block_bbox": [
+                1201,
+                121,
+                1526,
+                213
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                377,
+                2587,
+                1485
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                1882,
+                2585,
+                3255
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "OFFICERS: Barbara Isaacs, Treasurer; Miss Marsha Murray,Advisor; Susan Duckworth, President; Faye Rhodes,Vice-Presidnt;DebraPoteat, Secretary; Denese Causby, Reporter; Sylvia Greene, Parliamentarian; Jayne Morgan,Historian; Mary Simpson,Social Chairman;Frances Whitener,SongLeader,Burke CountyPresident.\n",
+            "block_bbox": [
+                247,
+                3282,
+                2477,
+                3408
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9576561450958252,
+                "coordinate": [
+                    0.8154296875,
+                    1882.542236328125,
+                    2585.149658203125,
+                    3255.829833984375
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9108442664146423,
+                "coordinate": [
+                    0.6939697265625,
+                    377.9114990234375,
+                    2587.81005859375,
+                    1485.5440673828125
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.8861551880836487,
+                "coordinate": [
+                    247.9832763671875,
+                    3282.605224609375,
+                    2477.40771484375,
+                    3408.622314453125
+                ]
+            },
+            {
+                "cls_id": 12,
+                "label": "header",
+                "score": 0.536592423915863,
+                "coordinate": [
+                    1201.43505859375,
+                    121.9610595703125,
+                    1526.26904296875,
+                    213.88796997070312
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    1194,
+                    111
+                ],
+                [
+                    1541,
+                    118
+                ],
+                [
+                    1539,
+                    231
+                ],
+                [
+                    1192,
+                    225
+                ]
+            ],
+            [
+                [
+                    536,
+                    2614
+                ],
+                [
+                    554,
+                    2596
+                ],
+                [
+                    567,
+                    2610
+                ],
+                [
+                    550,
+                    2627
+                ]
+            ],
+            [
+                [
+                    257,
+                    3281
+                ],
+                [
+                    2480,
+                    3290
+                ],
+                [
+                    2480,
+                    3333
+                ],
+                [
+                    257,
+                    3324
+                ]
+            ],
+            [
+                [
+                    257,
+                    3324
+                ],
+                [
+                    2478,
+                    3333
+                ],
+                [
+                    2478,
+                    3376
+                ],
+                [
+                    257,
+                    3367
+                ]
+            ],
+            [
+                [
+                    259,
+                    3368
+                ],
+                [
+                    1383,
+                    3376
+                ],
+                [
+                    1382,
+                    3413
+                ],
+                [
+                    258,
+                    3406
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "F.H.A.",
+            "OFFICERS: Barbara Isaacs, Treasurer; Miss Marsha Murray,Advisor; Susan Duckworth, President; Faye Rhodes,Vice-Presidnt;",
+            "DebraPoteat, Secretary; Denese Causby, Reporter; Sylvia Greene, Parliamentarian; Jayne Morgan,Historian; Mary Simpson,Social",
+            "Chairman;Frances Whitener,SongLeader,Burke CountyPresident."
+        ],
+        "rec_scores": [
+            0.9965665340423584,
+            0.9215519428253174,
+            0.9127957224845886,
+            0.9698575139045715
+        ],
+        "rec_polys": [
+            [
+                [
+                    1194,
+                    111
+                ],
+                [
+                    1541,
+                    118
+                ],
+                [
+                    1539,
+                    231
+                ],
+                [
+                    1192,
+                    225
+                ]
+            ],
+            [
+                [
+                    257,
+                    3281
+                ],
+                [
+                    2480,
+                    3290
+                ],
+                [
+                    2480,
+                    3333
+                ],
+                [
+                    257,
+                    3324
+                ]
+            ],
+            [
+                [
+                    257,
+                    3324
+                ],
+                [
+                    2478,
+                    3333
+                ],
+                [
+                    2478,
+                    3376
+                ],
+                [
+                    257,
+                    3367
+                ]
+            ],
+            [
+                [
+                    259,
+                    3368
+                ],
+                [
+                    1383,
+                    3376
+                ],
+                [
+                    1382,
+                    3413
+                ],
+                [
+                    258,
+                    3406
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                1192,
+                111,
+                1541,
+                231
+            ],
+            [
+                257,
+                3281,
+                2480,
+                3333
+            ],
+            [
+                257,
+                3324,
+                2478,
+                3376
+            ],
+            [
+                258,
+                3368,
+                1383,
+                3413
+            ]
+        ]
+    }
+}

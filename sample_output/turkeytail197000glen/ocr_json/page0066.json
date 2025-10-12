@@ -1,0 +1,553 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0066.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "header",
+            "block_content": "KEYCLUB ",
+            "block_bbox": [
+                1040,
+                126,
+                1621,
+                218
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "EYCLUD \n",
+            "block_bbox": [
+                217,
+                377,
+                2435,
+                1753
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "KEYCLUBOFFICERS Wayne Clontz, Pres.; Ronald Hardin, Vice-Pres.; David Winters,Secretary; Ricky Franklin,Trcasurer.",
+            "block_bbox": [
+                488,
+                1788,
+                2164,
+                1881
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "KEY CLUB \nGLENALPINE \nHIGHSCHOOL \nMORTH CAROLINA \n",
+            "block_bbox": [
+                2,
+                1985,
+                2586,
+                3519
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9802770614624023,
+                "coordinate": [
+                    217.2525634765625,
+                    377.54119873046875,
+                    2435.9501953125,
+                    1753.510498046875
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9677954316139221,
+                "coordinate": [
+                    2.0838623046875,
+                    1985.0306396484375,
+                    2586.947265625,
+                    3519.64306640625
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.6974785923957825,
+                "coordinate": [
+                    488.92462158203125,
+                    1788.11181640625,
+                    2164.91943359375,
+                    1881.3427734375
+                ]
+            },
+            {
+                "cls_id": 12,
+                "label": "header",
+                "score": 0.5943956971168518,
+                "coordinate": [
+                    1040.927490234375,
+                    126.74012756347656,
+                    1621.773681640625,
+                    218.66017150878906
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.5838541388511658,
+                "coordinate": [
+                    1120.6375732421875,
+                    1788.813232421875,
+                    1526.6431884765625,
+                    1827.849365234375
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    1038,
+                    130
+                ],
+                [
+                    1627,
+                    128
+                ],
+                [
+                    1627,
+                    227
+                ],
+                [
+                    1038,
+                    229
+                ]
+            ],
+            [
+                [
+                    1187,
+                    415
+                ],
+                [
+                    1584,
+                    396
+                ],
+                [
+                    1588,
+                    503
+                ],
+                [
+                    1192,
+                    521
+                ]
+            ],
+            [
+                [
+                    215,
+                    488
+                ],
+                [
+                    429,
+                    488
+                ],
+                [
+                    429,
+                    1367
+                ],
+                [
+                    215,
+                    1367
+                ]
+            ],
+            [
+                [
+                    1124,
+                    1794
+                ],
+                [
+                    1523,
+                    1794
+                ],
+                [
+                    1523,
+                    1830
+                ],
+                [
+                    1124,
+                    1830
+                ]
+            ],
+            [
+                [
+                    489,
+                    1839
+                ],
+                [
+                    2169,
+                    1842
+                ],
+                [
+                    2169,
+                    1885
+                ],
+                [
+                    489,
+                    1881
+                ]
+            ],
+            [
+                [
+                    1166,
+                    2283
+                ],
+                [
+                    1526,
+                    2276
+                ],
+                [
+                    1527,
+                    2371
+                ],
+                [
+                    1167,
+                    2377
+                ]
+            ],
+            [
+                [
+                    1280,
+                    2423
+                ],
+                [
+                    1410,
+                    2415
+                ],
+                [
+                    1413,
+                    2459
+                ],
+                [
+                    1282,
+                    2468
+                ]
+            ],
+            [
+                [
+                    1213,
+                    2641
+                ],
+                [
+                    1480,
+                    2637
+                ],
+                [
+                    1481,
+                    2697
+                ],
+                [
+                    1214,
+                    2701
+                ]
+            ],
+            [
+                [
+                    1225,
+                    2733
+                ],
+                [
+                    1478,
+                    2727
+                ],
+                [
+                    1480,
+                    2782
+                ],
+                [
+                    1227,
+                    2788
+                ]
+            ],
+            [
+                [
+                    1189,
+                    2815
+                ],
+                [
+                    1510,
+                    2811
+                ],
+                [
+                    1511,
+                    2864
+                ],
+                [
+                    1189,
+                    2868
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "KEYCLUB",
+            "EYCLUD",
+            "KEYCLUBOFFICERS",
+            "Wayne Clontz, Pres.; Ronald Hardin, Vice-Pres.; David Winters,Secretary; Ricky Franklin,Trcasurer.",
+            "KEY CLUB",
+            "GLENALPINE",
+            "HIGHSCHOOL",
+            "MORTH CAROLINA"
+        ],
+        "rec_scores": [
+            0.9935262799263,
+            0.764220654964447,
+            0.9892684817314148,
+            0.9147328734397888,
+            0.8640627264976501,
+            0.9310615658760071,
+            0.984484851360321,
+            0.9157137870788574
+        ],
+        "rec_polys": [
+            [
+                [
+                    1038,
+                    130
+                ],
+                [
+                    1627,
+                    128
+                ],
+                [
+                    1627,
+                    227
+                ],
+                [
+                    1038,
+                    229
+                ]
+            ],
+            [
+                [
+                    1187,
+                    415
+                ],
+                [
+                    1584,
+                    396
+                ],
+                [
+                    1588,
+                    503
+                ],
+                [
+                    1192,
+                    521
+                ]
+            ],
+            [
+                [
+                    1124,
+                    1794
+                ],
+                [
+                    1523,
+                    1794
+                ],
+                [
+                    1523,
+                    1830
+                ],
+                [
+                    1124,
+                    1830
+                ]
+            ],
+            [
+                [
+                    489,
+                    1839
+                ],
+                [
+                    2169,
+                    1842
+                ],
+                [
+                    2169,
+                    1885
+                ],
+                [
+                    489,
+                    1881
+                ]
+            ],
+            [
+                [
+                    1166,
+                    2283
+                ],
+                [
+                    1526,
+                    2276
+                ],
+                [
+                    1527,
+                    2371
+                ],
+                [
+                    1167,
+                    2377
+                ]
+            ],
+            [
+                [
+                    1213,
+                    2641
+                ],
+                [
+                    1480,
+                    2637
+                ],
+                [
+                    1481,
+                    2697
+                ],
+                [
+                    1214,
+                    2701
+                ]
+            ],
+            [
+                [
+                    1225,
+                    2733
+                ],
+                [
+                    1478,
+                    2727
+                ],
+                [
+                    1480,
+                    2782
+                ],
+                [
+                    1227,
+                    2788
+                ]
+            ],
+            [
+                [
+                    1189,
+                    2815
+                ],
+                [
+                    1510,
+                    2811
+                ],
+                [
+                    1511,
+                    2864
+                ],
+                [
+                    1189,
+                    2868
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                1038,
+                128,
+                1627,
+                229
+            ],
+            [
+                1187,
+                396,
+                1588,
+                521
+            ],
+            [
+                1124,
+                1794,
+                1523,
+                1830
+            ],
+            [
+                489,
+                1839,
+                2169,
+                1885
+            ],
+            [
+                1166,
+                2276,
+                1527,
+                2377
+            ],
+            [
+                1213,
+                2637,
+                1481,
+                2701
+            ],
+            [
+                1225,
+                2727,
+                1480,
+                2788
+            ],
+            [
+                1189,
+                2811,
+                1511,
+                2868
+            ]
+        ]
+    }
+}

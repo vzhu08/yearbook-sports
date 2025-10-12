@@ -1,0 +1,563 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0030.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "doc_title",
+            "block_content": "THE  CLASS  OF  1970",
+            "block_bbox": [
+                292,
+                278,
+                755,
+                904
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "Mascots:\nDonna Williams,\nTracy Self \n",
+            "block_bbox": [
+                993,
+                1386,
+                1308,
+                1546
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                1396,
+                208,
+                2539,
+                1746
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "Wayne Clontz,President; Dwight Farris, Vice-President; Becky Brewer, Secretary; Andy Pitts,Treasurer.",
+            "block_bbox": [
+                327,
+                1906,
+                2304,
+                1958
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                217,
+                1994,
+                2427,
+                3530
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9608300924301147,
+                "coordinate": [
+                    217.0120849609375,
+                    1994.1923828125,
+                    2427.48681640625,
+                    3530.42919921875
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.8447487950325012,
+                "coordinate": [
+                    1396.038818359375,
+                    208.9100341796875,
+                    2539,
+                    1746.3665771484375
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.6633092164993286,
+                "coordinate": [
+                    327.4295654296875,
+                    1906.512939453125,
+                    2304.49658203125,
+                    1958.392333984375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.558279275894165,
+                "coordinate": [
+                    993.0360107421875,
+                    1386.1368408203125,
+                    1308.9471435546875,
+                    1546.8306884765625
+                ]
+            },
+            {
+                "cls_id": 10,
+                "label": "doc_title",
+                "score": 0.5084738731384277,
+                "coordinate": [
+                    292.15081787109375,
+                    278.3109130859375,
+                    755.1343383789062,
+                    904.8638916015625
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    1486,
+                    226
+                ],
+                [
+                    2315,
+                    292
+                ],
+                [
+                    2281,
+                    723
+                ],
+                [
+                    1453,
+                    657
+                ]
+            ],
+            [
+                [
+                    377,
+                    288
+                ],
+                [
+                    682,
+                    288
+                ],
+                [
+                    682,
+                    411
+                ],
+                [
+                    377,
+                    411
+                ]
+            ],
+            [
+                [
+                    292,
+                    459
+                ],
+                [
+                    759,
+                    455
+                ],
+                [
+                    760,
+                    575
+                ],
+                [
+                    293,
+                    579
+                ]
+            ],
+            [
+                [
+                    421,
+                    621
+                ],
+                [
+                    642,
+                    621
+                ],
+                [
+                    642,
+                    751
+                ],
+                [
+                    421,
+                    751
+                ]
+            ],
+            [
+                [
+                    386,
+                    790
+                ],
+                [
+                    668,
+                    790
+                ],
+                [
+                    668,
+                    915
+                ],
+                [
+                    386,
+                    915
+                ]
+            ],
+            [
+                [
+                    993,
+                    1384
+                ],
+                [
+                    1175,
+                    1389
+                ],
+                [
+                    1174,
+                    1438
+                ],
+                [
+                    992,
+                    1434
+                ]
+            ],
+            [
+                [
+                    994,
+                    1443
+                ],
+                [
+                    1312,
+                    1443
+                ],
+                [
+                    1312,
+                    1493
+                ],
+                [
+                    994,
+                    1493
+                ]
+            ],
+            [
+                [
+                    994,
+                    1497
+                ],
+                [
+                    1206,
+                    1497
+                ],
+                [
+                    1206,
+                    1552
+                ],
+                [
+                    994,
+                    1552
+                ]
+            ],
+            [
+                [
+                    335,
+                    1913
+                ],
+                [
+                    2308,
+                    1911
+                ],
+                [
+                    2308,
+                    1959
+                ],
+                [
+                    335,
+                    1961
+                ]
+            ],
+            [
+                [
+                    238,
+                    2477
+                ],
+                [
+                    541,
+                    2477
+                ],
+                [
+                    541,
+                    2552
+                ],
+                [
+                    238,
+                    2552
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "THE",
+            "CLASS",
+            "OF",
+            "1970",
+            "Mascots:",
+            "Donna Williams,",
+            "Tracy Self",
+            "Wayne Clontz,President; Dwight Farris, Vice-President; Becky Brewer, Secretary; Andy Pitts,Treasurer."
+        ],
+        "rec_scores": [
+            0.9934225082397461,
+            0.9966574907302856,
+            0.9902275204658508,
+            0.9982552528381348,
+            0.9914787411689758,
+            0.9072932004928589,
+            0.9727408289909363,
+            0.938109278678894
+        ],
+        "rec_polys": [
+            [
+                [
+                    377,
+                    288
+                ],
+                [
+                    682,
+                    288
+                ],
+                [
+                    682,
+                    411
+                ],
+                [
+                    377,
+                    411
+                ]
+            ],
+            [
+                [
+                    292,
+                    459
+                ],
+                [
+                    759,
+                    455
+                ],
+                [
+                    760,
+                    575
+                ],
+                [
+                    293,
+                    579
+                ]
+            ],
+            [
+                [
+                    421,
+                    621
+                ],
+                [
+                    642,
+                    621
+                ],
+                [
+                    642,
+                    751
+                ],
+                [
+                    421,
+                    751
+                ]
+            ],
+            [
+                [
+                    386,
+                    790
+                ],
+                [
+                    668,
+                    790
+                ],
+                [
+                    668,
+                    915
+                ],
+                [
+                    386,
+                    915
+                ]
+            ],
+            [
+                [
+                    993,
+                    1384
+                ],
+                [
+                    1175,
+                    1389
+                ],
+                [
+                    1174,
+                    1438
+                ],
+                [
+                    992,
+                    1434
+                ]
+            ],
+            [
+                [
+                    994,
+                    1443
+                ],
+                [
+                    1312,
+                    1443
+                ],
+                [
+                    1312,
+                    1493
+                ],
+                [
+                    994,
+                    1493
+                ]
+            ],
+            [
+                [
+                    994,
+                    1497
+                ],
+                [
+                    1206,
+                    1497
+                ],
+                [
+                    1206,
+                    1552
+                ],
+                [
+                    994,
+                    1552
+                ]
+            ],
+            [
+                [
+                    335,
+                    1913
+                ],
+                [
+                    2308,
+                    1911
+                ],
+                [
+                    2308,
+                    1959
+                ],
+                [
+                    335,
+                    1961
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                377,
+                288,
+                682,
+                411
+            ],
+            [
+                292,
+                455,
+                760,
+                579
+            ],
+            [
+                421,
+                621,
+                642,
+                751
+            ],
+            [
+                386,
+                790,
+                668,
+                915
+            ],
+            [
+                992,
+                1384,
+                1175,
+                1438
+            ],
+            [
+                994,
+                1443,
+                1312,
+                1493
+            ],
+            [
+                994,
+                1497,
+                1206,
+                1552
+            ],
+            [
+                335,
+                1911,
+                2308,
+                1961
+            ]
+        ]
+    }
+}

@@ -1,0 +1,475 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0076.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "header",
+            "block_content": "HOMECOMING: 1969",
+            "block_bbox": [
+                799,
+                134,
+                1920,
+                230
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                302,
+                1199,
+                1664
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "1969 HOMECOMING QUEEN Miss Susan Duckworth ",
+            "block_bbox": [
+                355,
+                1703,
+                934,
+                1809
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                1530,
+                305,
+                2588,
+                1672
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "F.H.A.\nMiss Susan Duckworth Jerry McCurry, Escort ",
+            "block_bbox": [
+                1821,
+                1712,
+                2256,
+                1877
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                604,
+                2169,
+                2142,
+                3520
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9660679697990417,
+                "coordinate": [
+                    604.07958984375,
+                    2169.150390625,
+                    2142.39794921875,
+                    3520.3623046875
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9521433711051941,
+                "coordinate": [
+                    1530.76123046875,
+                    305.54632568359375,
+                    2588.4111328125,
+                    1672.45361328125
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9514119625091553,
+                "coordinate": [
+                    0.03778076171875,
+                    302.46563720703125,
+                    1199.19091796875,
+                    1664.891357421875
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.8208721876144409,
+                "coordinate": [
+                    1821.715087890625,
+                    1712.02685546875,
+                    2256.505615234375,
+                    1877.8525390625
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.7970771193504333,
+                "coordinate": [
+                    355.6068115234375,
+                    1703.911376953125,
+                    934.5892333984375,
+                    1809.455322265625
+                ]
+            },
+            {
+                "cls_id": 12,
+                "label": "header",
+                "score": 0.5281155705451965,
+                "coordinate": [
+                    799.6337890625,
+                    134.48822021484375,
+                    1920.34228515625,
+                    230.05950927734375
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    795,
+                    135
+                ],
+                [
+                    1926,
+                    131
+                ],
+                [
+                    1926,
+                    234
+                ],
+                [
+                    795,
+                    238
+                ]
+            ],
+            [
+                [
+                    352,
+                    1707
+                ],
+                [
+                    936,
+                    1707
+                ],
+                [
+                    936,
+                    1755
+                ],
+                [
+                    352,
+                    1755
+                ]
+            ],
+            [
+                [
+                    1971,
+                    1709
+                ],
+                [
+                    2113,
+                    1713
+                ],
+                [
+                    2111,
+                    1763
+                ],
+                [
+                    1969,
+                    1758
+                ]
+            ],
+            [
+                [
+                    427,
+                    1766
+                ],
+                [
+                    858,
+                    1766
+                ],
+                [
+                    858,
+                    1808
+                ],
+                [
+                    427,
+                    1808
+                ]
+            ],
+            [
+                [
+                    1824,
+                    1769
+                ],
+                [
+                    2260,
+                    1769
+                ],
+                [
+                    2260,
+                    1817
+                ],
+                [
+                    1824,
+                    1817
+                ]
+            ],
+            [
+                [
+                    1826,
+                    1826
+                ],
+                [
+                    2256,
+                    1822
+                ],
+                [
+                    2257,
+                    1876
+                ],
+                [
+                    1826,
+                    1880
+                ]
+            ],
+            [
+                [
+                    1800,
+                    2989
+                ],
+                [
+                    2119,
+                    2911
+                ],
+                [
+                    2198,
+                    3240
+                ],
+                [
+                    1879,
+                    3318
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "HOMECOMING: 1969",
+            "1969 HOMECOMING QUEEN",
+            "F.H.A.",
+            "Miss Susan Duckworth",
+            "Miss Susan Duckworth",
+            "Jerry McCurry, Escort"
+        ],
+        "rec_scores": [
+            0.972409188747406,
+            0.9340183734893799,
+            0.9986546635627747,
+            0.9735806584358215,
+            0.9731727838516235,
+            0.9744324684143066
+        ],
+        "rec_polys": [
+            [
+                [
+                    795,
+                    135
+                ],
+                [
+                    1926,
+                    131
+                ],
+                [
+                    1926,
+                    234
+                ],
+                [
+                    795,
+                    238
+                ]
+            ],
+            [
+                [
+                    352,
+                    1707
+                ],
+                [
+                    936,
+                    1707
+                ],
+                [
+                    936,
+                    1755
+                ],
+                [
+                    352,
+                    1755
+                ]
+            ],
+            [
+                [
+                    1971,
+                    1709
+                ],
+                [
+                    2113,
+                    1713
+                ],
+                [
+                    2111,
+                    1763
+                ],
+                [
+                    1969,
+                    1758
+                ]
+            ],
+            [
+                [
+                    427,
+                    1766
+                ],
+                [
+                    858,
+                    1766
+                ],
+                [
+                    858,
+                    1808
+                ],
+                [
+                    427,
+                    1808
+                ]
+            ],
+            [
+                [
+                    1824,
+                    1769
+                ],
+                [
+                    2260,
+                    1769
+                ],
+                [
+                    2260,
+                    1817
+                ],
+                [
+                    1824,
+                    1817
+                ]
+            ],
+            [
+                [
+                    1826,
+                    1826
+                ],
+                [
+                    2256,
+                    1822
+                ],
+                [
+                    2257,
+                    1876
+                ],
+                [
+                    1826,
+                    1880
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                795,
+                131,
+                1926,
+                238
+            ],
+            [
+                352,
+                1707,
+                936,
+                1755
+            ],
+            [
+                1969,
+                1709,
+                2113,
+                1763
+            ],
+            [
+                427,
+                1766,
+                858,
+                1808
+            ],
+            [
+                1824,
+                1769,
+                2260,
+                1817
+            ],
+            [
+                1826,
+                1822,
+                2257,
+                1880
+            ]
+        ]
+    }
+}

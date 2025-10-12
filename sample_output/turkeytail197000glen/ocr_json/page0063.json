@@ -1,0 +1,544 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0063.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                274,
+                1029,
+                1732
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                1107,
+                270,
+                2551,
+                1196
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "OFFICERS Butch Queen, Student Director; Wayne Clontz,President; David Melton, VicePresident;Denese Causby,Secretary;Cindy Wilson,Treasurer; Deborah Patton andCarolynCarpenter,Reporters.\n",
+            "block_bbox": [
+                1143,
+                1284,
+                2477,
+                1421
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "DIRECTORS MissMarthaThomasson Miss Betty Brooks ",
+            "block_bbox": [
+                365,
+                1767,
+                768,
+                1895
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                1960,
+                2572,
+                3519
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9366658329963684,
+                "coordinate": [
+                    0.7418212890625,
+                    1960.1181640625,
+                    2572.18505859375,
+                    3519.63427734375
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9355438351631165,
+                "coordinate": [
+                    0.05291748046875,
+                    274.2659912109375,
+                    1029.02587890625,
+                    1732.412109375
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9250778555870056,
+                "coordinate": [
+                    1107.338623046875,
+                    270.3250732421875,
+                    2551.6884765625,
+                    1196.9969482421875
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.763324499130249,
+                "coordinate": [
+                    365.0556640625,
+                    1767.689453125,
+                    768.913818359375,
+                    1895.713134765625
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.6510629653930664,
+                "coordinate": [
+                    1143.501708984375,
+                    1284.1190185546875,
+                    2477.297119140625,
+                    1421.3175048828125
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    869,
+                    96
+                ],
+                [
+                    1520,
+                    101
+                ],
+                [
+                    1519,
+                    201
+                ],
+                [
+                    869,
+                    195
+                ]
+            ],
+            [
+                [
+                    1720,
+                    1255
+                ],
+                [
+                    1915,
+                    1255
+                ],
+                [
+                    1915,
+                    1290
+                ],
+                [
+                    1720,
+                    1290
+                ]
+            ],
+            [
+                [
+                    1150,
+                    1297
+                ],
+                [
+                    2478,
+                    1294
+                ],
+                [
+                    2478,
+                    1331
+                ],
+                [
+                    1150,
+                    1335
+                ]
+            ],
+            [
+                [
+                    1152,
+                    1340
+                ],
+                [
+                    2478,
+                    1336
+                ],
+                [
+                    2478,
+                    1374
+                ],
+                [
+                    1152,
+                    1377
+                ]
+            ],
+            [
+                [
+                    1150,
+                    1381
+                ],
+                [
+                    1720,
+                    1383
+                ],
+                [
+                    1720,
+                    1420
+                ],
+                [
+                    1150,
+                    1418
+                ]
+            ],
+            [
+                [
+                    450,
+                    1769
+                ],
+                [
+                    677,
+                    1769
+                ],
+                [
+                    677,
+                    1807
+                ],
+                [
+                    450,
+                    1807
+                ]
+            ],
+            [
+                [
+                    368,
+                    1812
+                ],
+                [
+                    769,
+                    1812
+                ],
+                [
+                    769,
+                    1849
+                ],
+                [
+                    368,
+                    1849
+                ]
+            ],
+            [
+                [
+                    408,
+                    1853
+                ],
+                [
+                    719,
+                    1853
+                ],
+                [
+                    719,
+                    1895
+                ],
+                [
+                    408,
+                    1895
+                ]
+            ],
+            [
+                [
+                    1754,
+                    2764
+                ],
+                [
+                    2092,
+                    2789
+                ],
+                [
+                    2084,
+                    2911
+                ],
+                [
+                    1746,
+                    2887
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "GLEECLUB",
+            "OFFICERS",
+            "Butch Queen, Student Director; Wayne Clontz,President; David Melton, Vice-",
+            "President;Denese Causby,Secretary;Cindy Wilson,Treasurer; Deborah Patton",
+            "andCarolynCarpenter,Reporters.",
+            "DIRECTORS",
+            "MissMarthaThomasson",
+            "Miss Betty Brooks"
+        ],
+        "rec_scores": [
+            0.9942431449890137,
+            0.9929922223091125,
+            0.9237592816352844,
+            0.9457865953445435,
+            0.9918215274810791,
+            0.9964368343353271,
+            0.9959464073181152,
+            0.9394109845161438
+        ],
+        "rec_polys": [
+            [
+                [
+                    869,
+                    96
+                ],
+                [
+                    1520,
+                    101
+                ],
+                [
+                    1519,
+                    201
+                ],
+                [
+                    869,
+                    195
+                ]
+            ],
+            [
+                [
+                    1720,
+                    1255
+                ],
+                [
+                    1915,
+                    1255
+                ],
+                [
+                    1915,
+                    1290
+                ],
+                [
+                    1720,
+                    1290
+                ]
+            ],
+            [
+                [
+                    1150,
+                    1297
+                ],
+                [
+                    2478,
+                    1294
+                ],
+                [
+                    2478,
+                    1331
+                ],
+                [
+                    1150,
+                    1335
+                ]
+            ],
+            [
+                [
+                    1152,
+                    1340
+                ],
+                [
+                    2478,
+                    1336
+                ],
+                [
+                    2478,
+                    1374
+                ],
+                [
+                    1152,
+                    1377
+                ]
+            ],
+            [
+                [
+                    1150,
+                    1381
+                ],
+                [
+                    1720,
+                    1383
+                ],
+                [
+                    1720,
+                    1420
+                ],
+                [
+                    1150,
+                    1418
+                ]
+            ],
+            [
+                [
+                    450,
+                    1769
+                ],
+                [
+                    677,
+                    1769
+                ],
+                [
+                    677,
+                    1807
+                ],
+                [
+                    450,
+                    1807
+                ]
+            ],
+            [
+                [
+                    368,
+                    1812
+                ],
+                [
+                    769,
+                    1812
+                ],
+                [
+                    769,
+                    1849
+                ],
+                [
+                    368,
+                    1849
+                ]
+            ],
+            [
+                [
+                    408,
+                    1853
+                ],
+                [
+                    719,
+                    1853
+                ],
+                [
+                    719,
+                    1895
+                ],
+                [
+                    408,
+                    1895
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                869,
+                96,
+                1520,
+                201
+            ],
+            [
+                1720,
+                1255,
+                1915,
+                1290
+            ],
+            [
+                1150,
+                1294,
+                2478,
+                1335
+            ],
+            [
+                1152,
+                1336,
+                2478,
+                1377
+            ],
+            [
+                1150,
+                1381,
+                1720,
+                1420
+            ],
+            [
+                450,
+                1769,
+                677,
+                1807
+            ],
+            [
+                368,
+                1812,
+                769,
+                1849
+            ],
+            [
+                408,
+                1853,
+                719,
+                1895
+            ]
+        ]
+    }
+}

@@ -1,0 +1,567 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0080.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                0,
+                1250,
+                1561
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "Miss Kathy Wright ",
+            "block_bbox": [
+                482,
+                1598,
+                830,
+                1647
+            ]
+        },
+        {
+            "block_label": "doc_title",
+            "block_content": "Junior Miss Burke  County Fair ",
+            "block_bbox": [
+                1331,
+                623,
+                2190,
+                869
+            ]
+        },
+        {
+            "block_label": "paragraph_title",
+            "block_content": "Marshals ",
+            "block_bbox": [
+                494,
+                2313,
+                916,
+                2408
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "Chiefs: Dan Garrison and Kent Smith,\nDavid Melton, Mary Simpson,Ruth Smith,Marie \nMiller \n\n",
+            "block_bbox": [
+                228,
+                2492,
+                1174,
+                2646
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                1245,
+                1888,
+                2587,
+                3245
+            ]
+        },
+        {
+            "block_label": "number",
+            "block_content": "74",
+            "block_bbox": [
+                1323,
+                3330,
+                1363,
+                3360
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9825165271759033,
+                "coordinate": [
+                    1245.619140625,
+                    1888.2142333984375,
+                    2587.72900390625,
+                    3245.00244140625
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9787889719009399,
+                "coordinate": [
+                    0,
+                    0,
+                    1250.516845703125,
+                    1561.474609375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.8858898282051086,
+                "coordinate": [
+                    228.23248291015625,
+                    2492.44287109375,
+                    1174.509033203125,
+                    2646.13818359375
+                ]
+            },
+            {
+                "cls_id": 3,
+                "label": "number",
+                "score": 0.8381476402282715,
+                "coordinate": [
+                    1323.5845947265625,
+                    3330.6015625,
+                    1363.9112548828125,
+                    3360.12353515625
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.8180447220802307,
+                "coordinate": [
+                    482.5889892578125,
+                    1598.959716796875,
+                    830.7342529296875,
+                    1647.814697265625
+                ]
+            },
+            {
+                "cls_id": 0,
+                "label": "paragraph_title",
+                "score": 0.6121871471405029,
+                "coordinate": [
+                    494.88848876953125,
+                    2313.920166015625,
+                    916.4931030273438,
+                    2408.313720703125
+                ]
+            },
+            {
+                "cls_id": 10,
+                "label": "doc_title",
+                "score": 0.6024423837661743,
+                "coordinate": [
+                    1331.0322265625,
+                    623.5386962890625,
+                    2190.771728515625,
+                    869.965087890625
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    1331,
+                    626
+                ],
+                [
+                    2195,
+                    626
+                ],
+                [
+                    2195,
+                    729
+                ],
+                [
+                    1331,
+                    729
+                ]
+            ],
+            [
+                [
+                    1484,
+                    761
+                ],
+                [
+                    2063,
+                    761
+                ],
+                [
+                    2063,
+                    884
+                ],
+                [
+                    1484,
+                    884
+                ]
+            ],
+            [
+                [
+                    479,
+                    1597
+                ],
+                [
+                    837,
+                    1601
+                ],
+                [
+                    837,
+                    1656
+                ],
+                [
+                    478,
+                    1652
+                ]
+            ],
+            [
+                [
+                    494,
+                    2316
+                ],
+                [
+                    921,
+                    2310
+                ],
+                [
+                    922,
+                    2408
+                ],
+                [
+                    495,
+                    2414
+                ]
+            ],
+            [
+                [
+                    236,
+                    2497
+                ],
+                [
+                    953,
+                    2501
+                ],
+                [
+                    953,
+                    2541
+                ],
+                [
+                    236,
+                    2538
+                ]
+            ],
+            [
+                [
+                    234,
+                    2550
+                ],
+                [
+                    1177,
+                    2554
+                ],
+                [
+                    1177,
+                    2602
+                ],
+                [
+                    234,
+                    2598
+                ]
+            ],
+            [
+                [
+                    232,
+                    2607
+                ],
+                [
+                    348,
+                    2607
+                ],
+                [
+                    348,
+                    2653
+                ],
+                [
+                    232,
+                    2653
+                ]
+            ],
+            [
+                [
+                    1321,
+                    3331
+                ],
+                [
+                    1370,
+                    3331
+                ],
+                [
+                    1370,
+                    3368
+                ],
+                [
+                    1321,
+                    3368
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "Junior Miss Burke",
+            "County Fair",
+            "Miss Kathy Wright",
+            "Marshals",
+            "Chiefs: Dan Garrison and Kent Smith,",
+            "David Melton, Mary Simpson,Ruth Smith,Marie",
+            "Miller",
+            "74"
+        ],
+        "rec_scores": [
+            0.9559290409088135,
+            0.9971035122871399,
+            0.9353331923484802,
+            0.9986748099327087,
+            0.9423777461051941,
+            0.9577394723892212,
+            0.9981390833854675,
+            0.9990727305412292
+        ],
+        "rec_polys": [
+            [
+                [
+                    1331,
+                    626
+                ],
+                [
+                    2195,
+                    626
+                ],
+                [
+                    2195,
+                    729
+                ],
+                [
+                    1331,
+                    729
+                ]
+            ],
+            [
+                [
+                    1484,
+                    761
+                ],
+                [
+                    2063,
+                    761
+                ],
+                [
+                    2063,
+                    884
+                ],
+                [
+                    1484,
+                    884
+                ]
+            ],
+            [
+                [
+                    479,
+                    1597
+                ],
+                [
+                    837,
+                    1601
+                ],
+                [
+                    837,
+                    1656
+                ],
+                [
+                    478,
+                    1652
+                ]
+            ],
+            [
+                [
+                    494,
+                    2316
+                ],
+                [
+                    921,
+                    2310
+                ],
+                [
+                    922,
+                    2408
+                ],
+                [
+                    495,
+                    2414
+                ]
+            ],
+            [
+                [
+                    236,
+                    2497
+                ],
+                [
+                    953,
+                    2501
+                ],
+                [
+                    953,
+                    2541
+                ],
+                [
+                    236,
+                    2538
+                ]
+            ],
+            [
+                [
+                    234,
+                    2550
+                ],
+                [
+                    1177,
+                    2554
+                ],
+                [
+                    1177,
+                    2602
+                ],
+                [
+                    234,
+                    2598
+                ]
+            ],
+            [
+                [
+                    232,
+                    2607
+                ],
+                [
+                    348,
+                    2607
+                ],
+                [
+                    348,
+                    2653
+                ],
+                [
+                    232,
+                    2653
+                ]
+            ],
+            [
+                [
+                    1321,
+                    3331
+                ],
+                [
+                    1370,
+                    3331
+                ],
+                [
+                    1370,
+                    3368
+                ],
+                [
+                    1321,
+                    3368
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                1331,
+                626,
+                2195,
+                729
+            ],
+            [
+                1484,
+                761,
+                2063,
+                884
+            ],
+            [
+                478,
+                1597,
+                837,
+                1656
+            ],
+            [
+                494,
+                2310,
+                922,
+                2414
+            ],
+            [
+                236,
+                2497,
+                953,
+                2541
+            ],
+            [
+                234,
+                2550,
+                1177,
+                2602
+            ],
+            [
+                232,
+                2607,
+                348,
+                2653
+            ],
+            [
+                1321,
+                3331,
+                1370,
+                3368
+            ]
+        ]
+    }
+}

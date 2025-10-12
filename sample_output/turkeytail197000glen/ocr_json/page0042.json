@@ -1,0 +1,2634 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0042.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "doc_title",
+            "block_content": "LASTWILLANDTESTAMENT ",
+            "block_bbox": [
+                473,
+                90,
+                2144,
+                181
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I,DeniseAnderson,leavemy clarinettoAnita Dale.",
+            "block_bbox": [
+                226,
+                232,
+                1103,
+                269
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Ricky Auldredge, would like to leave my\"dear 'ole locker #79'to anyone who wants it!",
+            "block_bbox": [
+                225,
+                313,
+                1758,
+                353
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I,Pat Beach, leave to joinmy husband.",
+            "block_bbox": [
+                228,
+                398,
+                884,
+                436
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Barbara Berry, leave my marching and rifle to Pam McFalls.",
+            "block_bbox": [
+                228,
+                483,
+                1261,
+                521
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I,Becky Brewer, leave to bewith Bobby.",
+            "block_bbox": [
+                227,
+                568,
+                920,
+                605
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Archie Browning, leave my bus driving ability to anyone who wants it.",
+            "block_bbox": [
+                226,
+                653,
+                1442,
+                689
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Brenda Burnette, leave old G.A.H.S. at last to become Jimmy Wright's bride.",
+            "block_bbox": [
+                226,
+                736,
+                1544,
+                773
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Carolyn Carpenter, leave all my good times on band trips to Dorothy Lytle.",
+            "block_bbox": [
+                226,
+                821,
+                1530,
+                858
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Larry Carpenter, leave my fourth period English class to Michael Ervin to do as he pleases.",
+            "block_bbox": [
+                227,
+                905,
+                1766,
+                943
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Wayne Clontz, leave my statesman-like rhetoric to Lynn Curtis.",
+            "block_bbox": [
+                227,
+                989,
+                1327,
+                1025
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Nancy Cooke, leave Glen Alpine High School in high hopes of finding a husband.",
+            "block_bbox": [
+                227,
+                1073,
+                1616,
+                1111
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I,Charles Cresawn, leave to sail the\"wile blue yonderfor Uncle Sam in the U.S.A.F.",
+            "block_bbox": [
+                227,
+                1156,
+                1674,
+                1194
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Robert Wesley Dale, leave old Glen Alpine High once again.",
+            "block_bbox": [
+                228,
+                1242,
+                1262,
+                1280
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I,Susan Duckworth, leave my title as most likely to succeed to some lovely junior.",
+            "block_bbox": [
+                226,
+                1328,
+                1609,
+                1365
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Elaine Elder, leave my position as color guard to some deserving underclassman.",
+            "block_bbox": [
+                228,
+                1413,
+                1596,
+                1451
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Sharon Elliott, leave the service boys to anyone who wants to become a nervous wreck.",
+            "block_bbox": [
+                227,
+                1497,
+                1722,
+                1535
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Dwight Farris, leave Jayne here for one more year.",
+            "block_bbox": [
+                228,
+                1585,
+                1110,
+                1621
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I,Ellen Farris, leave my aspirin bottle to next year's paper staff editor.",
+            "block_bbox": [
+                227,
+                1669,
+                1412,
+                1707
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Eugene Flowers,leave all my knowledge,good looks,and managing ability to someother livelymanager.",
+            "block_bbox": [
+                225,
+                1753,
+                2008,
+                1792
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Mike Fowler, leave my student body presidency to a deserving junior.",
+            "block_bbox": [
+                226,
+                1837,
+                1428,
+                1875
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Betsy Gibbs, leave to become a fireman's woman.",
+            "block_bbox": [
+                227,
+                1921,
+                1092,
+                1956
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Delores Greene, leavemy typing ability toPhyllis Causby.",
+            "block_bbox": [
+                227,
+                2005,
+                1236,
+                2043
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Paul Greene, leave my bomb-making in Phy sics to anyone dumb enough to try it.",
+            "block_bbox": [
+                226,
+                2089,
+                1620,
+                2128
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Sylvia Greene, leave the third clarinets to Suzanne Courtney.",
+            "block_bbox": [
+                227,
+                2173,
+                1283,
+                2211
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Margaret Hallstein,leave my northern accent to anyone who thinks he might make a good Yankee.",
+            "block_bbox": [
+                226,
+                2258,
+                1909,
+                2296
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Ronald Hardin, leave French III to anyone dumb enough to take it.",
+            "block_bbox": [
+                227,
+                2341,
+                1391,
+                2379
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Mary Hardy, leave my bookkeeping class and work to Libbie.",
+            "block_bbox": [
+                226,
+                2425,
+                1289,
+                2463
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Elaine Harvey, leave my Rambler to anyone who wants it.",
+            "block_bbox": [
+                227,
+                2509,
+                1235,
+                2547
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Steve Henry, leave my height to my little brother, Doug.",
+            "block_bbox": [
+                227,
+                2594,
+                1212,
+                2635
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Janet Hildebrand, would like to leave my frown to any other new person that enters Glen Alpine High School.",
+            "block_bbox": [
+                224,
+                2679,
+                2098,
+                2719
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Wayne Hipps, leave my reputation as a playboy toStinker\" Powell.",
+            "block_bbox": [
+                225,
+                2762,
+                1408,
+                2802
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Garry Holder, leave my fiendish pranks to some sneaky junior.",
+            "block_bbox": [
+                227,
+                2848,
+                1308,
+                2887
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Donald Holland, leave to venture into a cruel world.",
+            "block_bbox": [
+                227,
+                2932,
+                1134,
+                2970
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Henry Houk, leave, taking with me my nickname,\"Burly.\"",
+            "block_bbox": [
+                227,
+                3016,
+                1254,
+                3056
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Lela Hyatt, leave the green bench in the lobby to Mr. Gibbs.",
+            "block_bbox": [
+                225,
+                3101,
+                1266,
+                3139
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, L. D.Jaynes,leave what few good parts of51\"there are to Randy Biggerstaff.",
+            "block_bbox": [
+                224,
+                3186,
+                1594,
+                3228
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I, Harold Johnson, leave my football shoes to another Johnson with flashy moves.",
+            "block_bbox": [
+                224,
+                3269,
+                1597,
+                3311
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "I,BillyLaeeavemabilitohanleahrandlsandmylleedNovawhicaogthaitrymuctoMikCo.",
+            "block_bbox": [
+                225,
+                3353,
+                2403,
+                3399
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9402987360954285,
+                "coordinate": [
+                    227.7109375,
+                    989.6322021484375,
+                    1327.6966552734375,
+                    1025.9417724609375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9393055438995361,
+                "coordinate": [
+                    227.53152465820312,
+                    2005.251953125,
+                    1236.443603515625,
+                    2043.21044921875
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9385489821434021,
+                "coordinate": [
+                    227.04986572265625,
+                    1073.462646484375,
+                    1616.44873046875,
+                    1111.25048828125
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9378527402877808,
+                "coordinate": [
+                    226.85113525390625,
+                    1837.330322265625,
+                    1428.350341796875,
+                    1875.775390625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.937364935874939,
+                "coordinate": [
+                    227.299072265625,
+                    2173.52294921875,
+                    1283.181396484375,
+                    2211.18212890625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9369643330574036,
+                "coordinate": [
+                    228.16644287109375,
+                    1413.66552734375,
+                    1596.736572265625,
+                    1451.5283203125
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.936189591884613,
+                "coordinate": [
+                    228.07763671875,
+                    1242.015625,
+                    1262.79296875,
+                    1280.14208984375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.935965359210968,
+                "coordinate": [
+                    227.58587646484375,
+                    905.3406982421875,
+                    1766.77783203125,
+                    943.592529296875
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9358357787132263,
+                "coordinate": [
+                    226.98370361328125,
+                    736.323486328125,
+                    1544.928466796875,
+                    773.604248046875
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9354821443557739,
+                "coordinate": [
+                    226.518310546875,
+                    2425.44677734375,
+                    1289.010986328125,
+                    2463.67138671875
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9347301721572876,
+                "coordinate": [
+                    226.89678955078125,
+                    821.2137451171875,
+                    1530.718505859375,
+                    858.8160400390625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9345503449440002,
+                "coordinate": [
+                    227.1634521484375,
+                    1669.6865234375,
+                    1412.158447265625,
+                    1707.54345703125
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9342726469039917,
+                "coordinate": [
+                    227.451416015625,
+                    2509.73779296875,
+                    1235.0498046875,
+                    2547.96826171875
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.933007538318634,
+                "coordinate": [
+                    227.87408447265625,
+                    1156.79541015625,
+                    1674.39599609375,
+                    1194.2275390625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9327101111412048,
+                "coordinate": [
+                    227.19647216796875,
+                    1921.4150390625,
+                    1092.609130859375,
+                    1956.9208984375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.932673990726471,
+                "coordinate": [
+                    226.26885986328125,
+                    2258.05126953125,
+                    1909.63330078125,
+                    2296.23681640625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9326333403587341,
+                "coordinate": [
+                    228.00698852539062,
+                    1585.6650390625,
+                    1110.509033203125,
+                    1621.873046875
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9326327443122864,
+                "coordinate": [
+                    226.9444580078125,
+                    2089.181396484375,
+                    1620.6051025390625,
+                    2128.091064453125
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9321649074554443,
+                "coordinate": [
+                    226.94207763671875,
+                    1328.765869140625,
+                    1609.510986328125,
+                    1365.89208984375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9307618141174316,
+                "coordinate": [
+                    225.74957275390625,
+                    1753.240478515625,
+                    2008.1513671875,
+                    1792.532958984375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9305139183998108,
+                "coordinate": [
+                    227.14263916015625,
+                    1497.9307861328125,
+                    1722.311279296875,
+                    1535.1033935546875
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9302706718444824,
+                "coordinate": [
+                    227.43475341796875,
+                    2848.24755859375,
+                    1308.135009765625,
+                    2887.93994140625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9300100803375244,
+                "coordinate": [
+                    227.71762084960938,
+                    2932.64990234375,
+                    1134.730224609375,
+                    2970.50341796875
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.92935711145401,
+                "coordinate": [
+                    225.947509765625,
+                    2762.75927734375,
+                    1408.69677734375,
+                    2802.68115234375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9285529851913452,
+                "coordinate": [
+                    227.19805908203125,
+                    2341.41357421875,
+                    1391.663330078125,
+                    2379.583984375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9279495477676392,
+                "coordinate": [
+                    225.51800537109375,
+                    3101.4892578125,
+                    1266.671142578125,
+                    3139.8955078125
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.927903413772583,
+                "coordinate": [
+                    227.3353271484375,
+                    2594.04833984375,
+                    1212.18408203125,
+                    2635.02587890625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9277468323707581,
+                "coordinate": [
+                    228.2830810546875,
+                    483.37225341796875,
+                    1261.6361083984375,
+                    521.587890625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9277411103248596,
+                "coordinate": [
+                    226.05157470703125,
+                    653.271240234375,
+                    1442.87353515625,
+                    689.839599609375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9274619817733765,
+                "coordinate": [
+                    227.9674072265625,
+                    568.8026123046875,
+                    920.5545654296875,
+                    605.8863525390625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9231957197189331,
+                "coordinate": [
+                    224.87603759765625,
+                    3269.617431640625,
+                    1597.131103515625,
+                    3311.490478515625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9229887127876282,
+                "coordinate": [
+                    227.14654541015625,
+                    3016.63720703125,
+                    1254.533447265625,
+                    3056.72314453125
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9208037853240967,
+                "coordinate": [
+                    224.902587890625,
+                    2679.01806640625,
+                    2098.795166015625,
+                    2719.31396484375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9170354008674622,
+                "coordinate": [
+                    224.0225830078125,
+                    3186.043212890625,
+                    1594.261474609375,
+                    3228.348876953125
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9132304787635803,
+                "coordinate": [
+                    228.2225341796875,
+                    398.7780456542969,
+                    884.607666015625,
+                    436.0076599121094
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9121522307395935,
+                "coordinate": [
+                    225.34423828125,
+                    3353.93896484375,
+                    2403.010009765625,
+                    3399.59521484375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.9108151197433472,
+                "coordinate": [
+                    225.05145263671875,
+                    313.2682189941406,
+                    1758.182861328125,
+                    353.3647155761719
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.8739309310913086,
+                "coordinate": [
+                    226.587646484375,
+                    232.2916259765625,
+                    1103.17529296875,
+                    269.174560546875
+                ]
+            },
+            {
+                "cls_id": 10,
+                "label": "doc_title",
+                "score": 0.7122334837913513,
+                "coordinate": [
+                    473.658203125,
+                    90.45562744140625,
+                    2144.56298828125,
+                    181.1165771484375
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    478,
+                    98
+                ],
+                [
+                    2142,
+                    96
+                ],
+                [
+                    2142,
+                    182
+                ],
+                [
+                    478,
+                    183
+                ]
+            ],
+            [
+                [
+                    233,
+                    239
+                ],
+                [
+                    1098,
+                    237
+                ],
+                [
+                    1098,
+                    274
+                ],
+                [
+                    233,
+                    276
+                ]
+            ],
+            [
+                [
+                    231,
+                    319
+                ],
+                [
+                    1758,
+                    310
+                ],
+                [
+                    1758,
+                    358
+                ],
+                [
+                    231,
+                    367
+                ]
+            ],
+            [
+                [
+                    233,
+                    404
+                ],
+                [
+                    882,
+                    406
+                ],
+                [
+                    882,
+                    449
+                ],
+                [
+                    233,
+                    447
+                ]
+            ],
+            [
+                [
+                    231,
+                    488
+                ],
+                [
+                    1259,
+                    486
+                ],
+                [
+                    1259,
+                    534
+                ],
+                [
+                    231,
+                    536
+                ]
+            ],
+            [
+                [
+                    233,
+                    575
+                ],
+                [
+                    915,
+                    575
+                ],
+                [
+                    915,
+                    618
+                ],
+                [
+                    233,
+                    618
+                ]
+            ],
+            [
+                [
+                    229,
+                    657
+                ],
+                [
+                    1442,
+                    655
+                ],
+                [
+                    1442,
+                    703
+                ],
+                [
+                    229,
+                    705
+                ]
+            ],
+            [
+                [
+                    229,
+                    740
+                ],
+                [
+                    1544,
+                    735
+                ],
+                [
+                    1545,
+                    788
+                ],
+                [
+                    229,
+                    794
+                ]
+            ],
+            [
+                [
+                    229,
+                    826
+                ],
+                [
+                    1527,
+                    824
+                ],
+                [
+                    1527,
+                    872
+                ],
+                [
+                    229,
+                    874
+                ]
+            ],
+            [
+                [
+                    231,
+                    911
+                ],
+                [
+                    1767,
+                    911
+                ],
+                [
+                    1767,
+                    959
+                ],
+                [
+                    231,
+                    959
+                ]
+            ],
+            [
+                [
+                    231,
+                    997
+                ],
+                [
+                    1324,
+                    997
+                ],
+                [
+                    1324,
+                    1039
+                ],
+                [
+                    231,
+                    1039
+                ]
+            ],
+            [
+                [
+                    229,
+                    1079
+                ],
+                [
+                    1613,
+                    1079
+                ],
+                [
+                    1613,
+                    1127
+                ],
+                [
+                    229,
+                    1127
+                ]
+            ],
+            [
+                [
+                    227,
+                    1162
+                ],
+                [
+                    1677,
+                    1159
+                ],
+                [
+                    1677,
+                    1207
+                ],
+                [
+                    228,
+                    1210
+                ]
+            ],
+            [
+                [
+                    229,
+                    1246
+                ],
+                [
+                    1259,
+                    1248
+                ],
+                [
+                    1259,
+                    1296
+                ],
+                [
+                    229,
+                    1294
+                ]
+            ],
+            [
+                [
+                    229,
+                    1331
+                ],
+                [
+                    1606,
+                    1331
+                ],
+                [
+                    1606,
+                    1379
+                ],
+                [
+                    229,
+                    1379
+                ]
+            ],
+            [
+                [
+                    229,
+                    1418
+                ],
+                [
+                    1596,
+                    1418
+                ],
+                [
+                    1596,
+                    1467
+                ],
+                [
+                    229,
+                    1467
+                ]
+            ],
+            [
+                [
+                    227,
+                    1502
+                ],
+                [
+                    1723,
+                    1500
+                ],
+                [
+                    1723,
+                    1550
+                ],
+                [
+                    227,
+                    1552
+                ]
+            ],
+            [
+                [
+                    228,
+                    1587
+                ],
+                [
+                    1109,
+                    1591
+                ],
+                [
+                    1109,
+                    1639
+                ],
+                [
+                    227,
+                    1636
+                ]
+            ],
+            [
+                [
+                    228,
+                    1671
+                ],
+                [
+                    1411,
+                    1673
+                ],
+                [
+                    1411,
+                    1721
+                ],
+                [
+                    227,
+                    1719
+                ]
+            ],
+            [
+                [
+                    226,
+                    1755
+                ],
+                [
+                    2012,
+                    1753
+                ],
+                [
+                    2012,
+                    1806
+                ],
+                [
+                    226,
+                    1808
+                ]
+            ],
+            [
+                [
+                    228,
+                    1837
+                ],
+                [
+                    1428,
+                    1838
+                ],
+                [
+                    1428,
+                    1892
+                ],
+                [
+                    227,
+                    1890
+                ]
+            ],
+            [
+                [
+                    233,
+                    1927
+                ],
+                [
+                    1090,
+                    1927
+                ],
+                [
+                    1090,
+                    1970
+                ],
+                [
+                    233,
+                    1970
+                ]
+            ],
+            [
+                [
+                    228,
+                    2007
+                ],
+                [
+                    1233,
+                    2011
+                ],
+                [
+                    1232,
+                    2059
+                ],
+                [
+                    227,
+                    2056
+                ]
+            ],
+            [
+                [
+                    228,
+                    2091
+                ],
+                [
+                    1619,
+                    2097
+                ],
+                [
+                    1618,
+                    2145
+                ],
+                [
+                    227,
+                    2139
+                ]
+            ],
+            [
+                [
+                    229,
+                    2178
+                ],
+                [
+                    1277,
+                    2182
+                ],
+                [
+                    1276,
+                    2225
+                ],
+                [
+                    229,
+                    2221
+                ]
+            ],
+            [
+                [
+                    226,
+                    2257
+                ],
+                [
+                    1913,
+                    2262
+                ],
+                [
+                    1913,
+                    2315
+                ],
+                [
+                    226,
+                    2310
+                ]
+            ],
+            [
+                [
+                    228,
+                    2342
+                ],
+                [
+                    1391,
+                    2348
+                ],
+                [
+                    1391,
+                    2396
+                ],
+                [
+                    227,
+                    2390
+                ]
+            ],
+            [
+                [
+                    228,
+                    2427
+                ],
+                [
+                    1289,
+                    2433
+                ],
+                [
+                    1289,
+                    2481
+                ],
+                [
+                    227,
+                    2476
+                ]
+            ],
+            [
+                [
+                    228,
+                    2511
+                ],
+                [
+                    1234,
+                    2518
+                ],
+                [
+                    1234,
+                    2566
+                ],
+                [
+                    227,
+                    2559
+                ]
+            ],
+            [
+                [
+                    228,
+                    2597
+                ],
+                [
+                    1206,
+                    2602
+                ],
+                [
+                    1206,
+                    2650
+                ],
+                [
+                    227,
+                    2645
+                ]
+            ],
+            [
+                [
+                    226,
+                    2678
+                ],
+                [
+                    2104,
+                    2684
+                ],
+                [
+                    2103,
+                    2737
+                ],
+                [
+                    226,
+                    2732
+                ]
+            ],
+            [
+                [
+                    229,
+                    2766
+                ],
+                [
+                    1407,
+                    2769
+                ],
+                [
+                    1407,
+                    2817
+                ],
+                [
+                    229,
+                    2814
+                ]
+            ],
+            [
+                [
+                    228,
+                    2849
+                ],
+                [
+                    1307,
+                    2857
+                ],
+                [
+                    1306,
+                    2906
+                ],
+                [
+                    227,
+                    2899
+                ]
+            ],
+            [
+                [
+                    228,
+                    2935
+                ],
+                [
+                    1132,
+                    2940
+                ],
+                [
+                    1132,
+                    2988
+                ],
+                [
+                    227,
+                    2983
+                ]
+            ],
+            [
+                [
+                    228,
+                    3018
+                ],
+                [
+                    1252,
+                    3024
+                ],
+                [
+                    1252,
+                    3072
+                ],
+                [
+                    227,
+                    3066
+                ]
+            ],
+            [
+                [
+                    228,
+                    3104
+                ],
+                [
+                    1264,
+                    3111
+                ],
+                [
+                    1264,
+                    3159
+                ],
+                [
+                    227,
+                    3152
+                ]
+            ],
+            [
+                [
+                    228,
+                    3187
+                ],
+                [
+                    1589,
+                    3195
+                ],
+                [
+                    1588,
+                    3245
+                ],
+                [
+                    227,
+                    3237
+                ]
+            ],
+            [
+                [
+                    228,
+                    3271
+                ],
+                [
+                    1594,
+                    3280
+                ],
+                [
+                    1594,
+                    3328
+                ],
+                [
+                    227,
+                    3319
+                ]
+            ],
+            [
+                [
+                    226,
+                    3353
+                ],
+                [
+                    2409,
+                    3364
+                ],
+                [
+                    2408,
+                    3417
+                ],
+                [
+                    226,
+                    3406
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "LASTWILLANDTESTAMENT",
+            "I,DeniseAnderson,leavemy clarinettoAnita Dale.",
+            "I, Ricky Auldredge, would like to leave my\"dear 'ole locker #79'to anyone who wants it!",
+            "I,Pat Beach, leave to joinmy husband.",
+            "I, Barbara Berry, leave my marching and rifle to Pam McFalls.",
+            "I,Becky Brewer, leave to bewith Bobby.",
+            "I, Archie Browning, leave my bus driving ability to anyone who wants it.",
+            "I, Brenda Burnette, leave old G.A.H.S. at last to become Jimmy Wright's bride.",
+            "I, Carolyn Carpenter, leave all my good times on band trips to Dorothy Lytle.",
+            "I, Larry Carpenter, leave my fourth period English class to Michael Ervin to do as he pleases.",
+            "I, Wayne Clontz, leave my statesman-like rhetoric to Lynn Curtis.",
+            "I, Nancy Cooke, leave Glen Alpine High School in high hopes of finding a husband.",
+            "I,Charles Cresawn, leave to sail the\"wile blue yonderfor Uncle Sam in the U.S.A.F.",
+            "I, Robert Wesley Dale, leave old Glen Alpine High once again.",
+            "I,Susan Duckworth, leave my title as most likely to succeed to some lovely junior.",
+            "I, Elaine Elder, leave my position as color guard to some deserving underclassman.",
+            "I, Sharon Elliott, leave the service boys to anyone who wants to become a nervous wreck.",
+            "I, Dwight Farris, leave Jayne here for one more year.",
+            "I,Ellen Farris, leave my aspirin bottle to next year's paper staff editor.",
+            "I, Eugene Flowers,leave all my knowledge,good looks,and managing ability to someother livelymanager.",
+            "I, Mike Fowler, leave my student body presidency to a deserving junior.",
+            "I, Betsy Gibbs, leave to become a fireman's woman.",
+            "I, Delores Greene, leavemy typing ability toPhyllis Causby.",
+            "I, Paul Greene, leave my bomb-making in Phy sics to anyone dumb enough to try it.",
+            "I, Sylvia Greene, leave the third clarinets to Suzanne Courtney.",
+            "I, Margaret Hallstein,leave my northern accent to anyone who thinks he might make a good Yankee.",
+            "I, Ronald Hardin, leave French III to anyone dumb enough to take it.",
+            "I, Mary Hardy, leave my bookkeeping class and work to Libbie.",
+            "I, Elaine Harvey, leave my Rambler to anyone who wants it.",
+            "I, Steve Henry, leave my height to my little brother, Doug.",
+            "I, Janet Hildebrand, would like to leave my frown to any other new person that enters Glen Alpine High School.",
+            "I, Wayne Hipps, leave my reputation as a playboy toStinker\" Powell.",
+            "I, Garry Holder, leave my fiendish pranks to some sneaky junior.",
+            "I, Donald Holland, leave to venture into a cruel world.",
+            "I, Henry Houk, leave, taking with me my nickname,\"Burly.\"",
+            "I, Lela Hyatt, leave the green bench in the lobby to Mr. Gibbs.",
+            "I, L. D.Jaynes,leave what few good parts of51\"there are to Randy Biggerstaff.",
+            "I, Harold Johnson, leave my football shoes to another Johnson with flashy moves.",
+            "I,BillyLaeeavemabilitohanleahrandlsandmylleedNovawhicaogthaitrymuctoMikCo."
+        ],
+        "rec_scores": [
+            0.9886401891708374,
+            0.9457145929336548,
+            0.941861629486084,
+            0.9278839826583862,
+            0.9341614246368408,
+            0.8940170407295227,
+            0.9439224600791931,
+            0.9218736290931702,
+            0.9516740441322327,
+            0.9313730001449585,
+            0.9378399848937988,
+            0.9503818154335022,
+            0.9296566843986511,
+            0.9472169280052185,
+            0.9454514384269714,
+            0.9514986276626587,
+            0.94620680809021,
+            0.9143385291099548,
+            0.9441924095153809,
+            0.9413874745368958,
+            0.9482084512710571,
+            0.9273600578308105,
+            0.9119501709938049,
+            0.9342457056045532,
+            0.9293265342712402,
+            0.9691321849822998,
+            0.923877477645874,
+            0.943246066570282,
+            0.9442117810249329,
+            0.9275681376457214,
+            0.9634979367256165,
+            0.9339413642883301,
+            0.9455223083496094,
+            0.9171754717826843,
+            0.9106056094169617,
+            0.9279488325119019,
+            0.9234349727630615,
+            0.9532621502876282,
+            0.7178983092308044
+        ],
+        "rec_polys": [
+            [
+                [
+                    478,
+                    98
+                ],
+                [
+                    2142,
+                    96
+                ],
+                [
+                    2142,
+                    182
+                ],
+                [
+                    478,
+                    183
+                ]
+            ],
+            [
+                [
+                    233,
+                    239
+                ],
+                [
+                    1098,
+                    237
+                ],
+                [
+                    1098,
+                    274
+                ],
+                [
+                    233,
+                    276
+                ]
+            ],
+            [
+                [
+                    231,
+                    319
+                ],
+                [
+                    1758,
+                    310
+                ],
+                [
+                    1758,
+                    358
+                ],
+                [
+                    231,
+                    367
+                ]
+            ],
+            [
+                [
+                    233,
+                    404
+                ],
+                [
+                    882,
+                    406
+                ],
+                [
+                    882,
+                    449
+                ],
+                [
+                    233,
+                    447
+                ]
+            ],
+            [
+                [
+                    231,
+                    488
+                ],
+                [
+                    1259,
+                    486
+                ],
+                [
+                    1259,
+                    534
+                ],
+                [
+                    231,
+                    536
+                ]
+            ],
+            [
+                [
+                    233,
+                    575
+                ],
+                [
+                    915,
+                    575
+                ],
+                [
+                    915,
+                    618
+                ],
+                [
+                    233,
+                    618
+                ]
+            ],
+            [
+                [
+                    229,
+                    657
+                ],
+                [
+                    1442,
+                    655
+                ],
+                [
+                    1442,
+                    703
+                ],
+                [
+                    229,
+                    705
+                ]
+            ],
+            [
+                [
+                    229,
+                    740
+                ],
+                [
+                    1544,
+                    735
+                ],
+                [
+                    1545,
+                    788
+                ],
+                [
+                    229,
+                    794
+                ]
+            ],
+            [
+                [
+                    229,
+                    826
+                ],
+                [
+                    1527,
+                    824
+                ],
+                [
+                    1527,
+                    872
+                ],
+                [
+                    229,
+                    874
+                ]
+            ],
+            [
+                [
+                    231,
+                    911
+                ],
+                [
+                    1767,
+                    911
+                ],
+                [
+                    1767,
+                    959
+                ],
+                [
+                    231,
+                    959
+                ]
+            ],
+            [
+                [
+                    231,
+                    997
+                ],
+                [
+                    1324,
+                    997
+                ],
+                [
+                    1324,
+                    1039
+                ],
+                [
+                    231,
+                    1039
+                ]
+            ],
+            [
+                [
+                    229,
+                    1079
+                ],
+                [
+                    1613,
+                    1079
+                ],
+                [
+                    1613,
+                    1127
+                ],
+                [
+                    229,
+                    1127
+                ]
+            ],
+            [
+                [
+                    227,
+                    1162
+                ],
+                [
+                    1677,
+                    1159
+                ],
+                [
+                    1677,
+                    1207
+                ],
+                [
+                    228,
+                    1210
+                ]
+            ],
+            [
+                [
+                    229,
+                    1246
+                ],
+                [
+                    1259,
+                    1248
+                ],
+                [
+                    1259,
+                    1296
+                ],
+                [
+                    229,
+                    1294
+                ]
+            ],
+            [
+                [
+                    229,
+                    1331
+                ],
+                [
+                    1606,
+                    1331
+                ],
+                [
+                    1606,
+                    1379
+                ],
+                [
+                    229,
+                    1379
+                ]
+            ],
+            [
+                [
+                    229,
+                    1418
+                ],
+                [
+                    1596,
+                    1418
+                ],
+                [
+                    1596,
+                    1467
+                ],
+                [
+                    229,
+                    1467
+                ]
+            ],
+            [
+                [
+                    227,
+                    1502
+                ],
+                [
+                    1723,
+                    1500
+                ],
+                [
+                    1723,
+                    1550
+                ],
+                [
+                    227,
+                    1552
+                ]
+            ],
+            [
+                [
+                    228,
+                    1587
+                ],
+                [
+                    1109,
+                    1591
+                ],
+                [
+                    1109,
+                    1639
+                ],
+                [
+                    227,
+                    1636
+                ]
+            ],
+            [
+                [
+                    228,
+                    1671
+                ],
+                [
+                    1411,
+                    1673
+                ],
+                [
+                    1411,
+                    1721
+                ],
+                [
+                    227,
+                    1719
+                ]
+            ],
+            [
+                [
+                    226,
+                    1755
+                ],
+                [
+                    2012,
+                    1753
+                ],
+                [
+                    2012,
+                    1806
+                ],
+                [
+                    226,
+                    1808
+                ]
+            ],
+            [
+                [
+                    228,
+                    1837
+                ],
+                [
+                    1428,
+                    1838
+                ],
+                [
+                    1428,
+                    1892
+                ],
+                [
+                    227,
+                    1890
+                ]
+            ],
+            [
+                [
+                    233,
+                    1927
+                ],
+                [
+                    1090,
+                    1927
+                ],
+                [
+                    1090,
+                    1970
+                ],
+                [
+                    233,
+                    1970
+                ]
+            ],
+            [
+                [
+                    228,
+                    2007
+                ],
+                [
+                    1233,
+                    2011
+                ],
+                [
+                    1232,
+                    2059
+                ],
+                [
+                    227,
+                    2056
+                ]
+            ],
+            [
+                [
+                    228,
+                    2091
+                ],
+                [
+                    1619,
+                    2097
+                ],
+                [
+                    1618,
+                    2145
+                ],
+                [
+                    227,
+                    2139
+                ]
+            ],
+            [
+                [
+                    229,
+                    2178
+                ],
+                [
+                    1277,
+                    2182
+                ],
+                [
+                    1276,
+                    2225
+                ],
+                [
+                    229,
+                    2221
+                ]
+            ],
+            [
+                [
+                    226,
+                    2257
+                ],
+                [
+                    1913,
+                    2262
+                ],
+                [
+                    1913,
+                    2315
+                ],
+                [
+                    226,
+                    2310
+                ]
+            ],
+            [
+                [
+                    228,
+                    2342
+                ],
+                [
+                    1391,
+                    2348
+                ],
+                [
+                    1391,
+                    2396
+                ],
+                [
+                    227,
+                    2390
+                ]
+            ],
+            [
+                [
+                    228,
+                    2427
+                ],
+                [
+                    1289,
+                    2433
+                ],
+                [
+                    1289,
+                    2481
+                ],
+                [
+                    227,
+                    2476
+                ]
+            ],
+            [
+                [
+                    228,
+                    2511
+                ],
+                [
+                    1234,
+                    2518
+                ],
+                [
+                    1234,
+                    2566
+                ],
+                [
+                    227,
+                    2559
+                ]
+            ],
+            [
+                [
+                    228,
+                    2597
+                ],
+                [
+                    1206,
+                    2602
+                ],
+                [
+                    1206,
+                    2650
+                ],
+                [
+                    227,
+                    2645
+                ]
+            ],
+            [
+                [
+                    226,
+                    2678
+                ],
+                [
+                    2104,
+                    2684
+                ],
+                [
+                    2103,
+                    2737
+                ],
+                [
+                    226,
+                    2732
+                ]
+            ],
+            [
+                [
+                    229,
+                    2766
+                ],
+                [
+                    1407,
+                    2769
+                ],
+                [
+                    1407,
+                    2817
+                ],
+                [
+                    229,
+                    2814
+                ]
+            ],
+            [
+                [
+                    228,
+                    2849
+                ],
+                [
+                    1307,
+                    2857
+                ],
+                [
+                    1306,
+                    2906
+                ],
+                [
+                    227,
+                    2899
+                ]
+            ],
+            [
+                [
+                    228,
+                    2935
+                ],
+                [
+                    1132,
+                    2940
+                ],
+                [
+                    1132,
+                    2988
+                ],
+                [
+                    227,
+                    2983
+                ]
+            ],
+            [
+                [
+                    228,
+                    3018
+                ],
+                [
+                    1252,
+                    3024
+                ],
+                [
+                    1252,
+                    3072
+                ],
+                [
+                    227,
+                    3066
+                ]
+            ],
+            [
+                [
+                    228,
+                    3104
+                ],
+                [
+                    1264,
+                    3111
+                ],
+                [
+                    1264,
+                    3159
+                ],
+                [
+                    227,
+                    3152
+                ]
+            ],
+            [
+                [
+                    228,
+                    3187
+                ],
+                [
+                    1589,
+                    3195
+                ],
+                [
+                    1588,
+                    3245
+                ],
+                [
+                    227,
+                    3237
+                ]
+            ],
+            [
+                [
+                    228,
+                    3271
+                ],
+                [
+                    1594,
+                    3280
+                ],
+                [
+                    1594,
+                    3328
+                ],
+                [
+                    227,
+                    3319
+                ]
+            ],
+            [
+                [
+                    226,
+                    3353
+                ],
+                [
+                    2409,
+                    3364
+                ],
+                [
+                    2408,
+                    3417
+                ],
+                [
+                    226,
+                    3406
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                478,
+                96,
+                2142,
+                183
+            ],
+            [
+                233,
+                237,
+                1098,
+                276
+            ],
+            [
+                231,
+                310,
+                1758,
+                367
+            ],
+            [
+                233,
+                404,
+                882,
+                449
+            ],
+            [
+                231,
+                486,
+                1259,
+                536
+            ],
+            [
+                233,
+                575,
+                915,
+                618
+            ],
+            [
+                229,
+                655,
+                1442,
+                705
+            ],
+            [
+                229,
+                735,
+                1545,
+                794
+            ],
+            [
+                229,
+                824,
+                1527,
+                874
+            ],
+            [
+                231,
+                911,
+                1767,
+                959
+            ],
+            [
+                231,
+                997,
+                1324,
+                1039
+            ],
+            [
+                229,
+                1079,
+                1613,
+                1127
+            ],
+            [
+                227,
+                1159,
+                1677,
+                1210
+            ],
+            [
+                229,
+                1246,
+                1259,
+                1296
+            ],
+            [
+                229,
+                1331,
+                1606,
+                1379
+            ],
+            [
+                229,
+                1418,
+                1596,
+                1467
+            ],
+            [
+                227,
+                1500,
+                1723,
+                1552
+            ],
+            [
+                227,
+                1587,
+                1109,
+                1639
+            ],
+            [
+                227,
+                1671,
+                1411,
+                1721
+            ],
+            [
+                226,
+                1753,
+                2012,
+                1808
+            ],
+            [
+                227,
+                1837,
+                1428,
+                1892
+            ],
+            [
+                233,
+                1927,
+                1090,
+                1970
+            ],
+            [
+                227,
+                2007,
+                1233,
+                2059
+            ],
+            [
+                227,
+                2091,
+                1619,
+                2145
+            ],
+            [
+                229,
+                2178,
+                1277,
+                2225
+            ],
+            [
+                226,
+                2257,
+                1913,
+                2315
+            ],
+            [
+                227,
+                2342,
+                1391,
+                2396
+            ],
+            [
+                227,
+                2427,
+                1289,
+                2481
+            ],
+            [
+                227,
+                2511,
+                1234,
+                2566
+            ],
+            [
+                227,
+                2597,
+                1206,
+                2650
+            ],
+            [
+                226,
+                2678,
+                2104,
+                2737
+            ],
+            [
+                229,
+                2766,
+                1407,
+                2817
+            ],
+            [
+                227,
+                2849,
+                1307,
+                2906
+            ],
+            [
+                227,
+                2935,
+                1132,
+                2988
+            ],
+            [
+                227,
+                3018,
+                1252,
+                3072
+            ],
+            [
+                227,
+                3104,
+                1264,
+                3159
+            ],
+            [
+                227,
+                3187,
+                1589,
+                3245
+            ],
+            [
+                227,
+                3271,
+                1594,
+                3328
+            ],
+            [
+                226,
+                3353,
+                2409,
+                3417
+            ]
+        ]
+    }
+}

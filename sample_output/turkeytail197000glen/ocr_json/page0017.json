@@ -1,0 +1,476 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0017.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "image",
+            "block_content": "to keep,",
+            "block_bbox": [
+                0,
+                158,
+                1168,
+                1278
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "and a time to cast away;",
+            "block_bbox": [
+                355,
+                2859,
+                1186,
+                2930
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "atime to keep,",
+            "block_bbox": [
+                1627,
+                586,
+                1942,
+                805
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "to keep,\n",
+            "block_bbox": [
+                1409,
+                2256,
+                2573,
+                3474
+            ]
+        },
+        {
+            "block_label": "number",
+            "block_content": "11",
+            "block_bbox": [
+                1216,
+                3312,
+                1252,
+                3343
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9507831931114197,
+                "coordinate": [
+                    0.90765380859375,
+                    158.3145751953125,
+                    1168.89013671875,
+                    1278.4737548828125
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9240286350250244,
+                "coordinate": [
+                    1409.620849609375,
+                    2256.66259765625,
+                    2573.91357421875,
+                    3474.77490234375
+                ]
+            },
+            {
+                "cls_id": 3,
+                "label": "number",
+                "score": 0.8034777045249939,
+                "coordinate": [
+                    1216.58203125,
+                    3312.677978515625,
+                    1252.14892578125,
+                    3343.691162109375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.5815823078155518,
+                "coordinate": [
+                    1627.4835205078125,
+                    586.1718139648438,
+                    1942.9278564453125,
+                    805.7332153320312
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.534652829170227,
+                "coordinate": [
+                    355.1460266113281,
+                    2859.3662109375,
+                    1186.13720703125,
+                    2930.65087890625
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    1618,
+                    575
+                ],
+                [
+                    1857,
+                    569
+                ],
+                [
+                    1860,
+                    665
+                ],
+                [
+                    1621,
+                    672
+                ]
+            ],
+            [
+                [
+                    386,
+                    683
+                ],
+                [
+                    439,
+                    683
+                ],
+                [
+                    439,
+                    708
+                ],
+                [
+                    386,
+                    708
+                ]
+            ],
+            [
+                [
+                    1664,
+                    709
+                ],
+                [
+                    1942,
+                    709
+                ],
+                [
+                    1942,
+                    805
+                ],
+                [
+                    1664,
+                    805
+                ]
+            ],
+            [
+                [
+                    781,
+                    754
+                ],
+                [
+                    970,
+                    770
+                ],
+                [
+                    966,
+                    819
+                ],
+                [
+                    777,
+                    803
+                ]
+            ],
+            [
+                [
+                    844,
+                    839
+                ],
+                [
+                    946,
+                    856
+                ],
+                [
+                    941,
+                    886
+                ],
+                [
+                    839,
+                    869
+                ]
+            ],
+            [
+                [
+                    846,
+                    940
+                ],
+                [
+                    1051,
+                    975
+                ],
+                [
+                    1025,
+                    1126
+                ],
+                [
+                    820,
+                    1090
+                ]
+            ],
+            [
+                [
+                    211,
+                    1573
+                ],
+                [
+                    2357,
+                    720
+                ],
+                [
+                    2574,
+                    2195
+                ],
+                [
+                    795,
+                    3048
+                ]
+            ],
+            [
+                [
+                    360,
+                    2863
+                ],
+                [
+                    1190,
+                    2848
+                ],
+                [
+                    1191,
+                    2939
+                ],
+                [
+                    361,
+                    2954
+                ]
+            ],
+            [
+                [
+                    1214,
+                    3311
+                ],
+                [
+                    1261,
+                    3311
+                ],
+                [
+                    1261,
+                    3350
+                ],
+                [
+                    1214,
+                    3350
+                ]
+            ],
+            null
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "atime",
+            "",
+            "to keep,",
+            "",
+            "11",
+            "and a time to cast away;"
+        ],
+        "rec_scores": [
+            0.9988390207290649,
+            0.9486044645309448,
+            0.9666810035705566,
+            0.9900591969490051,
+            0.9997260570526123,
+            0.9872557520866394
+        ],
+        "rec_polys": [
+            [
+                [
+                    1618,
+                    575
+                ],
+                [
+                    1857,
+                    569
+                ],
+                [
+                    1860,
+                    665
+                ],
+                [
+                    1621,
+                    672
+                ]
+            ],
+            [
+                [
+                    1666,
+                    709
+                ],
+                [
+                    1955,
+                    714
+                ],
+                [
+                    1954,
+                    820
+                ],
+                [
+                    1664,
+                    816
+                ]
+            ],
+            [
+                [
+                    1664,
+                    709
+                ],
+                [
+                    1942,
+                    709
+                ],
+                [
+                    1942,
+                    805
+                ],
+                [
+                    1664,
+                    805
+                ]
+            ],
+            [
+                [
+                    360,
+                    2863
+                ],
+                [
+                    1190,
+                    2848
+                ],
+                [
+                    1191,
+                    2939
+                ],
+                [
+                    361,
+                    2954
+                ]
+            ],
+            [
+                [
+                    1214,
+                    3311
+                ],
+                [
+                    1261,
+                    3311
+                ],
+                [
+                    1261,
+                    3350
+                ],
+                [
+                    1214,
+                    3350
+                ]
+            ],
+            null
+        ],
+        "rec_boxes": [
+            [
+                1618.0,
+                569.0,
+                1860.0,
+                672.0
+            ],
+            [
+                1664.0,
+                709.0,
+                1955.0,
+                820.0
+            ],
+            [
+                1627.0,
+                720.0,
+                1942.0,
+                805.0
+            ],
+            [
+                360.0,
+                2848.0,
+                1191.0,
+                2954.0
+            ],
+            [
+                1214.0,
+                3311.0,
+                1261.0,
+                3350.0
+            ],
+            [
+                355.1460266113281,
+                2859.3662109375,
+                1186.13720703125,
+                2930.65087890625
+            ]
+        ]
+    }
+}

@@ -1,22 +1,56 @@
 # src/text_extraction.py
 """
-Step 1 — Text Extraction (OCR).
+Step 1 — Text Extraction (OCR) with single-file compiled output.
 
-Pipeline per PDF:
+Per PDF:
   1) Render pages to RGB and GRAY images.
-  2) Run PaddleOCR on all GRAY images in one batch (predict) and, for each page,
-     call res.save_to_json(...) into ocr_json/.
-  3) Compile the saved Paddle JSONs into:
-        - compiled_ocr.json  (just concatenated per-page Paddle JSON)
-        - compiled_ocr_clean.json  (same, but entries with empty text removed)
+  2) Run PaddleOCR batch on GRAY images and save per-page raw JSONs into ocr_json/ (intermediate).
+  3) Load per-page JSONs, clean empty text entries, tag page numbers on pages and blocks,
+     compute metadata, build headers index, and write ONE file:
+
+     <out_dir>/<pdf_stem>/compiled_ocr.json
+
+     Structure:
+     {
+       "meta": {
+         "file_name": "<pdf name>",
+         "total_pages": <int>,
+         "counts_by_block_label": {"header": N, "text": M, ...},
+         "pipeline_settings": {...},
+         "generated_utc": "YYYY-MM-DDTHH:MM:SSZ"
+       },
+       "headers_index": [
+         {"page": 3, "block_content": "SENIOR", "block_bbox": [x1,y1,x2,y2]},
+         ...
+       ],
+       "pages": [
+         {
+           ...  # cleaned page JSON from Paddle with:
+           "page_number": 1,
+           "parsing_res_list": [
+              {"block_label": "header", "block_content": "...", "block_bbox": [...], "page_number": 1},
+              ...
+           ],
+           # rec_texts/texts arrays already cleaned of empties
+         },
+         ...
+       ]
+     }
+
+Notes:
+  - Page numbers are 1-indexed and stored both on each page and each block in parsing_res_list.
+  - Only a single compiled JSON is written. No separate meta, headers, or “clean” files.
 """
 
 from __future__ import annotations
 
 import time
+import json
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List
+from collections import Counter
 
 import fitz  # PyMuPDF
 from PIL import Image
@@ -79,17 +113,8 @@ def _render_pdf_to_images(pdf_path: Path, pages_dir: Path, gray_dir: Path,
         metas.append(PageImageMeta(index=i, width=gry.width, height=gry.height,
                                    rgb_path=rgb_path, gray_path=gray_path))
 
-        # Per-page printout
         dt = _t.time() - t0
-        try:
-            rgb_kb = rgb_path.stat().st_size // 1024
-            gray_kb = gray_path.stat().st_size // 1024
-            size_str = f"{rgb_kb}KB/{gray_kb}KB"
-        except Exception:
-            size_str = "n/a"
-
-        print(f"[text] page {i+1}/{total_pages}: {gry.width}x{gry.height} -> {rgb_path.name}, {gray_path.name} ({size_str}) time={dt:.2f}s",
-              flush=True)
+        print(f"[text] page {i+1}/{total_pages}: {gry.width}x{gry.height} -> {rgb_path.name}, {gray_path.name} time={dt:.2f}s", flush=True)
 
     doc.close()
     return metas
@@ -102,17 +127,18 @@ def _run_paddleocr_batch(gray_paths: List[Path], use_gpu: bool, lang: str, batch
         lang=lang,
         device=("gpu" if use_gpu else "cpu"),
         text_recognition_batch_size=batch_size,
-        text_det_limit_side_len=3000,
+        text_det_limit_side_len=2000,
         text_det_limit_type="max",
         text_det_box_thresh=0.60,
         text_rec_score_thresh=0.70,
         use_doc_orientation_classify=False,
         use_doc_unwarping=False,
-        use_textline_orientation=False,
+        use_textline_orientation=True,
         use_seal_recognition=False,
         use_table_recognition=False,
         use_formula_recognition=False,
         use_chart_recognition=False,
+        use_region_detection=True,
     )
     return ocr.predict([str(p) for p in gray_paths])
 
@@ -138,23 +164,13 @@ def _save_paddle_jsons(book_dir: Path, results: List[Any], page_count: int) -> N
             write_json({"result": res}, ocr_dir / f"page{(i+1):04d}.json")
 
         post = _json_set()
-        new_files = list(post - pre)
         target = ocr_dir / f"page{(i+1):04d}.json"
 
-        if len(new_files) == 1:
-            src = new_files[0]
-            if src != target:
-                try:
-                    src.replace(target)
-                except Exception:
-                    obj = read_json(src)
-                    write_json(obj, target)
+        if target in post - pre:
             print(f"[text] ocr_json: saved {target.name}")
             created += 1
-        elif target.exists():
-            print(f"[text] ocr_json: found existing {target.name}")
-            created += 1
         else:
+            # Fallback: move/clone the most recent new file
             candidates = sorted(post - before_all, key=lambda p: p.stat().st_mtime, reverse=True)
             if candidates:
                 src = candidates[0]
@@ -175,23 +191,9 @@ def _save_paddle_jsons(book_dir: Path, results: List[Any], page_count: int) -> N
 
 # ------------------------ Compile + Clean ------------------------
 
-def _compile_from_saved(ocr_json_dir: Path, metas: List[PageImageMeta]) -> Dict[str, Any]:
-    """
-    compiled_ocr.json = {"pages": [<raw paddle json for page1>, <raw for page2>, ...]}
-    """
-    pages: List[Dict[str, Any]] = []
-    for meta in metas:
-        fname = ocr_json_dir / f"page{(meta.index + 1):04d}.json"
-        if fname.exists():
-            pages.append(read_json(fname))
-        else:
-            pages.append({"page_index": meta.index})
-    return {"pages": pages, "note": "concatenated Paddle JSONs by page"}
-
-
 def _clean_page_json(page_obj: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Only remove entries with empty text strings. Keep everything else.
+    Remove entries with empty text strings from the parallel arrays.
     Supports either {rec_texts, rec_scores, rec_polys, rec_boxes} or {texts, scores, polys, boxes}.
     """
     obj = dict(page_obj)  # shallow copy
@@ -206,7 +208,7 @@ def _clean_page_json(page_obj: Dict[str, Any]) -> Dict[str, Any]:
             arr = obj.get(key, None)
             if isinstance(arr, list):
                 new = [arr[i] for i, keep in enumerate(mask) if i < len(arr) and keep]
-                obj[key] = new
+                obj[key] = new if key == text_key else new
 
         obj[text_key] = [t for t in texts if (t is not None and str(t).strip() != "")]
         _apply(score_key)
@@ -221,19 +223,100 @@ def _clean_page_json(page_obj: Dict[str, Any]) -> Dict[str, Any]:
     return obj
 
 
-def _compile_clean_from_saved(ocr_json_dir: Path, metas: List[PageImageMeta]) -> Dict[str, Any]:
+def _compile_clean_from_saved(ocr_json_dir: Path, page_count: int) -> Dict[str, Any]:
+    """
+    Return {"pages": [cleaned_page_json, ...]} in page order.
+    """
     pages: List[Dict[str, Any]] = []
-    for meta in metas:
-        fname = ocr_json_dir / f"page{(meta.index + 1):04d}.json"
+    for i in range(page_count):
+        fname = ocr_json_dir / f"page{(i + 1):04d}.json"
         if fname.exists():
             raw = read_json(fname)
             pages.append(_clean_page_json(raw))
         else:
-            pages.append({"page_index": meta.index})
-    return {"pages": pages, "note": "concatenated + cleaned (empty texts removed)"}
+            pages.append({"page_index": i})
+    return {"pages": pages, "note": "cleaned (empty texts removed)"}
 
 
-# -------------------------- Public API --------------------------
+# ------------------- Tagging + Metadata + Headers -------------------
+
+def _attach_page_numbers(bundle: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Add page_number to each page and to each block in parsing_res_list if present.
+    """
+    out = {"note": str(bundle.get("note", ""))}
+    new_pages: List[Dict[str, Any]] = []
+    for i, pg in enumerate(bundle.get("pages", []), start=1):
+        if not isinstance(pg, dict):
+            new_pages.append(pg)
+            continue
+        new_pg = dict(pg)
+        new_pg["page_number"] = i
+
+        prl = new_pg.get("parsing_res_list")
+        if isinstance(prl, list):
+            tagged = []
+            for blk in prl:
+                if isinstance(blk, dict):
+                    nb = dict(blk)
+                    nb["page_number"] = i
+                    tagged.append(nb)
+                else:
+                    tagged.append(blk)
+            new_pg["parsing_res_list"] = tagged
+
+        new_pages.append(new_pg)
+
+    out["pages"] = new_pages
+    return out
+
+
+def _build_meta(bundle: Dict[str, Any], file_name: str, settings: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Compute file-level metadata and attach settings and timestamp.
+    """
+    pages = bundle.get("pages", [])
+    cnt = Counter()
+    for pg in pages:
+        if isinstance(pg, dict):
+            prl = pg.get("parsing_res_list")
+            if isinstance(prl, list):
+                for blk in prl:
+                    if isinstance(blk, dict):
+                        cnt[str(blk.get("block_label"))] += 1
+
+    return {
+        "file_name": file_name,
+        "total_pages": len(pages),
+        "counts_by_block_label": dict(cnt),
+        "pipeline_settings": settings,
+        "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+
+
+def _extract_headers_index(bundle: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """
+    Collect entries where block_label == "header".
+    """
+    rows: List[Dict[str, Any]] = []
+    for pg in bundle.get("pages", []):
+        if not isinstance(pg, dict):
+            continue
+        page_num = pg.get("page_number")
+        prl = pg.get("parsing_res_list")
+        if not isinstance(prl, list):
+            continue
+        for blk in prl:
+            if isinstance(blk, dict) and str(blk.get("block_label")) == "header":
+                rows.append({
+                    "page": int(page_num) if isinstance(page_num, int) else None,
+                    "block_content": blk.get("block_content", ""),
+                    "block_bbox": blk.get("block_bbox", None),
+                })
+    return rows
+
+
+# ------------------------------- Entry Point -------------------------------
 
 def extract_text(
     pdf_path: str,
@@ -246,7 +329,8 @@ def extract_text(
     batch_size: int = 64,
 ) -> None:
     """
-    Integrated run function for Step 1. Minimal cleaning: drop empty text entries only.
+    Integrated run for Step 1.
+    Writes a single file: compiled_ocr.json
     """
     t0 = time.time()
 
@@ -265,18 +349,6 @@ def extract_text(
     def _expected_stem(i: int) -> str:
         return f"page{(i + 1):04d}"
 
-    def _metas_from_existing(n_pages: int) -> List[PageImageMeta]:
-        metas_: List[PageImageMeta] = []
-        for i in range(n_pages):
-            stem = _expected_stem(i)
-            rgb_path = pages_dir / f"{stem}.{fmt}"
-            gray_path = gray_dir / f"{stem}.{fmt}"
-            with Image.open(gray_path) as im:
-                w, h = im.size
-            metas_.append(PageImageMeta(index=i, width=w, height=h,
-                                        rgb_path=rgb_path, gray_path=gray_path))
-        return metas_
-
     with fitz.open(pdf) as _doc:
         page_count = len(_doc)
 
@@ -288,7 +360,16 @@ def extract_text(
     have_gray = sum((gray_dir / f"{_expected_stem(i)}.{fmt}").exists() for i in range(page_count))
     if have_rgb == page_count and have_gray == page_count:
         print(f"[text] render: skip (found {page_count} RGB and {page_count} GRAY images)")
-        metas = _metas_from_existing(page_count)
+        # rebuild metas from existing gray images
+        metas: List[PageImageMeta] = []
+        for i in range(page_count):
+            stem = _expected_stem(i)
+            gray_path = gray_dir / f"{stem}.{fmt}"
+            with Image.open(gray_path) as im:
+                w, h = im.size
+            metas.append(PageImageMeta(index=i, width=w, height=h,
+                                       rgb_path=pages_dir / f"{stem}.{fmt}",
+                                       gray_path=gray_path))
     else:
         print(f"[text] render: generating images...")
         t_render = time.time()
@@ -306,20 +387,40 @@ def extract_text(
         print(f"[text] ocr: done time={time.time() - t_ocr:.2f}s")
         _save_paddle_jsons(book_dir, results, page_count)
 
-    # ---- Step 3: compile ----
-    compiled_path = book_dir / "compiled_ocr.json"
-    clean_path = book_dir / "compiled_ocr_clean.json"
+    # ---- Step 3: compile clean + tag + meta + headers (single JSON) ----
+    compiled_single_path = book_dir / "compiled_ocr.json"
 
-    print("[text] compile: building compiled_ocr.json from ocr_json...")
-    t_save = time.time()
-    compiled = _compile_from_saved(ocr_json_dir, metas)
-    write_json(compiled, compiled_path)
+    # Clean
+    print("[text] compile: building cleaned pages from ocr_json...")
+    cleaned = _compile_clean_from_saved(ocr_json_dir, page_count)
 
-    print("[text] compile: building compiled_ocr_clean.json (drop empty texts)...")
-    cleaned = _compile_clean_from_saved(ocr_json_dir, metas)
-    write_json(cleaned, clean_path)
+    # Tag page numbers
+    print("[text] tagging: adding page_number to pages and parsing_res_list blocks...")
+    cleaned_paged = _attach_page_numbers(cleaned)
 
-    # Stats: count texts
+    # Meta + headers
+    print("[text] report: computing metadata and headers index...")
+    settings = {
+        "dpi": dpi,
+        "image_format": fmt,
+        "jpeg_quality": jpeg_quality,
+        "device": ("gpu" if use_gpu else "cpu"),
+        "lang": lang,
+        "batch_size": batch_size,
+    }
+    meta = _build_meta(cleaned_paged, pdf.name, settings)
+    headers = _extract_headers_index(cleaned_paged)
+
+    # Assemble final single JSON
+    final_bundle = {
+        "meta": meta,
+        "headers_index": headers,
+        "pages": cleaned_paged.get("pages", []),
+    }
+
+    write_json(final_bundle, compiled_single_path)
+
+    # Stats
     def _count_texts(bundle: Dict[str, Any]) -> int:
         total = 0
         for pg in bundle.get("pages", []):
@@ -327,8 +428,7 @@ def extract_text(
                 total += len(pg.get("rec_texts", pg.get("texts", [])) or [])
         return total
 
-    total_raw = _count_texts(compiled)
-    total_clean = _count_texts(cleaned)
-    print(f"[text] stats: texts_raw={total_raw}, texts_clean={total_clean} time={time.time() - t_save:.2f}s")
-
+    total_clean = _count_texts(final_bundle)
+    print(f"[text] stats: texts_clean={total_clean}")
+    print(f"[text] output: {compiled_single_path.name}")
     print(f"[text] done: {pdf.name} total_time={time.time() - t0:.2f}s")

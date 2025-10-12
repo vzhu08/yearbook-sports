@@ -1,0 +1,364 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0011.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                165,
+                1200,
+                1290
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "and a time to build up;",
+            "block_bbox": [
+                268,
+                2472,
+                727,
+                2664
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "a time to breakdown,",
+            "block_bbox": [
+                1452,
+                634,
+                2168,
+                708
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                1488,
+                1780,
+                2573,
+                3232
+            ]
+        },
+        {
+            "block_label": "number",
+            "block_content": "5",
+            "block_bbox": [
+                1230,
+                3321,
+                1249,
+                3352
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9360436797142029,
+                "coordinate": [
+                    0.62042236328125,
+                    165.32513427734375,
+                    1200.0732421875,
+                    1290.644775390625
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9319838881492615,
+                "coordinate": [
+                    1488.674560546875,
+                    1780.6875,
+                    2573.530517578125,
+                    3232.24951171875
+                ]
+            },
+            {
+                "cls_id": 3,
+                "label": "number",
+                "score": 0.7735463976860046,
+                "coordinate": [
+                    1230.0751953125,
+                    3321.8369140625,
+                    1249.6875,
+                    3352.8681640625
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.5984160304069519,
+                "coordinate": [
+                    268.50494384765625,
+                    2472.53173828125,
+                    727.4132690429688,
+                    2664.83349609375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.5780996680259705,
+                "coordinate": [
+                    1452.709228515625,
+                    634.3147583007812,
+                    2168.3759765625,
+                    708.9650268554688
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    1454,
+                    630
+                ],
+                [
+                    2177,
+                    638
+                ],
+                [
+                    2176,
+                    720
+                ],
+                [
+                    1453,
+                    713
+                ]
+            ],
+            [
+                [
+                    2132,
+                    1977
+                ],
+                [
+                    2222,
+                    1985
+                ],
+                [
+                    2218,
+                    2025
+                ],
+                [
+                    2129,
+                    2017
+                ]
+            ],
+            [
+                [
+                    271,
+                    2467
+                ],
+                [
+                    733,
+                    2467
+                ],
+                [
+                    733,
+                    2553
+                ],
+                [
+                    271,
+                    2553
+                ]
+            ],
+            [
+                [
+                    268,
+                    2575
+                ],
+                [
+                    591,
+                    2575
+                ],
+                [
+                    591,
+                    2681
+                ],
+                [
+                    268,
+                    2681
+                ]
+            ],
+            [
+                [
+                    1228,
+                    3325
+                ],
+                [
+                    1250,
+                    3325
+                ],
+                [
+                    1250,
+                    3357
+                ],
+                [
+                    1228,
+                    3357
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "a time to breakdown,",
+            "and a time to",
+            "build up;",
+            "5"
+        ],
+        "rec_scores": [
+            0.9716913104057312,
+            0.9568802714347839,
+            0.9874370098114014,
+            0.999221682548523
+        ],
+        "rec_polys": [
+            [
+                [
+                    1454,
+                    630
+                ],
+                [
+                    2177,
+                    638
+                ],
+                [
+                    2176,
+                    720
+                ],
+                [
+                    1453,
+                    713
+                ]
+            ],
+            [
+                [
+                    271,
+                    2467
+                ],
+                [
+                    733,
+                    2467
+                ],
+                [
+                    733,
+                    2553
+                ],
+                [
+                    271,
+                    2553
+                ]
+            ],
+            [
+                [
+                    268,
+                    2575
+                ],
+                [
+                    591,
+                    2575
+                ],
+                [
+                    591,
+                    2681
+                ],
+                [
+                    268,
+                    2681
+                ]
+            ],
+            [
+                [
+                    1228,
+                    3325
+                ],
+                [
+                    1250,
+                    3325
+                ],
+                [
+                    1250,
+                    3357
+                ],
+                [
+                    1228,
+                    3357
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                1453,
+                630,
+                2177,
+                720
+            ],
+            [
+                271,
+                2467,
+                733,
+                2553
+            ],
+            [
+                268,
+                2575,
+                591,
+                2681
+            ],
+            [
+                1228,
+                3325,
+                1250,
+                3357
+            ]
+        ]
+    }
+}

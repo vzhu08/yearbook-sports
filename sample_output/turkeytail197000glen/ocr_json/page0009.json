@@ -1,0 +1,383 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0009.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                490,
+                1181,
+                1289
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "and a time to pluck up what is planted;",
+            "block_bbox": [
+                191,
+                2542,
+                853,
+                2743
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "a time to plant,",
+            "block_bbox": [
+                1542,
+                714,
+                2056,
+                796
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                1303,
+                2120,
+                2573,
+                3224
+            ]
+        },
+        {
+            "block_label": "number",
+            "block_content": "3",
+            "block_bbox": [
+                1214,
+                3310,
+                1237,
+                3340
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9565301537513733,
+                "coordinate": [
+                    1303.79052734375,
+                    2120.273193359375,
+                    2573.4716796875,
+                    3224.441162109375
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9030489921569824,
+                "coordinate": [
+                    0.37286376953125,
+                    490.30084228515625,
+                    1181.534912109375,
+                    1289.094970703125
+                ]
+            },
+            {
+                "cls_id": 3,
+                "label": "number",
+                "score": 0.7945849895477295,
+                "coordinate": [
+                    1214.693603515625,
+                    3310.43017578125,
+                    1237.505859375,
+                    3340.69970703125
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.6657384634017944,
+                "coordinate": [
+                    191.02597045898438,
+                    2542.632080078125,
+                    853.0526123046875,
+                    2743.455322265625
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.6189885139465332,
+                "coordinate": [
+                    1542.8759765625,
+                    714.1968994140625,
+                    2056.64794921875,
+                    796.1534423828125
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    1544,
+                    711
+                ],
+                [
+                    2067,
+                    711
+                ],
+                [
+                    2067,
+                    808
+                ],
+                [
+                    1544,
+                    808
+                ]
+            ],
+            [
+                [
+                    0,
+                    860
+                ],
+                [
+                    1229,
+                    893
+                ],
+                [
+                    1217,
+                    1337
+                ],
+                [
+                    0,
+                    1304
+                ]
+            ],
+            [
+                [
+                    1306,
+                    2474
+                ],
+                [
+                    2214,
+                    2474
+                ],
+                [
+                    2214,
+                    2794
+                ],
+                [
+                    1306,
+                    2794
+                ]
+            ],
+            [
+                [
+                    195,
+                    2550
+                ],
+                [
+                    859,
+                    2535
+                ],
+                [
+                    861,
+                    2631
+                ],
+                [
+                    197,
+                    2646
+                ]
+            ],
+            [
+                [
+                    195,
+                    2664
+                ],
+                [
+                    845,
+                    2648
+                ],
+                [
+                    847,
+                    2750
+                ],
+                [
+                    198,
+                    2765
+                ]
+            ],
+            [
+                [
+                    1214,
+                    3311
+                ],
+                [
+                    1242,
+                    3311
+                ],
+                [
+                    1242,
+                    3353
+                ],
+                [
+                    1214,
+                    3353
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            1,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "a time to plant,",
+            "and a time to pluck",
+            "up what is planted;",
+            "3"
+        ],
+        "rec_scores": [
+            0.9633696675300598,
+            0.9655900001525879,
+            0.9811522960662842,
+            0.9857209920883179
+        ],
+        "rec_polys": [
+            [
+                [
+                    1544,
+                    711
+                ],
+                [
+                    2067,
+                    711
+                ],
+                [
+                    2067,
+                    808
+                ],
+                [
+                    1544,
+                    808
+                ]
+            ],
+            [
+                [
+                    195,
+                    2550
+                ],
+                [
+                    859,
+                    2535
+                ],
+                [
+                    861,
+                    2631
+                ],
+                [
+                    197,
+                    2646
+                ]
+            ],
+            [
+                [
+                    195,
+                    2664
+                ],
+                [
+                    845,
+                    2648
+                ],
+                [
+                    847,
+                    2750
+                ],
+                [
+                    198,
+                    2765
+                ]
+            ],
+            [
+                [
+                    1214,
+                    3311
+                ],
+                [
+                    1242,
+                    3311
+                ],
+                [
+                    1242,
+                    3353
+                ],
+                [
+                    1214,
+                    3353
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                1544,
+                711,
+                2067,
+                808
+            ],
+            [
+                195,
+                2535,
+                861,
+                2646
+            ],
+            [
+                195,
+                2648,
+                847,
+                2765
+            ],
+            [
+                1214,
+                3311,
+                1242,
+                3353
+            ]
+        ]
+    }
+}

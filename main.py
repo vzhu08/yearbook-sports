@@ -18,9 +18,9 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 # ---------------- Levers ----------------
-RUN_TEXT_EXTRACTION = True
-RUN_NAME_CORRECTION = False
+RUN_TEXT_EXTRACTION = False
 RUN_NAME_EXTRACTION = True
+RUN_NAME_CORRECTION = False
 
 # ---------------- IO ----------------
 PDF: Optional[str] = None            # e.g., "pdf_input/book.pdf"
@@ -123,7 +123,18 @@ def main() -> None:
                 ),
             )
 
-        # 2) name correction
+        # 2) name extraction
+        if RUN_NAME_EXTRACTION:
+            run_func(
+                module="src.name_extraction",
+                func="extract_names",
+                kwargs=dict(
+                    pdf_path=str(target_pdf),
+                    out_dir=str(out_root),
+                ),
+            )
+
+        # 3) name correction
         if RUN_NAME_CORRECTION:
             run_func(
                 module="src.name_correction",
@@ -135,19 +146,6 @@ def main() -> None:
                     model_name=NC_MODEL,
                     min_tokens=NC_MIN_TOKENS,
                     enable_correction=NC_ENABLE_CORRECTION,
-                ),
-            )
-
-        # 3) name extraction
-        if RUN_NAME_EXTRACTION:
-            run_func(
-                module="src.name_extraction",
-                func="extract_names",
-                kwargs=dict(
-                    pdf_path=str(target_pdf),
-                    out_dir=str(out_root),
-                    header_thresh=NE_HEADER_THRESH,
-                    max_gap=NE_MAX_GAP,
                 ),
             )
 

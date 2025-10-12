@@ -1,0 +1,298 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0068.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "doc_title",
+            "block_content": "STUDENTCOUNCIL ",
+            "block_bbox": [
+                779,
+                112,
+                1899,
+                206
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                243,
+                373,
+                2448,
+                1732
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "OFFICERS: Mike Fowler, President; Betsy Gibbs,Vice-President; Richard Smith, Secretary Jean Buff,Treasurer; Cathy Paton,Reporter.\n",
+            "block_bbox": [
+                230,
+                1771,
+                2446,
+                1852
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                1,
+                1976,
+                2583,
+                3519
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9830458164215088,
+                "coordinate": [
+                    243.6622314453125,
+                    373.02447509765625,
+                    2448.5556640625,
+                    1732.558349609375
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.978279173374176,
+                "coordinate": [
+                    1.6358642578125,
+                    1976.76904296875,
+                    2583.40087890625,
+                    3519.193359375
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.8782812356948853,
+                "coordinate": [
+                    230.8187255859375,
+                    1771.030029296875,
+                    2446.89404296875,
+                    1852.352294921875
+                ]
+            },
+            {
+                "cls_id": 10,
+                "label": "doc_title",
+                "score": 0.5305562019348145,
+                "coordinate": [
+                    779.5731201171875,
+                    112.47919464111328,
+                    1899.4637451171875,
+                    206.5911865234375
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    776,
+                    114
+                ],
+                [
+                    1908,
+                    110
+                ],
+                [
+                    1908,
+                    213
+                ],
+                [
+                    776,
+                    217
+                ]
+            ],
+            [
+                [
+                    236,
+                    1769
+                ],
+                [
+                    2450,
+                    1777
+                ],
+                [
+                    2450,
+                    1819
+                ],
+                [
+                    236,
+                    1812
+                ]
+            ],
+            [
+                [
+                    236,
+                    1814
+                ],
+                [
+                    403,
+                    1814
+                ],
+                [
+                    403,
+                    1858
+                ],
+                [
+                    236,
+                    1858
+                ]
+            ],
+            [
+                [
+                    2046,
+                    3244
+                ],
+                [
+                    2192,
+                    3255
+                ],
+                [
+                    2184,
+                    3363
+                ],
+                [
+                    2038,
+                    3352
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "STUDENTCOUNCIL",
+            "OFFICERS: Mike Fowler, President; Betsy Gibbs,Vice-President; Richard Smith, Secretary Jean Buff,Treasurer; Cathy Paton,",
+            "Reporter."
+        ],
+        "rec_scores": [
+            0.9983812570571899,
+            0.8867334723472595,
+            0.9955099821090698
+        ],
+        "rec_polys": [
+            [
+                [
+                    776,
+                    114
+                ],
+                [
+                    1908,
+                    110
+                ],
+                [
+                    1908,
+                    213
+                ],
+                [
+                    776,
+                    217
+                ]
+            ],
+            [
+                [
+                    236,
+                    1769
+                ],
+                [
+                    2450,
+                    1777
+                ],
+                [
+                    2450,
+                    1819
+                ],
+                [
+                    236,
+                    1812
+                ]
+            ],
+            [
+                [
+                    236,
+                    1814
+                ],
+                [
+                    403,
+                    1814
+                ],
+                [
+                    403,
+                    1858
+                ],
+                [
+                    236,
+                    1858
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                776,
+                110,
+                1908,
+                217
+            ],
+            [
+                236,
+                1769,
+                2450,
+                1819
+            ],
+            [
+                236,
+                1814,
+                403,
+                1858
+            ]
+        ]
+    }
+}

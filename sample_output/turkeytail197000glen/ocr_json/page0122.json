@@ -1,0 +1,337 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0122.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "image",
+            "block_content": "。BURKE COUNTY PUBLIC LIBRARY SYSTEM 33557004424891DELMAR ",
+            "block_bbox": [
+                1,
+                0,
+                2485,
+                3480
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.7900354862213135,
+                "coordinate": [
+                    1.1959228515625,
+                    0.080078125,
+                    2485,
+                    3480.286865234375
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    0,
+                    0
+                ],
+                [
+                    2485,
+                    0
+                ],
+                [
+                    2485,
+                    3481
+                ],
+                [
+                    0,
+                    3481
+                ]
+            ],
+            [
+                [
+                    1684,
+                    25
+                ],
+                [
+                    2257,
+                    26
+                ],
+                [
+                    2257,
+                    61
+                ],
+                [
+                    1684,
+                    60
+                ]
+            ],
+            [
+                [
+                    1707,
+                    163
+                ],
+                [
+                    2226,
+                    167
+                ],
+                [
+                    2226,
+                    221
+                ],
+                [
+                    1707,
+                    217
+                ]
+            ],
+            [
+                [
+                    248,
+                    1174
+                ],
+                [
+                    262,
+                    1174
+                ],
+                [
+                    262,
+                    1209
+                ],
+                [
+                    248,
+                    1209
+                ]
+            ],
+            [
+                [
+                    2123,
+                    1293
+                ],
+                [
+                    2131,
+                    1293
+                ],
+                [
+                    2131,
+                    1302
+                ],
+                [
+                    2123,
+                    1302
+                ]
+            ],
+            [
+                [
+                    2205,
+                    1646
+                ],
+                [
+                    2240,
+                    1646
+                ],
+                [
+                    2240,
+                    1691
+                ],
+                [
+                    2205,
+                    1691
+                ]
+            ],
+            [
+                [
+                    1740,
+                    3063
+                ],
+                [
+                    2116,
+                    3063
+                ],
+                [
+                    2116,
+                    3216
+                ],
+                [
+                    1740,
+                    3216
+                ]
+            ],
+            [
+                [
+                    1751,
+                    3206
+                ],
+                [
+                    2115,
+                    3202
+                ],
+                [
+                    2116,
+                    3282
+                ],
+                [
+                    1752,
+                    3287
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            1,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "。",
+            "BURKE COUNTY PUBLIC LIBRARY SYSTEM",
+            "33557004424891",
+            "DELMAR"
+        ],
+        "rec_scores": [
+            0.8082969784736633,
+            0.9675819277763367,
+            0.9986987709999084,
+            0.9699936509132385
+        ],
+        "rec_polys": [
+            [
+                [
+                    0,
+                    0
+                ],
+                [
+                    2485,
+                    0
+                ],
+                [
+                    2485,
+                    3481
+                ],
+                [
+                    0,
+                    3481
+                ]
+            ],
+            [
+                [
+                    1684,
+                    25
+                ],
+                [
+                    2257,
+                    26
+                ],
+                [
+                    2257,
+                    61
+                ],
+                [
+                    1684,
+                    60
+                ]
+            ],
+            [
+                [
+                    1707,
+                    163
+                ],
+                [
+                    2226,
+                    167
+                ],
+                [
+                    2226,
+                    221
+                ],
+                [
+                    1707,
+                    217
+                ]
+            ],
+            [
+                [
+                    1751,
+                    3206
+                ],
+                [
+                    2115,
+                    3202
+                ],
+                [
+                    2116,
+                    3282
+                ],
+                [
+                    1752,
+                    3287
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                0,
+                0,
+                2485,
+                3481
+            ],
+            [
+                1684,
+                25,
+                2257,
+                61
+            ],
+            [
+                1707,
+                163,
+                2226,
+                221
+            ],
+            [
+                1751,
+                3202,
+                2116,
+                3287
+            ]
+        ]
+    }
+}

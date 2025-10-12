@@ -1,0 +1,856 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0092.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "header",
+            "block_content": "J.V.BASKETBALL ",
+            "block_bbox": [
+                852,
+                111,
+                1834,
+                201
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "3535\n\n",
+            "block_bbox": [
+                246,
+                278,
+                2459,
+                1641
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "Greg Duckworth,Raymond Scott,,Columbus Carpenter,Lary Buff,Eddie Beck,Ronnie Carswell,Ray FannRoger McFalls,Rort Cantrell,SherillLytle,Gary Rutherford,Billy Penson,CharlesO'Neel,Jeff Chapman.\n",
+            "block_bbox": [
+                241,
+                1687,
+                2465,
+                1769
+            ]
+        },
+        {
+            "block_label": "paragraph_title",
+            "block_content": "SOFTBALL ",
+            "block_bbox": [
+                1056,
+                1892,
+                1657,
+                1986
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                248,
+                2155,
+                2465,
+                3253
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "Mrs. Becky impson; Coach,Frances Eley, Janet Powll,Slvi Gree,Susan Leonard,Lla Hyt,Betsy Gibbs,Frances Whnr.SECOND ROw: Susan Morrison,Sandra Kay Johnson,Debra Poteat,Terry Carswell, Barbara Jean Tate, Hatie Williams.",
+            "block_bbox": [
+                247,
+                3299,
+                2462,
+                3383
+            ]
+        },
+        {
+            "block_label": "number",
+            "block_content": "86",
+            "block_bbox": [
+                1330,
+                3421,
+                1372,
+                3449
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9839932918548584,
+                "coordinate": [
+                    246.55615234375,
+                    278.69036865234375,
+                    2459.05126953125,
+                    1641.73583984375
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9698032736778259,
+                "coordinate": [
+                    248.030517578125,
+                    2155.090087890625,
+                    2465.585205078125,
+                    3253.537353515625
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.8458570241928101,
+                "coordinate": [
+                    247.6326904296875,
+                    3299.77783203125,
+                    2462.05322265625,
+                    3383.326171875
+                ]
+            },
+            {
+                "cls_id": 3,
+                "label": "number",
+                "score": 0.8449143767356873,
+                "coordinate": [
+                    1330.4361572265625,
+                    3421.677734375,
+                    1372.0972900390625,
+                    3449.65234375
+                ]
+            },
+            {
+                "cls_id": 12,
+                "label": "header",
+                "score": 0.8335552215576172,
+                "coordinate": [
+                    852.5489501953125,
+                    111.4999771118164,
+                    1834.8314208984375,
+                    201.80386352539062
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.810499370098114,
+                "coordinate": [
+                    241.722900390625,
+                    1687.592529296875,
+                    2465.009033203125,
+                    1769.429931640625
+                ]
+            },
+            {
+                "cls_id": 0,
+                "label": "paragraph_title",
+                "score": 0.44528329372406006,
+                "coordinate": [
+                    1056.80029296875,
+                    1892.933349609375,
+                    1657.37939453125,
+                    1986.682373046875
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    853,
+                    117
+                ],
+                [
+                    1845,
+                    110
+                ],
+                [
+                    1845,
+                    206
+                ],
+                [
+                    854,
+                    213
+                ]
+            ],
+            [
+                [
+                    883,
+                    889
+                ],
+                [
+                    1004,
+                    889
+                ],
+                [
+                    1004,
+                    971
+                ],
+                [
+                    883,
+                    971
+                ]
+            ],
+            [
+                [
+                    1080,
+                    898
+                ],
+                [
+                    1168,
+                    898
+                ],
+                [
+                    1168,
+                    962
+                ],
+                [
+                    1080,
+                    962
+                ]
+            ],
+            [
+                [
+                    250,
+                    1691
+                ],
+                [
+                    730,
+                    1691
+                ],
+                [
+                    730,
+                    1734
+                ],
+                [
+                    250,
+                    1734
+                ]
+            ],
+            [
+                [
+                    818,
+                    1684
+                ],
+                [
+                    2473,
+                    1686
+                ],
+                [
+                    2473,
+                    1734
+                ],
+                [
+                    818,
+                    1732
+                ]
+            ],
+            [
+                [
+                    719,
+                    1695
+                ],
+                [
+                    839,
+                    1695
+                ],
+                [
+                    839,
+                    1727
+                ],
+                [
+                    719,
+                    1727
+                ]
+            ],
+            [
+                [
+                    250,
+                    1732
+                ],
+                [
+                    721,
+                    1732
+                ],
+                [
+                    721,
+                    1775
+                ],
+                [
+                    250,
+                    1775
+                ]
+            ],
+            [
+                [
+                    716,
+                    1730
+                ],
+                [
+                    1022,
+                    1730
+                ],
+                [
+                    1022,
+                    1773
+                ],
+                [
+                    716,
+                    1773
+                ]
+            ],
+            [
+                [
+                    1008,
+                    1730
+                ],
+                [
+                    1504,
+                    1730
+                ],
+                [
+                    1504,
+                    1771
+                ],
+                [
+                    1008,
+                    1771
+                ]
+            ],
+            [
+                [
+                    1491,
+                    1728
+                ],
+                [
+                    1671,
+                    1734
+                ],
+                [
+                    1670,
+                    1777
+                ],
+                [
+                    1489,
+                    1771
+                ]
+            ],
+            [
+                [
+                    1059,
+                    1896
+                ],
+                [
+                    1665,
+                    1892
+                ],
+                [
+                    1666,
+                    1989
+                ],
+                [
+                    1059,
+                    1993
+                ]
+            ],
+            [
+                [
+                    2397,
+                    2170
+                ],
+                [
+                    2464,
+                    2170
+                ],
+                [
+                    2464,
+                    2188
+                ],
+                [
+                    2397,
+                    2188
+                ]
+            ],
+            [
+                [
+                    257,
+                    3294
+                ],
+                [
+                    2468,
+                    3299
+                ],
+                [
+                    2468,
+                    3347
+                ],
+                [
+                    257,
+                    3342
+                ]
+            ],
+            [
+                [
+                    255,
+                    3335
+                ],
+                [
+                    2258,
+                    3344
+                ],
+                [
+                    2258,
+                    3393
+                ],
+                [
+                    255,
+                    3384
+                ]
+            ],
+            [
+                [
+                    1327,
+                    3412
+                ],
+                [
+                    1382,
+                    3416
+                ],
+                [
+                    1378,
+                    3461
+                ],
+                [
+                    1323,
+                    3456
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "J.V.BASKETBALL",
+            "35",
+            "35",
+            "Greg Duckworth,Raymond",
+            ",Columbus Carpenter,Lary Buff,Eddie Beck,Ronnie Carswell,Ray FannRoger McFalls,Rort",
+            "Scott,",
+            "Cantrell,SherillLytle,Gary",
+            "Rutherford,Billy",
+            "Penson,CharlesO'Neel,Jeff",
+            "Chapman.",
+            "SOFTBALL",
+            "Mrs. Becky impson; Coach,Frances Eley, Janet Powll,Slvi Gree,Susan Leonard,Lla Hyt,Betsy Gibbs,Frances Whnr.",
+            "SECOND ROw: Susan Morrison,Sandra Kay Johnson,Debra Poteat,Terry Carswell, Barbara Jean Tate, Hatie Williams.",
+            "86"
+        ],
+        "rec_scores": [
+            0.993376612663269,
+            0.9539312720298767,
+            0.979180634021759,
+            0.9534017443656921,
+            0.7900745272636414,
+            0.9952546954154968,
+            0.9508401155471802,
+            0.9312984943389893,
+            0.9565032124519348,
+            0.9943440556526184,
+            0.9950448870658875,
+            0.7625351548194885,
+            0.8916189670562744,
+            0.9965178370475769
+        ],
+        "rec_polys": [
+            [
+                [
+                    853,
+                    117
+                ],
+                [
+                    1845,
+                    110
+                ],
+                [
+                    1845,
+                    206
+                ],
+                [
+                    854,
+                    213
+                ]
+            ],
+            [
+                [
+                    883,
+                    889
+                ],
+                [
+                    1004,
+                    889
+                ],
+                [
+                    1004,
+                    971
+                ],
+                [
+                    883,
+                    971
+                ]
+            ],
+            [
+                [
+                    1080,
+                    898
+                ],
+                [
+                    1168,
+                    898
+                ],
+                [
+                    1168,
+                    962
+                ],
+                [
+                    1080,
+                    962
+                ]
+            ],
+            [
+                [
+                    250,
+                    1691
+                ],
+                [
+                    730,
+                    1691
+                ],
+                [
+                    730,
+                    1734
+                ],
+                [
+                    250,
+                    1734
+                ]
+            ],
+            [
+                [
+                    818,
+                    1684
+                ],
+                [
+                    2473,
+                    1686
+                ],
+                [
+                    2473,
+                    1734
+                ],
+                [
+                    818,
+                    1732
+                ]
+            ],
+            [
+                [
+                    719,
+                    1695
+                ],
+                [
+                    839,
+                    1695
+                ],
+                [
+                    839,
+                    1727
+                ],
+                [
+                    719,
+                    1727
+                ]
+            ],
+            [
+                [
+                    250,
+                    1732
+                ],
+                [
+                    721,
+                    1732
+                ],
+                [
+                    721,
+                    1775
+                ],
+                [
+                    250,
+                    1775
+                ]
+            ],
+            [
+                [
+                    716,
+                    1730
+                ],
+                [
+                    1022,
+                    1730
+                ],
+                [
+                    1022,
+                    1773
+                ],
+                [
+                    716,
+                    1773
+                ]
+            ],
+            [
+                [
+                    1008,
+                    1730
+                ],
+                [
+                    1504,
+                    1730
+                ],
+                [
+                    1504,
+                    1771
+                ],
+                [
+                    1008,
+                    1771
+                ]
+            ],
+            [
+                [
+                    1491,
+                    1728
+                ],
+                [
+                    1671,
+                    1734
+                ],
+                [
+                    1670,
+                    1777
+                ],
+                [
+                    1489,
+                    1771
+                ]
+            ],
+            [
+                [
+                    1059,
+                    1896
+                ],
+                [
+                    1665,
+                    1892
+                ],
+                [
+                    1666,
+                    1989
+                ],
+                [
+                    1059,
+                    1993
+                ]
+            ],
+            [
+                [
+                    257,
+                    3294
+                ],
+                [
+                    2468,
+                    3299
+                ],
+                [
+                    2468,
+                    3347
+                ],
+                [
+                    257,
+                    3342
+                ]
+            ],
+            [
+                [
+                    255,
+                    3335
+                ],
+                [
+                    2258,
+                    3344
+                ],
+                [
+                    2258,
+                    3393
+                ],
+                [
+                    255,
+                    3384
+                ]
+            ],
+            [
+                [
+                    1327,
+                    3412
+                ],
+                [
+                    1382,
+                    3416
+                ],
+                [
+                    1378,
+                    3461
+                ],
+                [
+                    1323,
+                    3456
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                853,
+                110,
+                1845,
+                213
+            ],
+            [
+                883,
+                889,
+                1004,
+                971
+            ],
+            [
+                1080,
+                898,
+                1168,
+                962
+            ],
+            [
+                250,
+                1691,
+                730,
+                1734
+            ],
+            [
+                818,
+                1684,
+                2473,
+                1734
+            ],
+            [
+                719,
+                1695,
+                839,
+                1727
+            ],
+            [
+                250,
+                1732,
+                721,
+                1775
+            ],
+            [
+                716,
+                1730,
+                1022,
+                1773
+            ],
+            [
+                1008,
+                1730,
+                1504,
+                1771
+            ],
+            [
+                1489,
+                1728,
+                1671,
+                1777
+            ],
+            [
+                1059,
+                1892,
+                1666,
+                1993
+            ],
+            [
+                257,
+                3294,
+                2468,
+                3347
+            ],
+            [
+                255,
+                3335,
+                2258,
+                3393
+            ],
+            [
+                1323,
+                3412,
+                1382,
+                3461
+            ]
+        ]
+    }
+}

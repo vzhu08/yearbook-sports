@@ -1,0 +1,520 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0093.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "paragraph_title",
+            "block_content": "BASEBALL ",
+            "block_bbox": [
+                902,
+                127,
+                1504,
+                219
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                292,
+                2588,
+                1584
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "Mr. Bob Little,Coach; Gene Lowdermilk, Ray Merrill,Victor Poteat, William Farris, Raymond McDowell,Garry Holder, Doug Michaels,BillParks,Paul Greene,GaryRich.\n",
+            "block_bbox": [
+                90,
+                1625,
+                2320,
+                1711
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "TRACK ",
+            "block_bbox": [
+                1010,
+                1830,
+                1418,
+                1926
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                0,
+                1982,
+                2587,
+                3276
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "KNEELING: Dickie Smith, Bud Lowdermilk. Eugene Flowers, Doug Michaels. ROW1: Ray McElrath,Eddie Beck, Randy Sisk,Dwight FarrisHarold Johnon Ray MeilDavid Winrs,Wayne Contz.OW2: Ralph Wilson;Coach,Andy tsGarry Holdr,Paul Greene,Ricky Franklin,BillParks, Mike Jarrett, DouglasPitts,GeneLowdermilk.\n",
+            "block_bbox": [
+                96,
+                3332,
+                2327,
+                3458
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9769779443740845,
+                "coordinate": [
+                    0,
+                    292.9940185546875,
+                    2588.256103515625,
+                    1584.3763427734375
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9410536885261536,
+                "coordinate": [
+                    0.5582275390625,
+                    1982.198486328125,
+                    2587.72998046875,
+                    3276.940673828125
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.7272516489028931,
+                "coordinate": [
+                    90.5096435546875,
+                    1625.625,
+                    2320.9677734375,
+                    1711.170166015625
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.6255178451538086,
+                "coordinate": [
+                    96.16015625,
+                    3332.33642578125,
+                    2327.712890625,
+                    3458.93603515625
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.555130124092102,
+                "coordinate": [
+                    1010.4872436523438,
+                    1830.82470703125,
+                    1418.583984375,
+                    1926.2763671875
+                ]
+            },
+            {
+                "cls_id": 0,
+                "label": "paragraph_title",
+                "score": 0.3249996304512024,
+                "coordinate": [
+                    902.5352783203125,
+                    127.499755859375,
+                    1504.2576904296875,
+                    219.54714965820312
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    904,
+                    126
+                ],
+                [
+                    1515,
+                    130
+                ],
+                [
+                    1514,
+                    227
+                ],
+                [
+                    904,
+                    223
+                ]
+            ],
+            [
+                [
+                    95,
+                    1626
+                ],
+                [
+                    2325,
+                    1629
+                ],
+                [
+                    2325,
+                    1677
+                ],
+                [
+                    95,
+                    1674
+                ]
+            ],
+            [
+                [
+                    97,
+                    1672
+                ],
+                [
+                    853,
+                    1674
+                ],
+                [
+                    853,
+                    1716
+                ],
+                [
+                    97,
+                    1714
+                ]
+            ],
+            [
+                [
+                    1009,
+                    1828
+                ],
+                [
+                    1425,
+                    1832
+                ],
+                [
+                    1424,
+                    1933
+                ],
+                [
+                    1008,
+                    1929
+                ]
+            ],
+            [
+                [
+                    1073,
+                    2907
+                ],
+                [
+                    1124,
+                    2907
+                ],
+                [
+                    1124,
+                    2981
+                ],
+                [
+                    1073,
+                    2981
+                ]
+            ],
+            [
+                [
+                    104,
+                    3333
+                ],
+                [
+                    2325,
+                    3336
+                ],
+                [
+                    2325,
+                    3379
+                ],
+                [
+                    104,
+                    3375
+                ]
+            ],
+            [
+                [
+                    102,
+                    3368
+                ],
+                [
+                    2329,
+                    3370
+                ],
+                [
+                    2329,
+                    3425
+                ],
+                [
+                    102,
+                    3423
+                ]
+            ],
+            [
+                [
+                    104,
+                    3423
+                ],
+                [
+                    1553,
+                    3422
+                ],
+                [
+                    1553,
+                    3459
+                ],
+                [
+                    104,
+                    3461
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "BASEBALL",
+            "Mr. Bob Little,Coach; Gene Lowdermilk, Ray Merrill,Victor Poteat, William Farris, Raymond McDowell,Garry Holder, Doug",
+            "Michaels,BillParks,Paul Greene,GaryRich.",
+            "TRACK",
+            "KNEELING: Dickie Smith, Bud Lowdermilk. Eugene Flowers, Doug Michaels. ROW1: Ray McElrath,Eddie Beck, Randy Sisk,",
+            "Dwight FarrisHarold Johnon Ray MeilDavid Winrs,Wayne Contz.OW2: Ralph Wilson;Coach,Andy tsGarry Holdr,",
+            "Paul Greene,Ricky Franklin,BillParks, Mike Jarrett, DouglasPitts,GeneLowdermilk."
+        ],
+        "rec_scores": [
+            0.9894537925720215,
+            0.8687649369239807,
+            0.9731197357177734,
+            0.9908982515335083,
+            0.9190324544906616,
+            0.7085157036781311,
+            0.9390571713447571
+        ],
+        "rec_polys": [
+            [
+                [
+                    904,
+                    126
+                ],
+                [
+                    1515,
+                    130
+                ],
+                [
+                    1514,
+                    227
+                ],
+                [
+                    904,
+                    223
+                ]
+            ],
+            [
+                [
+                    95,
+                    1626
+                ],
+                [
+                    2325,
+                    1629
+                ],
+                [
+                    2325,
+                    1677
+                ],
+                [
+                    95,
+                    1674
+                ]
+            ],
+            [
+                [
+                    97,
+                    1672
+                ],
+                [
+                    853,
+                    1674
+                ],
+                [
+                    853,
+                    1716
+                ],
+                [
+                    97,
+                    1714
+                ]
+            ],
+            [
+                [
+                    1009,
+                    1828
+                ],
+                [
+                    1425,
+                    1832
+                ],
+                [
+                    1424,
+                    1933
+                ],
+                [
+                    1008,
+                    1929
+                ]
+            ],
+            [
+                [
+                    104,
+                    3333
+                ],
+                [
+                    2325,
+                    3336
+                ],
+                [
+                    2325,
+                    3379
+                ],
+                [
+                    104,
+                    3375
+                ]
+            ],
+            [
+                [
+                    102,
+                    3368
+                ],
+                [
+                    2329,
+                    3370
+                ],
+                [
+                    2329,
+                    3425
+                ],
+                [
+                    102,
+                    3423
+                ]
+            ],
+            [
+                [
+                    104,
+                    3423
+                ],
+                [
+                    1553,
+                    3422
+                ],
+                [
+                    1553,
+                    3459
+                ],
+                [
+                    104,
+                    3461
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                904,
+                126,
+                1515,
+                227
+            ],
+            [
+                95,
+                1626,
+                2325,
+                1677
+            ],
+            [
+                97,
+                1672,
+                853,
+                1716
+            ],
+            [
+                1008,
+                1828,
+                1425,
+                1933
+            ],
+            [
+                104,
+                3333,
+                2325,
+                3379
+            ],
+            [
+                102,
+                3368,
+                2329,
+                3425
+            ],
+            [
+                104,
+                3422,
+                1553,
+                3461
+            ]
+        ]
+    }
+}

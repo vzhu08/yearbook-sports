@@ -1,0 +1,478 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0065.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "header",
+            "block_content": "ANCHORCLUB ",
+            "block_bbox": [
+                817,
+                184,
+                1680,
+                277
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                104,
+                366,
+                2318,
+                1733
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "OFFICERS: Mrs. Lena Taylor,Advisor; Judy Orders, President; Barbara Isaacs,Vice-President; Carolyn Bennett, Reporter; Elaine Elder,Treasurer; SandraPitts,Secretary.\n",
+            "block_bbox": [
+                96,
+                1775,
+                2323,
+                1857
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "GLEN ALPINE \nA \nSCHOOLS \n",
+            "block_bbox": [
+                1,
+                1974,
+                2563,
+                3520
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9840459823608398,
+                "coordinate": [
+                    104.070556640625,
+                    366.3553466796875,
+                    2318.221923828125,
+                    1733.2396240234375
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9756729602813721,
+                "coordinate": [
+                    1.0301513671875,
+                    1974.84619140625,
+                    2563.87109375,
+                    3520.74560546875
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.8927025198936462,
+                "coordinate": [
+                    96.6669921875,
+                    1775.337158203125,
+                    2323.6689453125,
+                    1857.605224609375
+                ]
+            },
+            {
+                "cls_id": 12,
+                "label": "header",
+                "score": 0.5461155772209167,
+                "coordinate": [
+                    817.75,
+                    184.56057739257812,
+                    1680.118408203125,
+                    277.3642578125
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    818,
+                    186
+                ],
+                [
+                    1690,
+                    186
+                ],
+                [
+                    1690,
+                    289
+                ],
+                [
+                    818,
+                    289
+                ]
+            ],
+            [
+                [
+                    104,
+                    1778
+                ],
+                [
+                    2325,
+                    1778
+                ],
+                [
+                    2325,
+                    1819
+                ],
+                [
+                    104,
+                    1819
+                ]
+            ],
+            [
+                [
+                    102,
+                    1817
+                ],
+                [
+                    786,
+                    1823
+                ],
+                [
+                    786,
+                    1865
+                ],
+                [
+                    102,
+                    1860
+                ]
+            ],
+            [
+                [
+                    1237,
+                    2593
+                ],
+                [
+                    1406,
+                    2676
+                ],
+                [
+                    1364,
+                    2763
+                ],
+                [
+                    1195,
+                    2680
+                ]
+            ],
+            [
+                [
+                    1061,
+                    2693
+                ],
+                [
+                    1188,
+                    2609
+                ],
+                [
+                    1238,
+                    2684
+                ],
+                [
+                    1110,
+                    2769
+                ]
+            ],
+            [
+                [
+                    1178,
+                    2726
+                ],
+                [
+                    1286,
+                    2726
+                ],
+                [
+                    1286,
+                    2850
+                ],
+                [
+                    1178,
+                    2850
+                ]
+            ],
+            [
+                [
+                    1093,
+                    2844
+                ],
+                [
+                    1373,
+                    2851
+                ],
+                [
+                    1370,
+                    2977
+                ],
+                [
+                    1090,
+                    2970
+                ]
+            ],
+            [
+                [
+                    106,
+                    3121
+                ],
+                [
+                    841,
+                    2978
+                ],
+                [
+                    877,
+                    3167
+                ],
+                [
+                    142,
+                    3310
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "ANCHORCLUB",
+            "OFFICERS: Mrs. Lena Taylor,Advisor; Judy Orders, President; Barbara Isaacs,Vice-President; Carolyn Bennett, Reporter; Elaine",
+            "Elder,Treasurer; SandraPitts,Secretary.",
+            "ALPINE",
+            "GLEN",
+            "A",
+            "SCHOOLS"
+        ],
+        "rec_scores": [
+            0.995391845703125,
+            0.907873272895813,
+            0.9690571427345276,
+            0.9553107619285583,
+            0.9497804641723633,
+            0.9440624713897705,
+            0.9640764594078064
+        ],
+        "rec_polys": [
+            [
+                [
+                    818,
+                    186
+                ],
+                [
+                    1690,
+                    186
+                ],
+                [
+                    1690,
+                    289
+                ],
+                [
+                    818,
+                    289
+                ]
+            ],
+            [
+                [
+                    104,
+                    1778
+                ],
+                [
+                    2325,
+                    1778
+                ],
+                [
+                    2325,
+                    1819
+                ],
+                [
+                    104,
+                    1819
+                ]
+            ],
+            [
+                [
+                    102,
+                    1817
+                ],
+                [
+                    786,
+                    1823
+                ],
+                [
+                    786,
+                    1865
+                ],
+                [
+                    102,
+                    1860
+                ]
+            ],
+            [
+                [
+                    1237,
+                    2593
+                ],
+                [
+                    1406,
+                    2676
+                ],
+                [
+                    1364,
+                    2763
+                ],
+                [
+                    1195,
+                    2680
+                ]
+            ],
+            [
+                [
+                    1061,
+                    2693
+                ],
+                [
+                    1188,
+                    2609
+                ],
+                [
+                    1238,
+                    2684
+                ],
+                [
+                    1110,
+                    2769
+                ]
+            ],
+            [
+                [
+                    1178,
+                    2726
+                ],
+                [
+                    1286,
+                    2726
+                ],
+                [
+                    1286,
+                    2850
+                ],
+                [
+                    1178,
+                    2850
+                ]
+            ],
+            [
+                [
+                    1093,
+                    2844
+                ],
+                [
+                    1373,
+                    2851
+                ],
+                [
+                    1370,
+                    2977
+                ],
+                [
+                    1090,
+                    2970
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                818,
+                186,
+                1690,
+                289
+            ],
+            [
+                104,
+                1778,
+                2325,
+                1819
+            ],
+            [
+                102,
+                1817,
+                786,
+                1865
+            ],
+            [
+                1195,
+                2593,
+                1406,
+                2763
+            ],
+            [
+                1061,
+                2609,
+                1238,
+                2769
+            ],
+            [
+                1178,
+                2726,
+                1286,
+                2850
+            ],
+            [
+                1090,
+                2844,
+                1373,
+                2977
+            ]
+        ]
+    }
+}

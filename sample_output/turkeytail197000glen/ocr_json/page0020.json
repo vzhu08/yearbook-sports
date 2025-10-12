@@ -1,0 +1,345 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0020.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "image",
+            "block_content": "X78833\n\n",
+            "block_bbox": [
+                1,
+                153,
+                2574,
+                1985
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "a time to love,",
+            "block_bbox": [
+                1030,
+                1996,
+                1512,
+                2069
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "and a time to hate;",
+            "block_bbox": [
+                937,
+                2377,
+                1577,
+                2452
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                583,
+                2534,
+                1941,
+                3475
+            ]
+        },
+        {
+            "block_label": "number",
+            "block_content": "14",
+            "block_bbox": [
+                2024,
+                3310,
+                2065,
+                3340
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.8534016609191895,
+                "coordinate": [
+                    583.749267578125,
+                    2534.33984375,
+                    1941.239013671875,
+                    3475.6533203125
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.7069346308708191,
+                "coordinate": [
+                    1030.2744140625,
+                    1996.21337890625,
+                    1512.24365234375,
+                    2069.69970703125
+                ]
+            },
+            {
+                "cls_id": 3,
+                "label": "number",
+                "score": 0.6855050325393677,
+                "coordinate": [
+                    2024.67578125,
+                    3310.092041015625,
+                    2065.08154296875,
+                    3340.227294921875
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.6446855068206787,
+                "coordinate": [
+                    937.8106689453125,
+                    2377.9775390625,
+                    1577.6551513671875,
+                    2452.5263671875
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.5483665466308594,
+                "coordinate": [
+                    1.2828369140625,
+                    153.2359619140625,
+                    2574,
+                    1985.7552490234375
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    878,
+                    1354
+                ],
+                [
+                    1047,
+                    1354
+                ],
+                [
+                    1047,
+                    1438
+                ],
+                [
+                    878,
+                    1438
+                ]
+            ],
+            [
+                [
+                    1022,
+                    1985
+                ],
+                [
+                    1522,
+                    1989
+                ],
+                [
+                    1521,
+                    2080
+                ],
+                [
+                    1021,
+                    2076
+                ]
+            ],
+            [
+                [
+                    941,
+                    2376
+                ],
+                [
+                    1581,
+                    2376
+                ],
+                [
+                    1581,
+                    2460
+                ],
+                [
+                    941,
+                    2460
+                ]
+            ],
+            [
+                [
+                    2020,
+                    3306
+                ],
+                [
+                    2072,
+                    3306
+                ],
+                [
+                    2072,
+                    3350
+                ],
+                [
+                    2020,
+                    3350
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "X78833",
+            "a time to love,",
+            "and a time to hate;",
+            "14"
+        ],
+        "rec_scores": [
+            0.9796097874641418,
+            0.9854047298431396,
+            0.9746749401092529,
+            0.9998580813407898
+        ],
+        "rec_polys": [
+            [
+                [
+                    878,
+                    1354
+                ],
+                [
+                    1047,
+                    1354
+                ],
+                [
+                    1047,
+                    1438
+                ],
+                [
+                    878,
+                    1438
+                ]
+            ],
+            [
+                [
+                    1022,
+                    1985
+                ],
+                [
+                    1522,
+                    1989
+                ],
+                [
+                    1521,
+                    2080
+                ],
+                [
+                    1021,
+                    2076
+                ]
+            ],
+            [
+                [
+                    941,
+                    2376
+                ],
+                [
+                    1581,
+                    2376
+                ],
+                [
+                    1581,
+                    2460
+                ],
+                [
+                    941,
+                    2460
+                ]
+            ],
+            [
+                [
+                    2020,
+                    3306
+                ],
+                [
+                    2072,
+                    3306
+                ],
+                [
+                    2072,
+                    3350
+                ],
+                [
+                    2020,
+                    3350
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                878,
+                1354,
+                1047,
+                1438
+            ],
+            [
+                1021,
+                1985,
+                1522,
+                2080
+            ],
+            [
+                941,
+                2376,
+                1581,
+                2460
+            ],
+            [
+                2020,
+                3306,
+                2072,
+                3350
+            ]
+        ]
+    }
+}

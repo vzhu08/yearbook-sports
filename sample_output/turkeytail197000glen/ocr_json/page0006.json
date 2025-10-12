@@ -1,0 +1,134 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0006.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "footer",
+            "block_content": "",
+            "block_bbox": [
+                642,
+                2982,
+                1409,
+                3183
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 14,
+                "label": "footer",
+                "score": 0.6815303564071655,
+                "coordinate": [
+                    642.729736328125,
+                    2982.42138671875,
+                    1409.15478515625,
+                    3183.05810546875
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    2214,
+                    1527
+                ],
+                [
+                    2243,
+                    1531
+                ],
+                [
+                    2238,
+                    1569
+                ],
+                [
+                    2209,
+                    1565
+                ]
+            ],
+            [
+                [
+                    637,
+                    2999
+                ],
+                [
+                    1385,
+                    2977
+                ],
+                [
+                    1387,
+                    3071
+                ],
+                [
+                    640,
+                    3094
+                ]
+            ],
+            [
+                [
+                    634,
+                    3111
+                ],
+                [
+                    1407,
+                    3087
+                ],
+                [
+                    1410,
+                    3179
+                ],
+                [
+                    637,
+                    3203
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            1,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [],
+        "rec_scores": [],
+        "rec_polys": [],
+        "rec_boxes": []
+    }
+}

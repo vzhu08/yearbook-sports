@@ -1,0 +1,453 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0085.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "image",
+            "block_content": "50\n20Andy Pitts Victor Poteat Butch Queen Randy Sisk David Winters ",
+            "block_bbox": [
+                4,
+                260,
+                2587,
+                3519
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.6531875133514404,
+                "coordinate": [
+                    4.5819091796875,
+                    260.8834228515625,
+                    2587.232421875,
+                    3519.52587890625
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    1403,
+                    493
+                ],
+                [
+                    1634,
+                    513
+                ],
+                [
+                    1599,
+                    923
+                ],
+                [
+                    1368,
+                    903
+                ]
+            ],
+            [
+                [
+                    25,
+                    509
+                ],
+                [
+                    135,
+                    435
+                ],
+                [
+                    230,
+                    579
+                ],
+                [
+                    120,
+                    653
+                ]
+            ],
+            [
+                [
+                    2074,
+                    555
+                ],
+                [
+                    2264,
+                    747
+                ],
+                [
+                    2128,
+                    884
+                ],
+                [
+                    1938,
+                    692
+                ]
+            ],
+            [
+                [
+                    206,
+                    1340
+                ],
+                [
+                    424,
+                    1340
+                ],
+                [
+                    424,
+                    1395
+                ],
+                [
+                    206,
+                    1395
+                ]
+            ],
+            [
+                [
+                    1121,
+                    1340
+                ],
+                [
+                    1388,
+                    1344
+                ],
+                [
+                    1387,
+                    1393
+                ],
+                [
+                    1120,
+                    1389
+                ]
+            ],
+            [
+                [
+                    2063,
+                    1342
+                ],
+                [
+                    2322,
+                    1342
+                ],
+                [
+                    2322,
+                    1397
+                ],
+                [
+                    2063,
+                    1397
+                ]
+            ],
+            [
+                [
+                    241,
+                    1694
+                ],
+                [
+                    338,
+                    1650
+                ],
+                [
+                    397,
+                    1784
+                ],
+                [
+                    300,
+                    1828
+                ]
+            ],
+            [
+                [
+                    1752,
+                    1776
+                ],
+                [
+                    2118,
+                    1776
+                ],
+                [
+                    2118,
+                    1988
+                ],
+                [
+                    1752,
+                    1988
+                ]
+            ],
+            [
+                [
+                    373,
+                    2440
+                ],
+                [
+                    607,
+                    2440
+                ],
+                [
+                    607,
+                    2495
+                ],
+                [
+                    373,
+                    2495
+                ]
+            ],
+            [
+                [
+                    1805,
+                    2440
+                ],
+                [
+                    2075,
+                    2440
+                ],
+                [
+                    2075,
+                    2488
+                ],
+                [
+                    1805,
+                    2488
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "50",
+            "20",
+            "Andy Pitts",
+            "Victor Poteat",
+            "Butch Queen",
+            "Randy Sisk",
+            "David Winters"
+        ],
+        "rec_scores": [
+            0.9064377546310425,
+            0.9976667165756226,
+            0.9765189290046692,
+            0.9754219651222229,
+            0.9834849834442139,
+            0.9537702798843384,
+            0.9682826995849609
+        ],
+        "rec_polys": [
+            [
+                [
+                    25,
+                    509
+                ],
+                [
+                    135,
+                    435
+                ],
+                [
+                    230,
+                    579
+                ],
+                [
+                    120,
+                    653
+                ]
+            ],
+            [
+                [
+                    2074,
+                    555
+                ],
+                [
+                    2264,
+                    747
+                ],
+                [
+                    2128,
+                    884
+                ],
+                [
+                    1938,
+                    692
+                ]
+            ],
+            [
+                [
+                    206,
+                    1340
+                ],
+                [
+                    424,
+                    1340
+                ],
+                [
+                    424,
+                    1395
+                ],
+                [
+                    206,
+                    1395
+                ]
+            ],
+            [
+                [
+                    1121,
+                    1340
+                ],
+                [
+                    1388,
+                    1344
+                ],
+                [
+                    1387,
+                    1393
+                ],
+                [
+                    1120,
+                    1389
+                ]
+            ],
+            [
+                [
+                    2063,
+                    1342
+                ],
+                [
+                    2322,
+                    1342
+                ],
+                [
+                    2322,
+                    1397
+                ],
+                [
+                    2063,
+                    1397
+                ]
+            ],
+            [
+                [
+                    373,
+                    2440
+                ],
+                [
+                    607,
+                    2440
+                ],
+                [
+                    607,
+                    2495
+                ],
+                [
+                    373,
+                    2495
+                ]
+            ],
+            [
+                [
+                    1805,
+                    2440
+                ],
+                [
+                    2075,
+                    2440
+                ],
+                [
+                    2075,
+                    2488
+                ],
+                [
+                    1805,
+                    2488
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                25,
+                435,
+                230,
+                653
+            ],
+            [
+                1938,
+                555,
+                2264,
+                884
+            ],
+            [
+                206,
+                1340,
+                424,
+                1395
+            ],
+            [
+                1120,
+                1340,
+                1388,
+                1393
+            ],
+            [
+                2063,
+                1342,
+                2322,
+                1397
+            ],
+            [
+                373,
+                2440,
+                607,
+                2495
+            ],
+            [
+                1805,
+                2440,
+                2075,
+                2488
+            ]
+        ]
+    }
+}

@@ -1,0 +1,357 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0018.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                407,
+                164,
+                2107,
+                1350
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "a time to rend,",
+            "block_bbox": [
+                1007,
+                1509,
+                1503,
+                1583
+            ]
+        },
+        {
+            "block_label": "figure_title",
+            "block_content": "and a time to sew;",
+            "block_bbox": [
+                940,
+                1963,
+                1558,
+                2034
+            ]
+        },
+        {
+            "block_label": "image",
+            "block_content": "",
+            "block_bbox": [
+                743,
+                2365,
+                1764,
+                3475
+            ]
+        },
+        {
+            "block_label": "number",
+            "block_content": "12",
+            "block_bbox": [
+                1846,
+                3317,
+                1885,
+                3350
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9739817976951599,
+                "coordinate": [
+                    407.07281494140625,
+                    164.14190673828125,
+                    2107.443115234375,
+                    1350.703857421875
+                ]
+            },
+            {
+                "cls_id": 1,
+                "label": "image",
+                "score": 0.9728092551231384,
+                "coordinate": [
+                    743.7840576171875,
+                    2365.34521484375,
+                    1764.2298583984375,
+                    3475.99365234375
+                ]
+            },
+            {
+                "cls_id": 3,
+                "label": "number",
+                "score": 0.7573598027229309,
+                "coordinate": [
+                    1846.2890625,
+                    3317.60546875,
+                    1885.941650390625,
+                    3350.3583984375
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.6198559403419495,
+                "coordinate": [
+                    1007.4110107421875,
+                    1509.11328125,
+                    1503.7606201171875,
+                    1583.837890625
+                ]
+            },
+            {
+                "cls_id": 6,
+                "label": "figure_title",
+                "score": 0.5455081462860107,
+                "coordinate": [
+                    940.1962890625,
+                    1963.55810546875,
+                    1558.830078125,
+                    2034.84716796875
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    1032,
+                    279
+                ],
+                [
+                    1303,
+                    400
+                ],
+                [
+                    1226,
+                    576
+                ],
+                [
+                    954,
+                    455
+                ]
+            ],
+            [
+                [
+                    1003,
+                    1507
+                ],
+                [
+                    1515,
+                    1501
+                ],
+                [
+                    1516,
+                    1591
+                ],
+                [
+                    1004,
+                    1596
+                ]
+            ],
+            [
+                [
+                    941,
+                    1955
+                ],
+                [
+                    1563,
+                    1959
+                ],
+                [
+                    1563,
+                    2043
+                ],
+                [
+                    941,
+                    2039
+                ]
+            ],
+            [
+                [
+                    1919,
+                    1977
+                ],
+                [
+                    1936,
+                    1972
+                ],
+                [
+                    1941,
+                    1988
+                ],
+                [
+                    1924,
+                    1994
+                ]
+            ],
+            [
+                [
+                    328,
+                    2162
+                ],
+                [
+                    2004,
+                    2136
+                ],
+                [
+                    2028,
+                    3476
+                ],
+                [
+                    352,
+                    3476
+                ]
+            ],
+            [
+                [
+                    1841,
+                    3317
+                ],
+                [
+                    1892,
+                    3317
+                ],
+                [
+                    1892,
+                    3360
+                ],
+                [
+                    1841,
+                    3360
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "a time to rend,",
+            "and a time to sew;",
+            "12"
+        ],
+        "rec_scores": [
+            0.9892612099647522,
+            0.9693591594696045,
+            0.9999591708183289
+        ],
+        "rec_polys": [
+            [
+                [
+                    1003,
+                    1507
+                ],
+                [
+                    1515,
+                    1501
+                ],
+                [
+                    1516,
+                    1591
+                ],
+                [
+                    1004,
+                    1596
+                ]
+            ],
+            [
+                [
+                    941,
+                    1955
+                ],
+                [
+                    1563,
+                    1959
+                ],
+                [
+                    1563,
+                    2043
+                ],
+                [
+                    941,
+                    2039
+                ]
+            ],
+            [
+                [
+                    1841,
+                    3317
+                ],
+                [
+                    1892,
+                    3317
+                ],
+                [
+                    1892,
+                    3360
+                ],
+                [
+                    1841,
+                    3360
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                1003,
+                1501,
+                1516,
+                1596
+            ],
+            [
+                941,
+                1955,
+                1563,
+                2043
+            ],
+            [
+                1841,
+                3317,
+                1892,
+                3360
+            ]
+        ]
+    }
+}

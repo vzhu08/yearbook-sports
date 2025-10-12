@@ -1,0 +1,504 @@
+{
+    "input_path": "C:\\Users\\vzhu0\\PycharmProjects\\yearbook-sports-git\\output\\turkeytail197000glen\\pages_gray\\page0023.jpg",
+    "page_index": null,
+    "model_settings": {
+        "use_doc_preprocessor": true,
+        "use_seal_recognition": false,
+        "use_table_recognition": false,
+        "use_formula_recognition": false,
+        "use_chart_recognition": false,
+        "use_region_detection": true
+    },
+    "parsing_res_list": [
+        {
+            "block_label": "doc_title",
+            "block_content": "THE  TURKEYTAIL  1970",
+            "block_bbox": [
+                476,
+                1060,
+                1665,
+                1652
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "Volume XXIII ",
+            "block_bbox": [
+                719,
+                1931,
+                1404,
+                2020
+            ]
+        },
+        {
+            "block_label": "text",
+            "block_content": "Editor: Frances Whitener; Circulation Managers: Judy Orders,Sharon Elliott; Business Managers: Betty Woods,Betsy Gibbs.\n",
+            "block_bbox": [
+                480,
+                2166,
+                1664,
+                2321
+            ]
+        },
+        {
+            "block_label": "number",
+            "block_content": "17",
+            "block_bbox": [
+                1046,
+                3325,
+                1081,
+                3355
+            ]
+        }
+    ],
+    "doc_preprocessor_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_orientation_classify": false,
+            "use_doc_unwarping": false
+        },
+        "angle": -1
+    },
+    "layout_det_res": {
+        "input_path": null,
+        "page_index": null,
+        "boxes": [
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.948826789855957,
+                "coordinate": [
+                    480.049072265625,
+                    2166.09814453125,
+                    1664.837158203125,
+                    2321.7275390625
+                ]
+            },
+            {
+                "cls_id": 10,
+                "label": "doc_title",
+                "score": 0.9163380265235901,
+                "coordinate": [
+                    476.3148193359375,
+                    1060.593505859375,
+                    1665.1644287109375,
+                    1652.522216796875
+                ]
+            },
+            {
+                "cls_id": 3,
+                "label": "number",
+                "score": 0.8297160267829895,
+                "coordinate": [
+                    1046.05517578125,
+                    3325.903564453125,
+                    1081.95849609375,
+                    3355.870849609375
+                ]
+            },
+            {
+                "cls_id": 2,
+                "label": "text",
+                "score": 0.6514518857002258,
+                "coordinate": [
+                    719.5696411132812,
+                    1931.2373046875,
+                    1404.406494140625,
+                    2020.864990234375
+                ]
+            }
+        ]
+    },
+    "overall_ocr_res": {
+        "input_path": null,
+        "page_index": null,
+        "model_settings": {
+            "use_doc_preprocessor": false,
+            "use_textline_orientation": true
+        },
+        "dt_polys": [
+            [
+                [
+                    884,
+                    1057
+                ],
+                [
+                    1272,
+                    1057
+                ],
+                [
+                    1272,
+                    1223
+                ],
+                [
+                    884,
+                    1223
+                ]
+            ],
+            [
+                [
+                    474,
+                    1289
+                ],
+                [
+                    1678,
+                    1289
+                ],
+                [
+                    1678,
+                    1445
+                ],
+                [
+                    474,
+                    1445
+                ]
+            ],
+            [
+                [
+                    911,
+                    1512
+                ],
+                [
+                    1252,
+                    1505
+                ],
+                [
+                    1255,
+                    1669
+                ],
+                [
+                    915,
+                    1676
+                ]
+            ],
+            [
+                [
+                    726,
+                    1932
+                ],
+                [
+                    1411,
+                    1932
+                ],
+                [
+                    1411,
+                    2021
+                ],
+                [
+                    726,
+                    2021
+                ]
+            ],
+            [
+                [
+                    482,
+                    2163
+                ],
+                [
+                    1666,
+                    2170
+                ],
+                [
+                    1666,
+                    2217
+                ],
+                [
+                    481,
+                    2210
+                ]
+            ],
+            [
+                [
+                    539,
+                    2220
+                ],
+                [
+                    1465,
+                    2226
+                ],
+                [
+                    1465,
+                    2273
+                ],
+                [
+                    539,
+                    2267
+                ]
+            ],
+            [
+                [
+                    538,
+                    2276
+                ],
+                [
+                    787,
+                    2280
+                ],
+                [
+                    786,
+                    2329
+                ],
+                [
+                    537,
+                    2325
+                ]
+            ],
+            [
+                [
+                    1040,
+                    3323
+                ],
+                [
+                    1090,
+                    3323
+                ],
+                [
+                    1090,
+                    3366
+                ],
+                [
+                    1040,
+                    3366
+                ]
+            ]
+        ],
+        "text_det_params": {
+            "limit_side_len": 2000,
+            "limit_type": "max",
+            "thresh": 0.3,
+            "max_side_limit": 4000,
+            "box_thresh": 0.6,
+            "unclip_ratio": 1.5
+        },
+        "text_type": "general",
+        "textline_orientation_angles": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "text_rec_score_thresh": 0.7,
+        "return_word_box": false,
+        "rec_texts": [
+            "THE",
+            "TURKEYTAIL",
+            "1970",
+            "Volume XXIII",
+            "Editor: Frances Whitener; Circulation Managers: Judy Orders,",
+            "Sharon Elliott; Business Managers: Betty Woods,",
+            "Betsy Gibbs.",
+            "17"
+        ],
+        "rec_scores": [
+            0.9972481727600098,
+            0.9955283403396606,
+            0.9995083808898926,
+            0.8482925295829773,
+            0.9598516821861267,
+            0.9579744338989258,
+            0.9469008445739746,
+            0.9994036555290222
+        ],
+        "rec_polys": [
+            [
+                [
+                    884,
+                    1057
+                ],
+                [
+                    1272,
+                    1057
+                ],
+                [
+                    1272,
+                    1223
+                ],
+                [
+                    884,
+                    1223
+                ]
+            ],
+            [
+                [
+                    474,
+                    1289
+                ],
+                [
+                    1678,
+                    1289
+                ],
+                [
+                    1678,
+                    1445
+                ],
+                [
+                    474,
+                    1445
+                ]
+            ],
+            [
+                [
+                    911,
+                    1512
+                ],
+                [
+                    1252,
+                    1505
+                ],
+                [
+                    1255,
+                    1669
+                ],
+                [
+                    915,
+                    1676
+                ]
+            ],
+            [
+                [
+                    726,
+                    1932
+                ],
+                [
+                    1411,
+                    1932
+                ],
+                [
+                    1411,
+                    2021
+                ],
+                [
+                    726,
+                    2021
+                ]
+            ],
+            [
+                [
+                    482,
+                    2163
+                ],
+                [
+                    1666,
+                    2170
+                ],
+                [
+                    1666,
+                    2217
+                ],
+                [
+                    481,
+                    2210
+                ]
+            ],
+            [
+                [
+                    539,
+                    2220
+                ],
+                [
+                    1465,
+                    2226
+                ],
+                [
+                    1465,
+                    2273
+                ],
+                [
+                    539,
+                    2267
+                ]
+            ],
+            [
+                [
+                    538,
+                    2276
+                ],
+                [
+                    787,
+                    2280
+                ],
+                [
+                    786,
+                    2329
+                ],
+                [
+                    537,
+                    2325
+                ]
+            ],
+            [
+                [
+                    1040,
+                    3323
+                ],
+                [
+                    1090,
+                    3323
+                ],
+                [
+                    1090,
+                    3366
+                ],
+                [
+                    1040,
+                    3366
+                ]
+            ]
+        ],
+        "rec_boxes": [
+            [
+                884,
+                1057,
+                1272,
+                1223
+            ],
+            [
+                474,
+                1289,
+                1678,
+                1445
+            ],
+            [
+                911,
+                1505,
+                1255,
+                1676
+            ],
+            [
+                726,
+                1932,
+                1411,
+                2021
+            ],
+            [
+                481,
+                2163,
+                1666,
+                2217
+            ],
+            [
+                539,
+                2220,
+                1465,
+                2273
+            ],
+            [
+                537,
+                2276,
+                787,
+                2329
+            ],
+            [
+                1040,
+                3323,
+                1090,
+                3366
+            ]
+        ]
+    }
+}
