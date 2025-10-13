@@ -2,64 +2,53 @@
 """
 Section mapping and name extraction from compiled_ocr.json using spaCy PERSON NER.
 
+Pipeline for names per your spec:
+  1) From each section's text blocks, split on commas/periods to get short candidate strings.
+  2) Run spaCy NER on candidates (CPU-parallel).
+  3) For each PERSON span, split joined capitals left->right (JakeSmith -> Jake Smith),
+     but DO NOT split if the first chunk would be 'Mc', 'Mac', or 'O' (prefix exceptions).
+  4) Normalize and dedupe.
+
 Inputs (under <out_dir>/<pdf_stem>/):
   - compiled_ocr.json
 
 Outputs (same folder):
-  - sections_with_text.json       # sections between headers with page spans + raw texts
-  - sections_with_names.json      # same spans, but with deduped person names instead of texts
+  - sections_with_text.json
+  - sections_with_names.json
 
 Rules:
   1) A section spans from one header to the next header.
-  2) Ignore headers that contain "starter", "player", or "captain" (case-insensitive).
-     Ignored headers neither start nor end sections.
-  3) Text collection excludes blocks labeled: header, paragraph_title, footer, image.
-
-Robust to legacy formats:
-  - Supports PPStructure 'parsing_res_list' and legacy 'items' layouts.
-  - Page numbers are inferred by list order, 1-indexed.
-
-Public entry:
-  extract_names(pdf_path: str, out_dir: str) -> dict | None
+  2) Ignore headers containing "starter", "player", or "captain" (case-insensitive).
+  3) Exclude blocks labeled: header, paragraph_title, footer, image.
 """
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
-from collections import OrderedDict
 
 from src.common.io_utils import read_json, write_json
 
+# ---------------- CPU oversubscription guard ----------------
+# Prevent BLAS thread explosion when using spaCy with n_process>1
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
 # ------------------------------- Config -------------------------------
 
-IGNORE_HEADER_SUBSTRINGS = {"starter", "player", "captain"}   # case-insensitive
-EXCLUDE_TEXT_LABELS = {"header", "paragraph_title", "footer", "image"}  # labels not treated as body text
+IGNORE_HEADER_SUBSTRINGS = {"starter", "player", "captain"}
+EXCLUDE_TEXT_LABELS = {"header", "paragraph_title", "footer", "image"}
 
-# Domain stopwords to filter false-positive "names"
-NAME_STOPWORDS = {
-    # roles and grades
-    "Varsity", "Junior", "JV", "Freshman", "Sophomore", "Senior",
-    "Captain", "Captains", "Assistant", "Coach", "Manager", "Starter", "Player", "Bench",
-    "Team", "Roster", "Schedule", "Record", "Season",
-    # sports
-    "Basketball", "Football", "Soccer", "Baseball", "Softball", "Lacrosse", "Hockey",
-    "Tennis", "Golf", "Swim", "Swimming", "Diving", "Track", "Field", "Cross", "Country",
-    "Volleyball", "Wrestling", "Cheer", "Cheerleading",
-    # time and common non-names
-    "January", "February", "March", "April", "May", "June", "July", "August",
-    "September", "October", "November", "December",
-    "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun",
-    # school words
-    "High", "School", "Yearbook", "Club", "Clubs", "Honor", "Honors",
-    # punctuation placeholders
-    "—", "-", "•",
-}
-
+NAME_STOPWORDS: Set[str] = set()
 SUFFIXES = {"Jr", "Jr.", "Sr", "Sr.", "II", "III", "IV", "V"}
 
+# NER parallel knobs (CPU only)
+NER_CPU_WORKERS = max((os.cpu_count() or 2) - 1, 1)
+NER_BATCH_CPU = 256
+NER_BATCH_GPU = 1024  # kept for completeness; we keep n_process=1 on GPU
 
 # --------------------------- spaCy Loader ---------------------------
 
@@ -73,9 +62,7 @@ _SPACY_MODEL_CANDIDATES = [
 
 
 def _get_spacy_nlp():
-    """
-    Lazy-load a spaCy English pipeline. Requires a model to be installed.
-    """
+    """Lazy-load a spaCy English pipeline."""
     global _NLP
     if _NLP is not None:
         return _NLP
@@ -84,13 +71,14 @@ def _get_spacy_nlp():
         import spacy  # type: ignore
     except Exception as e:
         raise RuntimeError(
-            "spaCy is required for name extraction. Install with: pip install spacy && python -m spacy download en_core_web_sm"
+            "spaCy is required. Install: pip install spacy && python -m spacy download en_core_web_sm"
         ) from e
 
     last_err: Optional[Exception] = None
     for model in _SPACY_MODEL_CANDIDATES:
         try:
             _NLP = spacy.load(model)
+            print("Using model:", model)
             return _NLP
         except Exception as e:
             last_err = e
@@ -108,14 +96,10 @@ def _normalize_space(s: str) -> str:
 
 
 def _page_blocks(page: Dict[str, Any]) -> Iterable[Dict[str, Any]]:
-    """
-    Yield blocks with unified keys: block_label, block_content, block_bbox.
-    Supports PPStructure 'parsing_res_list' and legacy 'items'.
-    """
+    """Yield unified blocks from PPStructure 'parsing_res_list' or legacy 'items'."""
     if not isinstance(page, dict):
         return
 
-    # PPStructure
     prl = page.get("parsing_res_list")
     if isinstance(prl, list) and prl:
         for blk in prl:
@@ -128,7 +112,6 @@ def _page_blocks(page: Dict[str, Any]) -> Iterable[Dict[str, Any]]:
             }
         return
 
-    # Legacy
     items = page.get("items")
     if isinstance(items, list) and items:
         for it in items:
@@ -162,15 +145,12 @@ def _is_ignored_header_text(text: str) -> bool:
 # ------------------------- Collect headers/text ------------------------
 
 def _collect_headers_with_pos(compiled_clean: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """
-    Ordered header markers: {"page": int, "y": float, "text": str}
-    Ignores headers with undesired substrings.
-    """
+    """Ordered header markers: {'page', 'y', 'text'}."""
     markers: List[Dict[str, Any]] = []
 
     for page_idx, page in enumerate(compiled_clean.get("pages", []), start=1):
         blocks = list(_page_blocks(page))
-        blocks.sort(key=_y1)  # top-to-bottom
+        blocks.sort(key=_y1)
         for blk in blocks:
             if _is_header(blk):
                 txt = _normalize_space(blk.get("block_content", ""))
@@ -182,11 +162,7 @@ def _collect_headers_with_pos(compiled_clean: Dict[str, Any]) -> List[Dict[str, 
 
 
 def _collect_text_blocks_by_page(compiled_clean: Dict[str, Any]) -> Dict[int, List[Dict[str, Any]]]:
-    """
-    For each page, collect textual blocks to include in sections.
-    Excludes labels in EXCLUDE_TEXT_LABELS. Keeps string contents only.
-    Returns: page_num -> [ { "text": str, "y": float } ... ]
-    """
+    """Collect textual blocks per page, excluding headers/titles/footers/images."""
     out: Dict[int, List[Dict[str, Any]]] = {}
 
     for page_idx, page in enumerate(compiled_clean.get("pages", []), start=1):
@@ -212,12 +188,7 @@ def _slice_section_texts(
     start_marker: Dict[str, Any],
     next_marker: Optional[Dict[str, Any]],
 ) -> Tuple[List[str], List[int]]:
-    """
-    Return (texts, pages_involved) for section from start_marker up to (not including) next_marker.
-    - Start page: include y >= start_y
-    - Middle pages: include all
-    - End page: include y < end_y
-    """
+    """Return (texts, pages_involved) for section from start_marker to next_marker."""
     start_p, start_y = start_marker["page"], start_marker["y"]
     end_p: Optional[int] = next_marker["page"] if next_marker else None
     end_y: Optional[float] = next_marker["y"] if next_marker else None
@@ -267,16 +238,13 @@ def _slice_section_texts(
 
 
 def _build_sections(compiled_clean: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """
-    Build sections list with header text, page span, and collected texts.
-    """
+    """Build sections with header, page span, and collected texts."""
     markers = _collect_headers_with_pos(compiled_clean)
     texts_by_page = _collect_text_blocks_by_page(compiled_clean)
 
     sections: List[Dict[str, Any]] = []
 
     if not markers:
-        # Single section for the whole document if no headers
         all_texts: List[str] = []
         pages_involved: Set[int] = set()
         for p, rows in texts_by_page.items():
@@ -298,7 +266,7 @@ def _build_sections(compiled_clean: Dict[str, Any]) -> List[Dict[str, Any]]:
         nxt = markers[i + 1] if i + 1 < len(markers) else None
         texts, pages = _slice_section_texts(texts_by_page, start, nxt)
         if not texts and not pages:
-            pages = [start["page"]]  # keep traceable even if empty
+            pages = [start["page"]]
         sections.append({
             "header": start["text"],
             "start_page": pages[0] if pages else start["page"],
@@ -311,6 +279,27 @@ def _build_sections(compiled_clean: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 # --------------------------- Name utilities ---------------------------
+
+_SPLIT_ON_PUNCT = re.compile(r"[.,]+")  # split candidates on commas/periods
+
+
+def _chunk_candidates(texts: List[str]) -> List[str]:
+    """
+    Split each text span on commas/periods into short candidate strings.
+    Do NOT pre-split joined capitals here; we apply that AFTER NER per spec.
+    """
+    cands: List[str] = []
+    for t in texts:
+        t = _normalize_space(t)
+        if not t:
+            continue
+        for chunk in _SPLIT_ON_PUNCT.split(t):
+            chunk = _normalize_space(chunk)
+            if not chunk:
+                continue
+            cands.append(chunk)
+    return cands
+
 
 def _is_bad_token(tok: str) -> bool:
     if not tok or len(tok) < 2:
@@ -325,25 +314,18 @@ def _is_bad_token(tok: str) -> bool:
 
 
 def _post_filter_name_str(name: str) -> Optional[str]:
-    """
-    Token-level sanity checks and domain stopword filtering.
-    Allows suffixes. Drops names containing obvious non-person terms.
-    """
+    """Normalize casing, remove punctuation, and reject obvious non-names."""
     name = _normalize_space(name).strip(".,;:()[]{}")
     if not name:
         return None
-
-    # Title-case if the span is ALL CAPS to normalize OCR variants.
     if name.isupper():
         name = name.title()
-
     parts = name.split()
     clean_parts: List[str] = []
     for p in parts:
         if _is_bad_token(p):
             return None
         clean_parts.append(p)
-
     full = " ".join(clean_parts)
     for sw in NAME_STOPWORDS:
         if re.search(rf"\b{re.escape(sw)}\b", full):
@@ -351,31 +333,114 @@ def _post_filter_name_str(name: str) -> Optional[str]:
     return full
 
 
-def _extract_names_spacy(texts: List[str]) -> List[str]:
+# ---- Post-NER joined-capitals splitter ----
+
+_PREFIX_EXCEPTIONS = ("Mc", "Mac", "O")
+
+
+def _split_joined_capitals_left_to_right(s: str) -> str:
     """
-    Run spaCy NER over a list of lines. Collect PERSON entities.
+    Split words on internal capital letters from left to right.
+    Do NOT split if the segment before the capital equals 'Mc', 'Mac', or 'O'.
+    Works per-token while preserving whitespace and punctuation.
     """
-    if not texts:
+    if not s:
+        return s
+
+    # Preserve whitespace tokens
+    parts = re.split(r"(\s+)", s)
+    out: List[str] = []
+
+    for part in parts:
+        if not part or part.isspace():
+            out.append(part)
+            continue
+
+        # Process contiguous alphabetic chunks; leave non-alpha as-is
+        tokens = re.split(r"([A-Za-z]+)", part)
+        rebuilt: List[str] = []
+        for tok in tokens:
+            if not tok or not tok.isalpha():
+                rebuilt.append(tok)
+                continue
+
+            # Skip all-caps tokens (e.g., II, III, JR) and short ones
+            if tok.isupper() or len(tok) < 6:
+                rebuilt.append(tok)
+                continue
+
+            # Left-to-right scan
+            segments: List[str] = []
+            start = 0
+            i = 1
+            while i < len(tok):
+                ch = tok[i]
+                if ch.isupper():
+                    prefix = tok[start:i]
+                    # Apply exception only if the split would directly follow the exception prefix
+                    if prefix in _PREFIX_EXCEPTIONS:
+                        # Do not split here; continue scanning
+                        i += 1
+                        continue
+                    # Split here
+                    segments.append(prefix)
+                    start = i
+                i += 1
+            segments.append(tok[start:])
+
+            # Join segments with spaces
+            rebuilt.append(" ".join(seg for seg in segments if seg))
+        out.append("".join(rebuilt))
+
+    return "".join(out)
+
+
+def _extract_names_spacy_from_candidates(candidates: List[str]) -> List[str]:
+    """
+    Run spaCy NER over candidates with CPU parallelism and post-NER splitting.
+    - CPU: n_process = NER_CPU_WORKERS, batch_size = NER_BATCH_CPU
+    - GPU+transformer: n_process = 1, batch_size = NER_BATCH_GPU
+    After extracting PERSON spans, apply joined-capital splitting and normalize.
+    """
+    if not candidates:
         return []
 
     nlp = _get_spacy_nlp()
 
+    # Keep only transformer+ner if present, to reduce overhead
+    keep = {"ner", "transformer"} & set(nlp.pipe_names)
+    disable = [p for p in nlp.pipe_names if p not in keep]
+
+    # Decide CPU vs GPU
+    is_gpu = False
+    try:
+        import torch  # type: ignore
+        is_gpu = torch.cuda.is_available() and ("transformer" in nlp.pipe_names)
+    except Exception:
+        is_gpu = False
+
+    n_proc = 1 if is_gpu else NER_CPU_WORKERS
+    bsz = NER_BATCH_GPU if is_gpu else NER_BATCH_CPU
+
     found: List[str] = []
-    # Use pipe for speed and memory efficiency.
-    for doc in nlp.pipe(texts):
-        for ent in doc.ents:
-            if ent.label_ == "PERSON":
-                cand = _post_filter_name_str(ent.text)
+    with nlp.select_pipes(disable=disable):
+        for doc in nlp.pipe(candidates, batch_size=bsz, n_process=n_proc):
+            for ent in doc.ents:
+                if ent.label_ != "PERSON":
+                    continue
+                # Post-NER split of joined capitals with prefix exceptions
+                split = _split_joined_capitals_left_to_right(ent.text)
+                cand = _post_filter_name_str(split)
                 if cand:
                     found.append(cand)
 
-    # Deduplicate then sort for stability.
-    uniq_sorted = sorted(set(found))
-    return uniq_sorted
+    return sorted(set(found))
 
 
 def _names_from_section_texts(texts: List[str]) -> List[str]:
-    return _extract_names_spacy(texts)
+    """Chunk -> NER -> split joined capitals -> normalize -> dedupe."""
+    candidates = _chunk_candidates(texts)
+    return _extract_names_spacy_from_candidates(candidates)
 
 
 # ------------------------------- Entry Point -------------------------------
@@ -385,13 +450,6 @@ def extract_names(pdf_path: str, out_dir: str) -> Dict[str, Any] | None:
     Read compiled_ocr.json and emit:
       - sections_with_text.json
       - sections_with_names.json
-
-    Args:
-      pdf_path: path to the original PDF (used to locate <out_dir>/<pdf_stem>/)
-      out_dir: root output directory used in earlier steps
-
-    Returns:
-      dict with file paths and counts, or None if inputs are missing.
     """
     book_dir = Path(out_dir) / Path(pdf_path).stem
     compiled_clean_path = book_dir / "compiled_ocr.json"
@@ -408,7 +466,7 @@ def extract_names(pdf_path: str, out_dir: str) -> Dict[str, Any] | None:
     write_json({"sections": sections}, sections_text_path)
     print(f"[names] wrote {sections_text_path.name}  sections={len(sections)}")
 
-    # Build sections with names via spaCy PERSON NER
+    # Build sections with names
     sections_names: List[Dict[str, Any]] = []
     for sec in sections:
         names = _names_from_section_texts(sec.get("texts", []))
