@@ -15,11 +15,3 @@ def write_json(obj: Any, path: Path) -> None:
 def read_json(path: Path) -> Any:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
-
-def pdf_iter(pdf: Path | None, pdf_dir: Path | None):
-    if pdf and pdf.exists():
-        yield pdf
-        return
-    if pdf_dir and pdf_dir.exists():
-        for p in sorted(pdf_dir.glob("*.pdf")):
-            yield p
