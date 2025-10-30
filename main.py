@@ -18,9 +18,9 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 # ---------------- Levers ----------------
-RUN_TEXT_EXTRACTION = False
+RUN_TEXT_EXTRACTION = True
 RUN_NAME_EXTRACTION = True
-RUN_NAME_CORRECTION = False
+RUN_NAME_CORRECTION = True
 
 # ---------------- IO ----------------
 PDF: Optional[str] = None            # e.g., "pdf_input/book.pdf"
@@ -31,7 +31,7 @@ OUT_DIR: str = "output"
 TX_DPI = 300
 TX_FORMAT = "jpg"         # "jpg" | "png"
 TX_JPEG_QUALITY = 90
-TX_USE_GPU = True
+TX_USE_GPU = False
 TX_LANG = "en"
 
 # Step 2
