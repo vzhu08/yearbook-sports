@@ -122,9 +122,8 @@ def _render_pdf_to_images(pdf_path: Path, pages_dir: Path, gray_dir: Path,
 
 # ----------------------------- OCR ------------------------------
 
-def _run_paddleocr_batch(gray_paths: List[Path], use_gpu: bool, lang: str, batch_size: int = 64) -> List[Any]:
+def _run_paddleocr_batch(gray_paths: List[Path], use_gpu: bool, batch_size: int = 64) -> List[Any]:
     ocr = PPStructureV3(
-        lang=lang,
         device=("gpu" if use_gpu else "cpu"),
         text_recognition_batch_size=batch_size,
         text_det_limit_side_len=2000,
@@ -325,7 +324,6 @@ def extract_text(
     fmt: str = "jpg",
     jpeg_quality: int = 95,
     use_gpu: bool = True,
-    lang: str = "en",
     batch_size: int = 64,
 ) -> None:
     """
@@ -353,7 +351,7 @@ def extract_text(
         page_count = len(_doc)
 
     print(f"[text] start: {pdf.name} -> {book_dir} (pages={page_count})")
-    print(f"[text] settings: dpi={dpi}, fmt={fmt}, quality={jpeg_quality}, device={'gpu' if use_gpu else 'cpu'}, lang={lang}, batch={batch_size}")
+    print(f"[text] settings: dpi={dpi}, fmt={fmt}, quality={jpeg_quality}, device={'gpu' if use_gpu else 'cpu'}, batch={batch_size}")
 
     # ---- Step 1: render ----
     have_rgb = sum((pages_dir / f"{_expected_stem(i)}.{fmt}").exists() for i in range(page_count))
@@ -383,7 +381,7 @@ def extract_text(
     else:
         print(f"[text] ocr: running Paddle on {len(metas)} images...")
         t_ocr = time.time()
-        results = _run_paddleocr_batch([m.gray_path for m in metas], use_gpu=use_gpu, lang=lang, batch_size=batch_size)
+        results = _run_paddleocr_batch([m.gray_path for m in metas], use_gpu=use_gpu, batch_size=batch_size)
         print(f"[text] ocr: done time={time.time() - t_ocr:.2f}s")
         _save_paddle_jsons(book_dir, results, page_count)
 

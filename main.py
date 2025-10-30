@@ -32,7 +32,6 @@ TX_DPI = 300
 TX_FORMAT = "jpg"         # "jpg" | "png"
 TX_JPEG_QUALITY = 90
 TX_USE_GPU = False
-TX_LANG = "en"
 
 # Step 2
 NC_YEAR = 1980
@@ -119,7 +118,6 @@ def main() -> None:
                     fmt=TX_FORMAT,
                     jpeg_quality=TX_JPEG_QUALITY,
                     use_gpu=TX_USE_GPU,
-                    lang=TX_LANG,
                 ),
             )
 
