@@ -1,13 +1,7 @@
 # src/section_name_extraction.py
 """
-Section mapping and name extraction from compiled_ocr.json using spaCy PERSON NER.
-
-Pipeline for names per your spec:
-  1) From each section's text blocks, split on commas/periods to get short candidate strings.
-  2) Run spaCy NER on candidates (CPU-parallel).
-  3) For each PERSON span, split joined capitals left->right (JakeSmith -> Jake Smith),
-     but DO NOT split if the first chunk would be 'Mc', 'Mac', or 'O' (prefix exceptions).
-  4) Normalize and dedupe.
+Pre/Post processing: section building + text/header correction + candidate generation,
+then assign name tokens to sections via spaCy NER (src.name_ner) and identify sports.
 
 Inputs (under <out_dir>/<pdf_stem>/):
   - compiled_ocr.json
@@ -15,6 +9,7 @@ Inputs (under <out_dir>/<pdf_stem>/):
 Outputs (same folder):
   - sections_with_text.json
   - sections_with_names.json
+  - sports_sections.json  (sports-only reduced view of sections_with_names)
 
 Rules:
   1) A section spans from one header to the next header.
@@ -30,9 +25,9 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from src.common.io_utils import read_json, write_json
+from src.name_ner import extract_person_names_per_candidate, dedupe_person_names
 
 # ---------------- CPU oversubscription guard ----------------
-# Prevent BLAS thread explosion when using spaCy with n_process>1
 os.environ.setdefault("OMP_NUM_THREADS", "1")
 os.environ.setdefault("MKL_NUM_THREADS", "1")
 os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
@@ -42,52 +37,46 @@ os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 IGNORE_HEADER_SUBSTRINGS = {"starter", "player", "captain"}
 EXCLUDE_TEXT_LABELS = {"header", "paragraph_title", "footer", "image"}
 
-NAME_STOPWORDS: Set[str] = set()
-SUFFIXES = {"Jr", "Jr.", "Sr", "Sr.", "II", "III", "IV", "V"}
-
-# NER parallel knobs (CPU only)
-NER_CPU_WORKERS = max((os.cpu_count() or 2) - 1, 1)
-NER_BATCH_CPU = 256
-NER_BATCH_GPU = 1024  # kept for completeness; we keep n_process=1 on GPU
-
-# --------------------------- spaCy Loader ---------------------------
-
-_NLP = None
-_SPACY_MODEL_CANDIDATES = [
-    "en_core_web_trf",
-    "en_core_web_lg",
-    "en_core_web_md",
-    "en_core_web_sm",
-]
-
-
-def _get_spacy_nlp():
-    """Lazy-load a spaCy English pipeline."""
-    global _NLP
-    if _NLP is not None:
-        return _NLP
-
-    try:
-        import spacy  # type: ignore
-    except Exception as e:
-        raise RuntimeError(
-            "spaCy is required. Install: pip install spacy && python -m spacy download en_core_web_sm"
-        ) from e
-
-    last_err: Optional[Exception] = None
-    for model in _SPACY_MODEL_CANDIDATES:
-        try:
-            _NLP = spacy.load(model)
-            print("Using model:", model)
-            return _NLP
-        except Exception as e:
-            last_err = e
-            continue
-
-    raise RuntimeError(
-        "No spaCy English model found. Install one, e.g.: python -m spacy download en_core_web_sm"
-    ) from last_err
-
+# ---------------- Sports section detection ----------------
+_SPORTS_SINGLE_WORD = {
+    "athletics",
+    "sports",
+    "varsity",
+    "jv",
+    "baseball",
+    "softball",
+    "basketball",
+    "football",
+    "soccer",
+    "lacrosse",
+    "volleyball",
+    "tennis",
+    "golf",
+    "swimming",
+    "diving",
+    "wrestling",
+    "cheer",
+    "gymnastics",
+    "rowing",
+    "crew",
+    "badminton",
+    "squash",
+    "fencing",
+    "bowling",
+    "skiing",
+    "rugby",
+    "ultimate",
+    "hockey",
+    "track",
+}
+_SPORTS_MULTI_WORD = {
+    "junior varsity",
+    "cross country",
+    "track and field",
+    "field hockey",
+    "water polo",
+    "flag football",
+}
 
 # --------------------------- Helpers: blocks ---------------------------
 
@@ -142,6 +131,111 @@ def _is_ignored_header_text(text: str) -> bool:
     return any(key in t for key in IGNORE_HEADER_SUBSTRINGS)
 
 
+# ------------------------- Text correction helpers -------------------------
+
+_PREFIX_EXCEPTIONS = ("Mc", "Mac", "O")
+_SPLIT_ON_PUNCT = re.compile(r"[.,]+")
+
+
+def _looks_all_caps(s: str) -> bool:
+    """True if the string has letters and none are lowercase (ignores digits/punct/spaces)."""
+    if not s:
+        return False
+    if not re.search(r"[A-Za-z]", s):
+        return False
+    return not bool(re.search(r"[a-z]", s))
+
+
+def _collapse_spaced_letters(s: str) -> str:
+    """Collapse sequences like 'A T H L E T I C S' -> 'ATHLETICS'."""
+    if not s:
+        return s
+
+    def repl(m: re.Match) -> str:
+        return m.group(0).replace(" ", "")
+
+    return re.sub(r"\b(?:[A-Za-z]\s+){2,}[A-Za-z]\b", repl, s)
+
+
+def _split_joined_capitals_left_to_right(s: str) -> str:
+    """
+    Split words on internal capital letters from left to right.
+    Do NOT split if the segment before the capital equals 'Mc', 'Mac', or 'O'.
+    Works per-token while preserving whitespace and punctuation.
+    """
+    if not s:
+        return s
+
+    parts = re.split(r"(\s+)", s)
+    out: List[str] = []
+
+    for part in parts:
+        if not part or part.isspace():
+            out.append(part)
+            continue
+
+        tokens = re.split(r"([A-Za-z]+)", part)
+        rebuilt: List[str] = []
+        for tok in tokens:
+            if not tok or not tok.isalpha():
+                rebuilt.append(tok)
+                continue
+
+            if tok.isupper() or len(tok) < 6:
+                rebuilt.append(tok)
+                continue
+
+            segments: List[str] = []
+            start = 0
+            i = 1
+            while i < len(tok):
+                if tok[i].isupper():
+                    prefix = tok[start:i]
+                    if prefix in _PREFIX_EXCEPTIONS:
+                        i += 1
+                        continue
+                    segments.append(prefix)
+                    start = i
+                i += 1
+            segments.append(tok[start:])
+            rebuilt.append(" ".join(seg for seg in segments if seg))
+
+        out.append("".join(rebuilt))
+
+    return "".join(out)
+
+
+def _correct_candidate_text_pre_ner(s: str) -> str:
+    """
+    Candidate correction:
+      - If ALL CAPS: do nothing beyond punctuation splitting already done upstream
+      - Else: split joined capitals with prefix exceptions
+    """
+    s = _normalize_space(s)
+    if not s:
+        return s
+    if _looks_all_caps(s):
+        return s
+    return _split_joined_capitals_left_to_right(s)
+
+
+def _correct_header_text(s: str) -> str:
+    """
+    Header correction:
+      - normalize spaces
+      - collapse spaced-letter headers ("A T H L E T I C S" -> "ATHLETICS")
+      - if ALL CAPS: do not split joined capitals
+      - else: split joined capitals with prefix exceptions
+    """
+    s = _normalize_space(s)
+    s = _collapse_spaced_letters(s)
+    if not s:
+        return s
+    if _looks_all_caps(s):
+        return s
+    return _split_joined_capitals_left_to_right(s)
+
+
 # ------------------------- Collect headers/text ------------------------
 
 def _collect_headers_with_pos(compiled_clean: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -153,7 +247,8 @@ def _collect_headers_with_pos(compiled_clean: Dict[str, Any]) -> List[Dict[str, 
         blocks.sort(key=_y1)
         for blk in blocks:
             if _is_header(blk):
-                txt = _normalize_space(blk.get("block_content", ""))
+                raw = blk.get("block_content", "")
+                txt = _correct_header_text(raw if isinstance(raw, str) else "")
                 if txt and not _is_ignored_header_text(txt):
                     markers.append({"page": page_idx, "y": _y1(blk), "text": txt})
 
@@ -278,15 +373,13 @@ def _build_sections(compiled_clean: Dict[str, Any]) -> List[Dict[str, Any]]:
     return sections
 
 
-# --------------------------- Name utilities ---------------------------
-
-_SPLIT_ON_PUNCT = re.compile(r"[.,]+")  # split candidates on commas/periods
-
+# --------------------------- Candidate generation ---------------------------
 
 def _chunk_candidates(texts: List[str]) -> List[str]:
     """
-    Split each text span on commas/periods into short candidate strings.
-    Do NOT pre-split joined capitals here; we apply that AFTER NER per spec.
+    Step 1:
+      - Split each text span on commas/periods into short candidate strings.
+      - Then apply joined-capital splitting BEFORE NER (unless ALL CAPS).
     """
     cands: List[str] = []
     for t in texts:
@@ -297,159 +390,45 @@ def _chunk_candidates(texts: List[str]) -> List[str]:
             chunk = _normalize_space(chunk)
             if not chunk:
                 continue
-            cands.append(chunk)
+            cands.append(_correct_candidate_text_pre_ner(chunk))
     return cands
 
 
-def _is_bad_token(tok: str) -> bool:
-    if not tok or len(tok) < 2:
-        return True
-    if any(ch.isdigit() for ch in tok):
-        return True
-    if tok in SUFFIXES:
+# --------------------------- Sports header matching ---------------------------
+
+def _is_sports_section_header(header_text: str) -> bool:
+    """
+    Case-insensitive match of a section header against sports keywords.
+    Now supports partial matches (substring) on normalized text.
+    Example: "Track & Field" or "TRACKANDFIELD" matches keyword "track".
+    """
+    t = (header_text or "").strip().lower()
+    if not t:
         return False
-    if tok in NAME_STOPWORDS:
-        return True
+
+    norm = re.sub(r"[^a-z0-9\s-]+", " ", t)
+    norm = re.sub(r"\s+", " ", norm).strip()
+
+    for kw in _SPORTS_MULTI_WORD:
+        if kw in norm:
+            return True
+
+    # partial match for single-word sports keys
+    for kw in _SPORTS_SINGLE_WORD:
+        if kw in norm:
+            return True
+
     return False
-
-
-def _post_filter_name_str(name: str) -> Optional[str]:
-    """Normalize casing, remove punctuation, and reject obvious non-names."""
-    name = _normalize_space(name).strip(".,;:()[]{}")
-    if not name:
-        return None
-    if name.isupper():
-        name = name.title()
-    parts = name.split()
-    clean_parts: List[str] = []
-    for p in parts:
-        if _is_bad_token(p):
-            return None
-        clean_parts.append(p)
-    full = " ".join(clean_parts)
-    for sw in NAME_STOPWORDS:
-        if re.search(rf"\b{re.escape(sw)}\b", full):
-            return None
-    return full
-
-
-# ---- Post-NER joined-capitals splitter ----
-
-_PREFIX_EXCEPTIONS = ("Mc", "Mac", "O")
-
-
-def _split_joined_capitals_left_to_right(s: str) -> str:
-    """
-    Split words on internal capital letters from left to right.
-    Do NOT split if the segment before the capital equals 'Mc', 'Mac', or 'O'.
-    Works per-token while preserving whitespace and punctuation.
-    """
-    if not s:
-        return s
-
-    # Preserve whitespace tokens
-    parts = re.split(r"(\s+)", s)
-    out: List[str] = []
-
-    for part in parts:
-        if not part or part.isspace():
-            out.append(part)
-            continue
-
-        # Process contiguous alphabetic chunks; leave non-alpha as-is
-        tokens = re.split(r"([A-Za-z]+)", part)
-        rebuilt: List[str] = []
-        for tok in tokens:
-            if not tok or not tok.isalpha():
-                rebuilt.append(tok)
-                continue
-
-            # Skip all-caps tokens (e.g., II, III, JR) and short ones
-            if tok.isupper() or len(tok) < 6:
-                rebuilt.append(tok)
-                continue
-
-            # Left-to-right scan
-            segments: List[str] = []
-            start = 0
-            i = 1
-            while i < len(tok):
-                ch = tok[i]
-                if ch.isupper():
-                    prefix = tok[start:i]
-                    # Apply exception only if the split would directly follow the exception prefix
-                    if prefix in _PREFIX_EXCEPTIONS:
-                        # Do not split here; continue scanning
-                        i += 1
-                        continue
-                    # Split here
-                    segments.append(prefix)
-                    start = i
-                i += 1
-            segments.append(tok[start:])
-
-            # Join segments with spaces
-            rebuilt.append(" ".join(seg for seg in segments if seg))
-        out.append("".join(rebuilt))
-
-    return "".join(out)
-
-
-def _extract_names_spacy_from_candidates(candidates: List[str]) -> List[str]:
-    """
-    Run spaCy NER over candidates with CPU parallelism and post-NER splitting.
-    - CPU: n_process = NER_CPU_WORKERS, batch_size = NER_BATCH_CPU
-    - GPU+transformer: n_process = 1, batch_size = NER_BATCH_GPU
-    After extracting PERSON spans, apply joined-capital splitting and normalize.
-    """
-    if not candidates:
-        return []
-
-    nlp = _get_spacy_nlp()
-
-    # Keep only transformer+ner if present, to reduce overhead
-    keep = {"ner", "transformer"} & set(nlp.pipe_names)
-    disable = [p for p in nlp.pipe_names if p not in keep]
-
-    # Decide CPU vs GPU
-    is_gpu = False
-    try:
-        import torch  # type: ignore
-        is_gpu = torch.cuda.is_available() and ("transformer" in nlp.pipe_names)
-    except Exception:
-        is_gpu = False
-
-    n_proc = 1 if is_gpu else NER_CPU_WORKERS
-    bsz = NER_BATCH_GPU if is_gpu else NER_BATCH_CPU
-
-    found: List[str] = []
-    with nlp.select_pipes(disable=disable):
-        for doc in nlp.pipe(candidates, batch_size=bsz, n_process=n_proc):
-            for ent in doc.ents:
-                if ent.label_ != "PERSON":
-                    continue
-                # Post-NER split of joined capitals with prefix exceptions
-                split = _split_joined_capitals_left_to_right(ent.text)
-                cand = _post_filter_name_str(split)
-                if cand:
-                    found.append(cand)
-
-    return sorted(set(found))
-
-
-def _names_from_section_texts(texts: List[str]) -> List[str]:
-    """Chunk -> NER -> split joined capitals -> normalize -> dedupe."""
-    candidates = _chunk_candidates(texts)
-    return _extract_names_spacy_from_candidates(candidates)
 
 
 # ------------------------------- Entry Point -------------------------------
 
-def extract_names(pdf_path: str, out_dir: str) -> Dict[str, Any] | None:
+def extract_names(pdf_path: str, out_dir: str, verbose_ner: bool = False) -> Dict[str, Any] | None:
     """
     Read compiled_ocr.json and emit:
       - sections_with_text.json
       - sections_with_names.json
+      - sports_sections.json
     """
     book_dir = Path(out_dir) / Path(pdf_path).stem
     compiled_clean_path = book_dir / "compiled_ocr.json"
@@ -466,10 +445,38 @@ def extract_names(pdf_path: str, out_dir: str) -> Dict[str, Any] | None:
     write_json({"sections": sections}, sections_text_path)
     print(f"[names] wrote {sections_text_path.name}  sections={len(sections)}")
 
-    # Build sections with names
+    # Sports-only reduced view (decide sports sections BEFORE NER)
+    sports_section_mask: List[bool] = [
+        _is_sports_section_header(sec.get("header", "")) for sec in sections
+    ]
+    sports_section_indices: List[int] = [i for i, is_sports in enumerate(sports_section_mask) if is_sports]
+
+    # Build candidates only for sports sections (single NER call)
+    flat_candidates: List[str] = []
+    flat_section_idx: List[int] = []
+    candidates_per_sports_section: List[int] = []
+
+    for i in sports_section_indices:
+        sec = sections[i]
+        cands = _chunk_candidates(sec.get("texts", []))
+        candidates_per_sports_section.append(len(cands))
+        for c in cands:
+            flat_candidates.append(c)
+            flat_section_idx.append(i)
+
+    # Run NER once over sports candidates (or skip if none)
+    section_names_raw: List[List[str]] = [[] for _ in sections]
+    if flat_candidates:
+        names_per_candidate = extract_person_names_per_candidate(flat_candidates, verbose=verbose_ner)
+
+        # Group back to original section indices
+        for idx, names_here in zip(flat_section_idx, names_per_candidate):
+            section_names_raw[idx].extend(names_here)
+
+    # Per-section dedupe (nested-name removal, etc.)
     sections_names: List[Dict[str, Any]] = []
-    for sec in sections:
-        names = _names_from_section_texts(sec.get("texts", []))
+    for sec, raw_names in zip(sections, section_names_raw):
+        names = dedupe_person_names(raw_names) if raw_names else []
         sections_names.append({
             "header": sec["header"],
             "start_page": sec["start_page"],
@@ -482,8 +489,18 @@ def extract_names(pdf_path: str, out_dir: str) -> Dict[str, Any] | None:
     write_json({"sections": sections_names}, sections_names_path)
     print(f"[names] wrote {sections_names_path.name}")
 
+    sports_only = [sections_names[i] for i in sports_section_indices]
+    sports_sections_path = book_dir / "sports_sections.json"
+    write_json({"sections": sports_only}, sports_sections_path)
+    print(f"[names] wrote {sports_sections_path.name}  sports_sections={len(sports_only)}")
+
     return {
         "sections_with_text": str(sections_text_path),
         "sections_with_names": str(sections_names_path),
+        "sports_sections": str(sports_sections_path),
         "sections_count": len(sections),
+        "sports_sections_count": len(sports_only),
+        "total_candidates": len(flat_candidates),
+        "candidates_per_sports_section": candidates_per_sports_section,
     }
+
