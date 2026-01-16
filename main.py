@@ -18,9 +18,9 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 # ---------------- Levers ----------------
-RUN_TEXT_EXTRACTION = True
+RUN_TEXT_EXTRACTION = False
 RUN_NAME_EXTRACTION = True
-RUN_NAME_CORRECTION = False
+RUN_NAME_CORRECTION = True
 
 # ---------------- IO ----------------
 PDF: Optional[str] = None            # e.g., "pdf_input/book.pdf"
@@ -37,7 +37,7 @@ TX_USE_GPU = True
 NC_YEAR = 1980
 NC_MIN_TOKENS = 2
 NC_MODEL = "en_core_web_trf"         # enforced in name_correction
-NC_ENABLE_CORRECTION = False
+NC_ENABLE_CORRECTION = True
 
 # Step 3
 NE_HEADER_THRESH = 1.8
