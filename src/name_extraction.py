@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import os
 import re
+import unicodedata
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
@@ -36,6 +37,22 @@ os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
 
 IGNORE_HEADER_SUBSTRINGS = {"starter", "player", "captain"}
 EXCLUDE_TEXT_LABELS = {"header", "paragraph_title", "footer", "image"}
+
+# Layout labels PP-StructureV3 uses for section-title-like blocks. "doc_title"
+# is included alongside the primary "header"/"paragraph_title" labels because
+# some yearbooks' section titles get classified there instead.
+_HEADER_LAYOUT_LABELS = {"header", "paragraph_title", "doc_title"}
+
+# Some yearbooks' large/spaced stylized heading fonts get OCR'd as full-width
+# Unicode glyphs (e.g. "ＡＴＨＬＥＴＩＣＳ") or underscore-joined letters
+# instead of being classified as a header block by the layout model — they
+# come through as plain "text"/"doc_title" blocks. This range/marker check is
+# a narrow, high-precision signal for that artifact (real body text and names
+# never contain full-width glyphs or underscores), so it catches those
+# mislabeled headers without risking misclassifying ordinary short all-caps
+# lines (e.g. "OFFICERS", a coach's name) as section headers.
+_FULLWIDTH_RE = re.compile(r"[＀-￯]")
+_STYLIZED_HEADER_MAX_WORDS = 6
 
 # ---------------- Sports section detection ----------------
 _SPORTS_SINGLE_WORD = {
@@ -81,7 +98,10 @@ _SPORTS_MULTI_WORD = {
 # --------------------------- Helpers: blocks ---------------------------
 
 def _normalize_space(s: str) -> str:
-    return re.sub(r"\s+", " ", (s or "").strip())
+    # NFKC folds OCR'd full-width Unicode glyphs (e.g. "Ａ" -> "A") to their
+    # normal ASCII form, so downstream keyword matching and NER see plain text.
+    s = unicodedata.normalize("NFKC", s or "")
+    return re.sub(r"\s+", " ", s.strip())
 
 
 def _page_blocks(page: Dict[str, Any]) -> Iterable[Dict[str, Any]]:
@@ -123,7 +143,12 @@ def _y1(block: Dict[str, Any]) -> float:
 
 def _is_header(block: Dict[str, Any]) -> bool:
     lbl = str(block.get("block_label", "")).lower()
-    return lbl in {"header", "paragraph_title"}
+    if lbl in _HEADER_LAYOUT_LABELS:
+        return True
+    if lbl == "text":
+        raw = block.get("block_content", "")
+        return _looks_like_stylized_header(raw if isinstance(raw, str) else "")
+    return False
 
 
 def _is_ignored_header_text(text: str) -> bool:
@@ -144,6 +169,28 @@ def _looks_all_caps(s: str) -> bool:
     if not re.search(r"[A-Za-z]", s):
         return False
     return not bool(re.search(r"[a-z]", s))
+
+
+def _looks_like_stylized_header(raw_text: str) -> bool:
+    """
+    Catch section-title blocks that PP-StructureV3 labeled as plain
+    "text"/"doc_title" instead of "header"/"paragraph_title" — seen on
+    yearbooks whose large/spaced heading font gets OCR'd as full-width
+    Unicode glyphs (e.g. "ATHLETICS") or underscore-joined letters.
+
+    Deliberately narrow: only fires when the ORIGINAL (pre-normalization)
+    text contains one of those specific artifacts, so ordinary short
+    all-caps lines (a coach's name, "OFFICERS") aren't misclassified as
+    section headers.
+    """
+    raw = raw_text or ""
+    if not (_FULLWIDTH_RE.search(raw) or "_" in raw):
+        return False
+
+    t = _normalize_space(raw).replace("_", " ")
+    if not t or len(t.split()) > _STYLIZED_HEADER_MAX_WORDS:
+        return False
+    return _looks_all_caps(t)
 
 
 def _collapse_spaced_letters(s: str) -> str:
