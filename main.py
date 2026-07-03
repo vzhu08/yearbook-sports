@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 # ---------------- Levers ----------------
-RUN_TEXT_EXTRACTION = True
+RUN_TEXT_EXTRACTION = False
 RUN_NAME_EXTRACTION = True
 RUN_NAME_CORRECTION = True
 
@@ -28,16 +28,16 @@ PDF_DIR: Optional[str] = "pdf_input" # or None
 OUT_DIR: str = "output"
 
 # Step 1
-TX_DPI = 300
+TX_DPI = 200
 TX_FORMAT = "jpg"         # "jpg" | "png"
 TX_JPEG_QUALITY = 90
-TX_USE_GPU = False
+TX_USE_GPU = True
 
 # Step 2
 NC_YEAR = 1980
 NC_MIN_TOKENS = 2
 NC_MODEL = "en_core_web_trf"         # enforced in name_correction
-NC_ENABLE_CORRECTION = False
+NC_ENABLE_CORRECTION = True
 
 # Step 3
 NE_HEADER_THRESH = 1.8
@@ -115,8 +115,6 @@ def main() -> None:
                     pdf_path=str(target_pdf),
                     out_dir=str(out_root),
                     dpi=TX_DPI,
-                    fmt=TX_FORMAT,
-                    jpeg_quality=TX_JPEG_QUALITY,
                     use_gpu=TX_USE_GPU,
                 ),
             )
@@ -129,6 +127,7 @@ def main() -> None:
                 kwargs=dict(
                     pdf_path=str(target_pdf),
                     out_dir=str(out_root),
+                    verbose_ner=True,
                 ),
             )
 
