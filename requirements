@@ -1,6 +1,12 @@
 paddlepaddle
 paddleocr
+paddlex[ocr]
 pymupdf
 setuptools
 spacy
 rapidfuzz
+
+numpy
+torch
+requests
+beautifulsoup4

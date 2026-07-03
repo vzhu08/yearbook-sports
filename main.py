@@ -1,4 +1,4 @@
-# src/main.py
+# main.py
 # -*- coding: utf-8 -*-
 """
 Per-PDF pipeline with function-based subprocesses.

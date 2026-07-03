@@ -117,8 +117,10 @@ def _run_paddleocr_batch(gray_arrays: List[np.ndarray], use_gpu: bool, batch_siz
         use_region_detection=True,
     )
 
-    # NOTE: pass arrays directly; PaddleOCR will handle internally
-    return ocr.predict(gray_arrays)
+    # PaddleX's current preprocessors expect (H, W, C) input; expand our
+    # single-channel grayscale arrays to 3 channels before predicting.
+    bgr_arrays = [np.repeat(g[:, :, None], 3, axis=2) for g in gray_arrays]
+    return ocr.predict(bgr_arrays)
 
 
 def _save_paddle_jsons(ocr_json_dir: Path, results: List[Any], page_count: int) -> None:
