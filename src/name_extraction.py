@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from src.common.io_utils import read_json, write_json
-from src.name_ner import extract_person_names_per_candidate, dedupe_person_names
+from src.name_ner import extract_person_names_per_candidate, dedupe_person_names, _ROSTER_NOISE_WORDS
 
 # ---------------- CPU oversubscription guard ----------------
 os.environ.setdefault("OMP_NUM_THREADS", "1")
@@ -160,6 +160,22 @@ def _is_ignored_header_text(text: str) -> bool:
 
 _PREFIX_EXCEPTIONS = ("Mc", "Mac", "O")
 _SPLIT_ON_PUNCT = re.compile(r"[.,]+")
+
+# A single letter followed by "." (an initial, e.g. "R." in "R. E. Foard")
+# would otherwise be torn apart by _SPLIT_ON_PUNCT into meaningless
+# single-letter fragments. We temporarily swap that period for a placeholder
+# before splitting, then restore it (with a following space, since OCR often
+# drops the space after an initial, e.g. "E.Foard") once chunking is done.
+_INITIAL_DOT_RE = re.compile(r"\b([A-Za-z])\.(?=\s?[A-Za-z])")
+_INITIAL_DOT_PLACEHOLDER = "\x00"
+
+
+def _protect_initials(s: str) -> str:
+    return _INITIAL_DOT_RE.sub(lambda m: m.group(1) + _INITIAL_DOT_PLACEHOLDER, s)
+
+
+def _restore_initials(s: str) -> str:
+    return re.sub(re.escape(_INITIAL_DOT_PLACEHOLDER) + r"\s*", ". ", s)
 
 
 def _looks_all_caps(s: str) -> bool:
@@ -303,20 +319,62 @@ def _collect_headers_with_pos(compiled_clean: Dict[str, Any]) -> List[Dict[str, 
     return markers
 
 
+_GRID_MAX_WIDTH_FRACTION = 0.35
+
+
+def _looks_like_grid_block(raw_content: str, block_bbox: Any, page_width: Any) -> bool:
+    """
+    True when a block's RAW (pre-normalization) content looks like a narrow,
+    multi-line, punctuation-free grid/column of short items — e.g. a roster
+    laid out in columns, where PP-StructureV3 still preserves the original
+    per-row "\n" breaks inside block_content — rather than ordinary wrapped
+    prose or a comma-delimited list. Requires ALL of:
+      - more than one real line (ignoring a purely trailing newline)
+      - no periods anywhere in the block (in this pipeline's data, prose
+        paragraphs and comma-lists always have at least one — a trailing
+        sentence period or a period-abbreviated initial like "R. E. Foard")
+      - the block is narrow relative to the page (a paragraph spanning most
+        of the page width is prose, not a name column)
+
+    Only when ALL hold do we split the block on "\n" into separate per-line
+    candidates; otherwise newlines are collapsed to spaces exactly as
+    before, so ordinary wrapped prose/comma-lists are never affected (a
+    name like "R. E. Foard" can't be split mid-name by this).
+    """
+    if "." in raw_content:
+        return False
+    if "\n" not in raw_content.strip("\n"):
+        return False
+    if not isinstance(block_bbox, (list, tuple)) or len(block_bbox) < 3 or not page_width:
+        return False
+    width = block_bbox[2] - block_bbox[0]
+    return width <= _GRID_MAX_WIDTH_FRACTION * page_width
+
+
 def _collect_text_blocks_by_page(compiled_clean: Dict[str, Any]) -> Dict[int, List[Dict[str, Any]]]:
     """Collect textual blocks per page, excluding headers/titles/footers/images."""
     out: Dict[int, List[Dict[str, Any]]] = {}
 
     for page_idx, page in enumerate(compiled_clean.get("pages", []), start=1):
         lst: List[Dict[str, Any]] = []
+        page_width = page.get("width") if isinstance(page, dict) else None
         for blk in _page_blocks(page):
             label = str(blk.get("block_label", "")).lower()
             if label in EXCLUDE_TEXT_LABELS:
                 continue
-            text = _normalize_space(blk.get("block_content", ""))
-            if not text:
+            raw = blk.get("block_content", "")
+            if not raw:
                 continue
-            lst.append({"text": text, "y": _y1(blk)})
+
+            if _looks_like_grid_block(raw, blk.get("block_bbox"), page_width):
+                for line in raw.split("\n"):
+                    text = _normalize_space(line)
+                    if text:
+                        lst.append({"text": text, "y": _y1(blk)})
+            else:
+                text = _normalize_space(raw)
+                if text:
+                    lst.append({"text": text, "y": _y1(blk)})
         lst.sort(key=lambda r: r["y"])
         out[page_idx] = lst
 
@@ -422,22 +480,97 @@ def _build_sections(compiled_clean: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 # --------------------------- Candidate generation ---------------------------
 
-def _chunk_candidates(texts: List[str]) -> List[str]:
+_ROLE_WORD_SPLIT_RE = re.compile(r"[\s.,]")
+_CLAUSE_SPLIT_RE = re.compile(r";")
+
+
+def _is_single_role_word_caption(text: str) -> bool:
+    """
+    True only for a whole block that is itself a single role/organizational
+    caption for one person (e.g. "COACHEP.FAULKNER", "COACHPASCO GETTLE") —
+    used to drop such blocks entirely before candidate splitting, so a
+    coach's/officer's name isn't fragmented and accidentally salvaged as a
+    bare surname by NER later. Prefix match on the first word handles OCR
+    dropping the space after the role word (e.g. "COACHPASCO" for "Coach
+    Pasco").
+
+    Deliberately requires NO comma anywhere in the block, so this doesn't
+    also swallow multi-person list labels like "MEMBERS: Eleanor Bennett,
+    Dot Fulk, ..." — those get comma-split into per-person candidates
+    normally, and NER already handles the "MEMBERS:" noise prefix fine on
+    just the first chunk.
+    """
+    t = _normalize_space(text)
+    if not t or "," in t:
+        return False
+    first = _ROLE_WORD_SPLIT_RE.split(t, maxsplit=1)[0].lower()
+    return any(first == w or first.startswith(w) for w in _ROSTER_NOISE_WORDS)
+
+
+def _is_role_caption_clause(clause: str) -> bool:
+    """
+    True for a single ';'-delimited clause that is itself one "Name, role"
+    pair (e.g. "Mr.Cordell,Athletic Director", "Mr.Savage,HeadCoach") — used
+    to drop the whole clause so a coach's/manager's bare surname isn't
+    fragmented off from its role word and salvaged as a PERSON by NER, the
+    same way _is_single_role_word_caption already does for a whole undivided
+    block. Multi-person captions join each person's "Name, role" with ';'
+    (e.g. "Mr.Cordell,Athletic Director;Mr. Davis, Asst.Coach"), which
+    defeats _is_single_role_word_caption's whole-block check (it bails on
+    ANY comma) since each clause here has a comma between name and role.
+
+    Deliberately requires the clause to have EXACTLY ONE comma, so it never
+    touches a genuinely comma-delimited multi-person list that happens to
+    end up glued into one clause (e.g. a "STANDING: A, B, C...KNEELING: D,
+    manager" clause has many commas and is left untouched here).
+    """
+    clause = _normalize_space(clause)
+    if clause.count(",") != 1:
+        return False
+    _, role_part = clause.split(",", 1)
+    role_part = _normalize_space(role_part).lower()
+    if not role_part:
+        return False
+    return any(w in role_part for w in _ROSTER_NOISE_WORDS)
+
+
+def _chunk_candidates(texts: List[str], header: str = "") -> List[str]:
     """
     Step 1:
-      - Split each text span on commas/periods into short candidate strings.
+      - Drop any text block that's just the section's own header repeated
+        as a caption (e.g. a photo caption that duplicates "Varsity
+        Basketball" verbatim) — never a real name, but shaped enough like
+        one (2+ capitalized words) to otherwise slip through the NER-miss
+        fallback in name_ner.py.
+      - Drop whole blocks that start with a role/organizational word (e.g. a
+        coach's caption), so they never enter candidate generation at all.
+      - Split each remaining text span on ';' into per-person clauses, and
+        drop any clause that is itself a single "Name, role" pair (see
+        _is_role_caption_clause) before further splitting.
+      - Split each remaining clause on commas/periods into short candidate
+        strings.
       - Then apply joined-capital splitting BEFORE NER (unless ALL CAPS).
     """
+    header_norm = _normalize_space(header).casefold()
     cands: List[str] = []
     for t in texts:
         t = _normalize_space(t)
         if not t:
             continue
-        for chunk in _SPLIT_ON_PUNCT.split(t):
-            chunk = _normalize_space(chunk)
-            if not chunk:
+        if header_norm and t.casefold() == header_norm:
+            continue
+        if _is_single_role_word_caption(t):
+            continue
+        for clause in _CLAUSE_SPLIT_RE.split(t):
+            clause = _normalize_space(clause)
+            if not clause or _is_role_caption_clause(clause):
                 continue
-            cands.append(_correct_candidate_text_pre_ner(chunk))
+            protected = _protect_initials(clause)
+            for chunk in _SPLIT_ON_PUNCT.split(protected):
+                chunk = _normalize_space(_restore_initials(chunk))
+                if not chunk:
+                    continue
+                cands.append(_correct_candidate_text_pre_ner(chunk))
     return cands
 
 
@@ -453,7 +586,10 @@ def _is_sports_section_header(header_text: str) -> bool:
     if not t:
         return False
 
-    norm = re.sub(r"[^a-z0-9\s-]+", " ", t)
+    # Hyphens are folded to spaces (not kept) so a hyphenated header like
+    # "Cross-Country Team" still matches the space-separated
+    # _SPORTS_MULTI_WORD keyword "cross country".
+    norm = re.sub(r"[^a-z0-9\s]+", " ", t)
     norm = re.sub(r"\s+", " ", norm).strip()
 
     for kw in _SPORTS_MULTI_WORD:
@@ -505,7 +641,7 @@ def extract_names(pdf_path: str, out_dir: str, verbose_ner: bool = False) -> Dic
 
     for i in sports_section_indices:
         sec = sections[i]
-        cands = _chunk_candidates(sec.get("texts", []))
+        cands = _chunk_candidates(sec.get("texts", []), sec.get("header", ""))
         candidates_per_sports_section.append(len(cands))
         for c in cands:
             flat_candidates.append(c)

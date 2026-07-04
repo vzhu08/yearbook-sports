@@ -117,6 +117,65 @@ def _post_filter_name_str(name: str) -> Optional[str]:
     return full
 
 
+# --------------------- NER-miss fallback (isolated candidates) ---------------------
+
+# Common non-name words that show up in yearbook rosters as organizational
+# labels rather than people (e.g. a stray "OFFICERS" or "CHIEF" isolated by
+# the upstream comma/period splitter). Used only to gate the fallback below,
+# never applied to names the NER model already found.
+_ROSTER_NOISE_WORDS = {
+    "chief", "captain", "coach", "coaches", "officers", "members", "member",
+    "squad", "team", "club", "class", "committee", "staff",
+    "president", "vice", "secretary", "treasurer", "reporter", "editor",
+    "sponsor", "advisor", "adviser", "manager", "director",
+}
+
+_FALLBACK_MIN_TOKENS = 2
+_FALLBACK_MAX_TOKENS = 4
+_GAP_FALLBACK_MAX_TOKENS = 2
+_FALLBACK_TOKEN_RE = re.compile(r"[A-Za-z'\-]+")
+
+
+def _looks_like_probable_name_shape(text: str, max_tokens: int = _FALLBACK_MAX_TOKENS) -> bool:
+    """
+    Narrow shape check used ONLY as a fallback for text NER didn't tag as a
+    PERSON. Requires 2-`max_tokens` capitalized, letters-only(-ish) tokens
+    and rejects common roster/organizational words, so obvious non-name
+    fragments aren't rescued.
+
+    Two call sites use different `max_tokens`:
+      - A candidate where NER found NOTHING at all (e.g. "Dot Fulk", already
+        isolated by upstream comma/period splitting, so very likely one
+        person) allows up to _FALLBACK_MAX_TOKENS.
+      - A gap between spans NER DID find, inside an unstructured multi-name
+        run with no delimiters (e.g. "GEORGE HAM NEAL WESTMORELAND" between
+        two found names), is capped at _GAP_FALLBACK_MAX_TOKENS (2) — a
+        4-token gap there is genuinely ambiguous between "one four-word
+        name" and "two two-word names", so we don't guess.
+    """
+    t = _normalize_space(text)
+    if not t:
+        return False
+
+    tokens = t.split()
+    if not (_FALLBACK_MIN_TOKENS <= len(tokens) <= max_tokens):
+        return False
+
+    for tok in tokens:
+        bare = tok.strip(".,;:()[]{}'\"")
+        if not bare or not _FALLBACK_TOKEN_RE.fullmatch(bare):
+            return False
+        if not bare[0].isupper():
+            return False
+        low = bare.lower()
+        # Prefix (not just exact) match: OCR often drops the space after a
+        # role word, e.g. "COACHPASCO GETTLE" for "Coach Pasco Gettle".
+        if any(low == w or low.startswith(w) for w in _ROSTER_NOISE_WORDS):
+            return False
+
+    return True
+
+
 # --------------------------- Span/Token dedupe ---------------------------
 
 def _merge_overlapping_spans(spans: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
@@ -235,6 +294,30 @@ def extract_person_names_per_candidate(candidates: List[str], verbose: bool = Fa
                 cand = _post_filter_name_str(raw)
                 if cand:
                     names_here.append(cand)
+
+            # Check text NOT covered by any found span -- the whole string
+            # if NER found nothing at all, or the gaps between/around spans
+            # otherwise -- for a name NER skipped entirely. E.g. NER finds
+            # "DoT McKee" and "Louise Ramsey" in "DoT McKEE MARY MOTTER
+            # LOUISE RAMSEY" but misses "MARY MOTTER" in between; the gap
+            # itself still passes the narrow name-shape check. Gaps are
+            # capped at 2 tokens (stricter than a total NER miss) since a
+            # gap sits inside an unstructured, delimiter-free multi-name
+            # run where a longer match could actually be two people.
+            prev_end = 0
+            gaps: List[Tuple[int, int]] = []
+            for s, e in spans:
+                gaps.append((prev_end, s))
+                prev_end = e
+            gaps.append((prev_end, len(doc.text)))
+
+            max_gap_tokens = _FALLBACK_MAX_TOKENS if not spans else _GAP_FALLBACK_MAX_TOKENS
+            for gs, ge in gaps:
+                gap_text = doc.text[gs:ge]
+                if _looks_like_probable_name_shape(gap_text, max_tokens=max_gap_tokens):
+                    fallback = _post_filter_name_str(gap_text)
+                    if fallback:
+                        names_here.append(fallback)
 
             out.append(names_here)
 
