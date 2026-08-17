@@ -127,7 +127,35 @@ _ROSTER_NOISE_WORDS = {
     "chief", "captain", "coach", "coaches", "officers", "members", "member",
     "squad", "team", "club", "class", "committee", "staff",
     "president", "vice", "secretary", "treasurer", "reporter", "editor",
-    "sponsor", "advisor", "adviser", "manager", "director",
+    "sponsor", "advisor", "adviser", "manager", "director", "mascot",
+    "assistant", "coordinator", "trainer", "instructor", "scorer",
+    "statistician", "statistian",  # incl. common OCR/print misspelling
+}
+
+# Function words and caption vocabulary that never occur inside a person's
+# name. Title-Case photo captions ("Dogs Still Remain No. 1", "The Number
+# One Score-Keeper", "Leaders of a Winning Team") are otherwise exactly the
+# 2-4 capitalized tokens the NER-miss fallback below rescues as a name.
+_CAPTION_STOPWORDS = {
+    "the", "a", "an", "of", "and", "or", "but", "in", "on", "at", "to", "for", "by",
+    "with", "from", "our", "your", "his", "her", "their", "its", "this",
+    "that", "these", "those", "is", "are", "was", "were", "be", "no", "not",
+    "one", "two", "three", "four", "five", "still", "all", "big",
+    "first", "last", "most", "more", "new", "old", "up", "down", "out",
+    "over", "under", "into", "after", "before", "during", "off", "action",
+    "team", "teams", "players", "number", "score", "game", "games",
+    "season", "year", "night", "time", "home", "away", "life",
+    "world", "top", "bottom", "left", "right", "center", "row", "front",
+    "back", "above", "below", "who", "what", "when", "where", "how", "why",
+    "we", "you", "they", "it", "he", "she", "my", "me", "us", "them",
+    "than", "then", "there", "here", "very", "just", "only", "also", "some",
+    "any", "each", "every", "both", "few", "many", "much", "such", "own",
+    "same", "so", "too", "again", "once", "about", "against", "between",
+    "through", "mighty", "great", "super", "proud", "fighting",
+    "hard", "hitting", "gifted", "striving", "winning", "leading",
+    "leaders", "champions", "champs", "varsity", "spirit", "heart",
+    "boys", "girls", "men", "women", "school", "high", "class", "club",
+    "candidate", "secondary", "all-american", "director", "coordinator",
 }
 
 _FALLBACK_MIN_TOKENS = 2
@@ -171,6 +199,8 @@ def _looks_like_probable_name_shape(text: str, max_tokens: int = _FALLBACK_MAX_T
         # Prefix (not just exact) match: OCR often drops the space after a
         # role word, e.g. "COACHPASCO GETTLE" for "Coach Pasco Gettle".
         if any(low == w or low.startswith(w) for w in _ROSTER_NOISE_WORDS):
+            return False
+        if low in _CAPTION_STOPWORDS:
             return False
 
     return True
@@ -235,7 +265,12 @@ def _dedupe_nested_names(names: List[str]) -> List[str]:
         kept.append(n)
         kept_tokens.append(toks)
 
-    return sorted(set(kept))
+    # Return in first-appearance (document/yearbook) order, not
+    # alphabetical, so output can be checked against the physical page.
+    first_idx: Dict[str, int] = {}
+    for i, n in enumerate(names):
+        first_idx.setdefault(n, i)
+    return sorted(set(kept), key=lambda n: first_idx[n])
 
 
 # --------------------------- Public API ---------------------------

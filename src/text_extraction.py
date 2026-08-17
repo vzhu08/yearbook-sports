@@ -24,83 +24,40 @@ Notes:
 
 from __future__ import annotations
 
+import re
 import time
 from datetime import datetime, timezone
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Set, Tuple
 from collections import Counter
 
 import fitz  # PyMuPDF
 import numpy as np
 
 import paddle  # noqa: F401  (import to initialize Paddle runtime)
-from paddleocr import PPStructureV3
+from paddleocr import PaddleOCR, PPStructureV3
 
 from src.common.io_utils import ensure_dir, write_json, read_json
 
 
-# ----------------------------- Data -----------------------------
-
-@dataclass
-class PageGrayMeta:
-    index: int
-    width: int
-    height: int
-    gray: np.ndarray  # uint8, shape (H, W)
-
-
 # --------------------------- Rendering --------------------------
 
-def _render_pdf_to_gray_arrays(pdf_path: Path, dpi: int) -> List[PageGrayMeta]:
+def _render_page_gray(doc: "fitz.Document", page_index: int, dpi: int) -> np.ndarray:
     """
-    Render each page to an in-memory grayscale numpy array.
+    Render a single page to an in-memory grayscale uint8 array (H, W).
     No image files are saved.
-
-    Returns:
-      List[PageGrayMeta] with .gray as uint8 array (H,W).
     """
-    t0 = time.time()
-
-    doc = fitz.open(pdf_path)
     scale = dpi / 72.0
-    total_pages = len(doc)
-
-    metas: List[PageGrayMeta] = []
-
-    for i in range(total_pages):
-        p0 = time.time()
-        page = doc.load_page(i)
-        mat = fitz.Matrix(scale, scale)
-
-        # GRAY render (single channel)
-        pix = page.get_pixmap(matrix=mat, colorspace=fitz.csGRAY, alpha=False)
-
-        # pix.samples is a bytes-like buffer of length w*h for GRAY
-        arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width)
-
-        metas.append(PageGrayMeta(index=i, width=pix.width, height=pix.height, gray=arr))
-
-        dt = time.time() - p0
-        print(
-            f"[text] page {i+1}/{total_pages}: {pix.width}x{pix.height} (gray in-memory) time={dt:.2f}s",
-            flush=True,
-        )
-
-    doc.close()
-    print(f"[text] render: done pages={len(metas)} time={time.time() - t0:.2f}s", flush=True)
-    return metas
+    page = doc.load_page(page_index)
+    pix = page.get_pixmap(matrix=fitz.Matrix(scale, scale), colorspace=fitz.csGRAY, alpha=False)
+    # pix.samples is a bytes-like buffer of length w*h for GRAY
+    return np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width)
 
 
 # ----------------------------- OCR ------------------------------
 
-def _run_paddleocr_batch(gray_arrays: List[np.ndarray], use_gpu: bool, batch_size: int = 64) -> List[Any]:
-    """
-    Run PPStructureV3 on a list of grayscale numpy arrays.
-
-    PP-StructureV3 predict() supports numpy.ndarray inputs (and lists of them). :contentReference[oaicite:1]{index=1}
-    """
-    ocr = PPStructureV3(
+def _create_ppstructure(use_gpu: bool, batch_size: int) -> PPStructureV3:
+    return PPStructureV3(
         device=("gpu" if use_gpu else "cpu"),
         text_recognition_batch_size=batch_size,
         text_det_limit_side_len=2000,
@@ -117,35 +74,436 @@ def _run_paddleocr_batch(gray_arrays: List[np.ndarray], use_gpu: bool, batch_siz
         use_region_detection=True,
     )
 
-    # PaddleX's current preprocessors expect (H, W, C) input; expand our
-    # single-channel grayscale arrays to 3 channels before predicting.
-    bgr_arrays = [np.repeat(g[:, :, None], 3, axis=2) for g in gray_arrays]
-    return ocr.predict(bgr_arrays)
 
-
-def _save_paddle_jsons(ocr_json_dir: Path, results: List[Any], page_count: int) -> None:
+def _create_plain_ocr() -> PaddleOCR:
     """
-    Save each OCRResult to a deterministic file path: ocr_json/pageNNNN.json.
-    This avoids relying on directory-based naming behavior (which varies by input type).
+    Plain det+rec OCR pipeline (same PP-OCRv5 server models as the structure
+    pipeline, same thresholds) used for a SECOND pass over every page.
+
+    PP-StructureV3's own OCR of the same page is markedly worse on small
+    roster type: on the 1975 Ayantee's football roster it read "Bastick",
+    "Thamas", "McKinnev", "Dexrer" where this pipeline reads "Bostick",
+    "Thomas", "McKinney", "Dexter"; it silently dropped whole wrestling-table
+    rows ("Ike Smith", "George Harris", "Robert Brown") that this pipeline
+    returns; and with textline orientation it reads a rotated caption ("Ron
+    Johnson") the structure pass gave as "uosuyor uoy". It is also 5-20x
+    faster per page. Layout (blocks/labels/bboxes) still comes from
+    PP-StructureV3; only the text is taken from here (see _merge_plain_ocr).
+    """
+    return PaddleOCR(
+        text_det_limit_side_len=2000,
+        text_det_limit_type="max",
+        text_det_box_thresh=0.60,
+        text_rec_score_thresh=0.70,
+        use_doc_orientation_classify=False,
+        use_doc_unwarping=False,
+        use_textline_orientation=True,
+    )
+
+
+_PLAIN_MERGED_KEY = "plain_ocr_merged"
+# Blocks whose block_content is rebuilt from the plain-OCR lines inside them.
+_REBUILD_LABELS = {
+    "text", "figure_title", "paragraph_title", "doc_title", "header", "image",
+    "aside_text", "content", "vision_footnote", "abstract", "footer",
+}
+
+
+def _boxes_from_result(res: Dict[str, Any]) -> List[List[float]]:
+    boxes = res.get("rec_boxes")
+    if boxes is not None and len(boxes):
+        return [[float(v) for v in b] for b in boxes]
+    out: List[List[float]] = []
+    for poly in res.get("rec_polys") or []:
+        xs = [float(pt[0]) for pt in poly]
+        ys = [float(pt[1]) for pt in poly]
+        out.append([min(xs), min(ys), max(xs), max(ys)])
+    return out
+
+
+def _merge_plain_ocr(plain: PaddleOCR, page_json: Path, bgr: "np.ndarray") -> bool:
+    """
+    Second OCR pass for one saved page: run the plain pipeline on the page,
+    then
+      - overall_ocr_res := plain lines + structure lines whose box overlaps
+        no plain line (the structure pass still wins the odd big display
+        title, e.g. an outline-font "BASEBALL", that plain OCR fragments);
+      - block_content of every text-bearing block := the merged lines whose
+        centre lies inside the block, in reading order (rows top-to-bottom,
+        left-to-right); blocks with no line inside keep their old content;
+      - structure_ocr_res keeps the structure pass's original lines.
+    Idempotent per page via the plain_ocr_merged flag. Returns True if the
+    page was (re)written.
+    """
+    try:
+        data = read_json(page_json)
+    except Exception:
+        return False
+    if data.get(_PLAIN_MERGED_KEY):
+        return False
+
+    res = list(plain.predict([bgr]))[0]
+    try:
+        res = res.json["res"] if hasattr(res, "json") else dict(res)
+    except Exception:
+        res = dict(res)
+    new_texts = [str(t) for t in (res.get("rec_texts") or [])]
+    new_scores = [float(x) for x in (res.get("rec_scores") or [])]
+    new_boxes = _boxes_from_result(res)
+    n = min(len(new_texts), len(new_boxes))
+    new_lines = [
+        (new_texts[i], new_scores[i] if i < len(new_scores) else 0.0, new_boxes[i])
+        for i in range(n)
+        if new_texts[i].strip()
+    ]
+
+    old = data.get("overall_ocr_res") or {}
+    old_texts = old.get("rec_texts") or []
+    old_scores = old.get("rec_scores") or []
+    old_boxes = old.get("rec_boxes") or []
+
+    def _overlap(a: List[float], b: List[float]) -> float:
+        ix = max(0.0, min(a[2], b[2]) - max(a[0], b[0]))
+        iy = max(0.0, min(a[3], b[3]) - max(a[1], b[1]))
+        inter = ix * iy
+        if inter <= 0:
+            return 0.0
+        area = min((a[2] - a[0]) * (a[3] - a[1]), (b[2] - b[0]) * (b[3] - b[1]))
+        return inter / area if area > 0 else 0.0
+
+    def _covered(ob: List[float]) -> float:
+        """Fraction of an old line's box area covered by new lines."""
+        area = max((ob[2] - ob[0]) * (ob[3] - ob[1]), 1.0)
+        inter = 0.0
+        for _, _, nb in new_lines:
+            ix = max(0.0, min(ob[2], nb[2]) - max(ob[0], nb[0]))
+            iy = max(0.0, min(ob[3], nb[3]) - max(ob[1], nb[1]))
+            inter += ix * iy
+        return inter / area
+
+    def _degenerate(new_t: str, old_t: str) -> bool:
+        """The plain pass mangled this line where the structure pass had a
+        clean read ("aic  oke" for "Janice Hooker"): much shorter, or with
+        a run of spaces, or hardly any letters."""
+        a, b = new_t.strip(), old_t.strip()
+        if "  " in a:
+            return True
+        if len(a) < 0.6 * len(b):
+            return True
+        letters = sum(ch.isalpha() for ch in a)
+        return len(a) >= 4 and letters < 0.6 * len(a)
+
+    merged: List[Tuple[str, float, List[float]]] = []
+    dropped_new: Set[int] = set()
+    kept_old: List[Tuple[str, float, List[float]]] = []
+    for i, t in enumerate(old_texts):
+        if not str(t).strip() or i >= len(old_boxes):
+            continue
+        ob = [float(v) for v in old_boxes[i]]
+        overlapping = [k for k, (_, _, nb) in enumerate(new_lines) if _overlap(ob, nb) >= 0.3]
+        if overlapping and _covered(ob) >= 0.5:
+            # Same box re-read by the plain pass: it wins unless its read
+            # is degenerate, in which case the old line stays and the
+            # mangled new one goes.
+            if all(_degenerate(new_lines[k][0], str(t)) for k in overlapping):
+                dropped_new.update(overlapping)
+            else:
+                continue
+        elif overlapping:
+            # A big display title the plain pass only fragmented
+            # ("BASEBALL" -> "ASE", "TRACK" -> "TR"): keep the old line and
+            # drop the fragments lying inside it.
+            for k in overlapping:
+                nb = new_lines[k][2]
+                n_area = max((nb[2] - nb[0]) * (nb[3] - nb[1]), 1.0)
+                ix = max(0.0, min(ob[2], nb[2]) - max(ob[0], nb[0]))
+                iy = max(0.0, min(ob[3], nb[3]) - max(ob[1], nb[1]))
+                if ix * iy / n_area >= 0.5:
+                    dropped_new.add(k)
+        kept_old.append((str(t), float(old_scores[i]) if i < len(old_scores) else 0.0, ob))
+    merged = [ln for k, ln in enumerate(new_lines) if k not in dropped_new] + kept_old
+
+    data["structure_ocr_res"] = {
+        "rec_texts": old_texts, "rec_scores": old_scores, "rec_boxes": old_boxes,
+    }
+    data["overall_ocr_res"] = {
+        "rec_texts": [m[0] for m in merged],
+        "rec_scores": [m[1] for m in merged],
+        "rec_boxes": [m[2] for m in merged],
+    }
+
+    _rebuild_block_contents(data, merged)
+
+    data[_PLAIN_MERGED_KEY] = True
+    write_json(data, page_json)
+    return True
+
+
+# Title/caption blocks: PP-StructureV3 joins their printed lines with a space
+# ("Hornsby Howell Head Coach"), which downstream role filters rely on;
+# everything else keeps one line per printed line.
+_SPACE_JOIN_LABELS = {"figure_title", "paragraph_title", "doc_title", "header"}
+
+
+def _rebuild_block_contents(data: Dict[str, Any], merged: List[Tuple[str, float, List[float]]]) -> None:
+    """block_content := merged lines inside the block, in reading order."""
+    blocks = data.get("parsing_res_list")
+    if not isinstance(blocks, list):
+        return
+    for blk in blocks:
+        if blk.get("block_label") not in _REBUILD_LABELS:
+            continue
+        bbox = blk.get("block_bbox")
+        if not (isinstance(bbox, (list, tuple)) and len(bbox) == 4):
+            continue
+        if "structure_block_content" not in blk:
+            blk["structure_block_content"] = blk.get("block_content", "")
+        x0, y0, x1, y1 = (float(v) for v in bbox)
+        inside = []
+        for t, _, b in merged:
+            cx, cy = (b[0] + b[2]) / 2.0, (b[1] + b[3]) / 2.0
+            if x0 <= cx <= x1 and y0 <= cy <= y1:
+                inside.append((t, b))
+        if not inside:
+            continue
+        # reading order: rows (y-overlap) top-to-bottom, left-to-right. A
+        # tall box (a name set vertically down a photo, "CAROLYN") is its
+        # own line and never defines a row, or it would swallow every line
+        # beside it.
+        inside.sort(key=lambda it: (it[1][1], it[1][0]))
+        rows: List[List[Any]] = []
+        for it in inside:
+            b = it[1]
+            tall = (b[3] - b[1]) > 2.5 * max(b[2] - b[0], 1.0)
+            cy = (b[1] + b[3]) / 2.0
+            if not tall:
+                for row in rows:
+                    if row[0][2]:
+                        continue
+                    ry0 = min(r[1][1] for r in row)
+                    ry1 = max(r[1][3] for r in row)
+                    if ry0 <= cy <= ry1:
+                        row.append((it[0], it[1], False))
+                        break
+                else:
+                    rows.append([(it[0], it[1], False)])
+            else:
+                rows.append([(it[0], it[1], True)])
+        lines: List[str] = []
+        for row in rows:
+            row.sort(key=lambda it: it[1][0])
+            lines.append(" ".join(t for t, _, _ in row))
+        # Join mode: what the structure pass did for this block when known
+        # (space-joined caption vs one line per printed line); otherwise
+        # title/caption labels and 1-2 row blocks are space-joined.
+        orig = blk.get("structure_block_content")
+        if isinstance(orig, str) and orig.strip():
+            sep = "\n" if "\n" in orig.strip() else " "
+        elif blk.get("block_label") in _SPACE_JOIN_LABELS or len(lines) <= 2:
+            sep = " "
+        else:
+            sep = "\n"
+        blk["block_content"] = sep.join(lines) + ("\n" if sep == "\n" else " ")
+
+
+def _plain_only_pages(pdf: Path, ocr_json_dir: Path, missing: List[int], page_count: int, dpi: int) -> None:
+    """OCR pages with the plain pipeline only (no layout blocks), one page
+    per predict(), resumable; for portrait/index pages."""
+    if not missing:
+        return
+    ensure_dir(ocr_json_dir)
+    print(f"[text] plain-only: {len(missing)} page(s)", flush=True)
+    plain = _create_plain_ocr()
+    doc = fitz.open(pdf)
+    try:
+        for n, i in enumerate(missing, start=1):
+            t_pg = time.time()
+            gray = _render_page_gray(doc, i, dpi=dpi)
+            bgr = np.repeat(gray[:, :, None], 3, axis=2)
+            target = ocr_json_dir / f"page{(i + 1):04d}.json"
+            try:
+                res = list(plain.predict([bgr]))[0]
+                try:
+                    res = res.json["res"] if hasattr(res, "json") else dict(res)
+                except Exception:
+                    res = dict(res)
+                texts = [str(t) for t in (res.get("rec_texts") or [])]
+                boxes = _boxes_from_result(res)
+                scores = [float(x) for x in (res.get("rec_scores") or [])]
+                k = min(len(texts), len(boxes))
+                write_json({
+                    "page_index": i,
+                    "parsing_res_list": [],
+                    "overall_ocr_res": {
+                        "rec_texts": texts[:k], "rec_scores": scores[:k], "rec_boxes": boxes[:k],
+                    },
+                    _PLAIN_MERGED_KEY: True,
+                    "layout": False,
+                }, target)
+                print(
+                    f"[text] plain-only: page {i+1}/{page_count} saved "
+                    f"time={time.time() - t_pg:.2f}s ({n}/{len(missing)})",
+                    flush=True,
+                )
+            except Exception as e:
+                print(f"[text] plain-only: ERROR page {i+1}: {e}", flush=True)
+    finally:
+        doc.close()
+
+
+def _plain_ocr_pass(pdf: Path, ocr_json_dir: Path, page_count: int, dpi: int) -> None:
+    """Run/resume the plain-OCR merge over every saved page that lacks it."""
+    todo = [
+        i for i in range(page_count)
+        if (ocr_json_dir / f"page{(i + 1):04d}.json").exists()
+        and not (read_json(ocr_json_dir / f"page{(i + 1):04d}.json") or {}).get(_PLAIN_MERGED_KEY)
+        and (read_json(ocr_json_dir / f"page{(i + 1):04d}.json") or {}).get("parsing_res_list")
+    ]
+    if not todo:
+        print("[text] plain-ocr: skip (all pages merged)", flush=True)
+        return
+    print(f"[text] plain-ocr: {len(todo)} page(s) to merge", flush=True)
+    plain = _create_plain_ocr()
+    doc = fitz.open(pdf)
+    try:
+        for n, i in enumerate(todo, start=1):
+            t_pg = time.time()
+            gray = _render_page_gray(doc, i, dpi=dpi)
+            bgr = np.repeat(gray[:, :, None], 3, axis=2)
+            target = ocr_json_dir / f"page{(i + 1):04d}.json"
+            try:
+                _merge_plain_ocr(plain, target, bgr)
+                print(
+                    f"[text] plain-ocr: page {i+1}/{page_count} merged "
+                    f"time={time.time() - t_pg:.2f}s ({n}/{len(todo)})",
+                    flush=True,
+                )
+            except Exception as e:
+                print(f"[text] plain-ocr: ERROR page {i+1}: {e}", flush=True)
+    finally:
+        doc.close()
+
+
+# Text-bearing labels eligible for the empty-block retry, and the minimum
+# region size worth retrying (at 400 DPI ~ half an inch of text height).
+# "image" is included because a stylized full-page section divider (the 1975
+# Ayantee's "SPORTS" page, PDF p. 91) is detected as one image block with no
+# text at all; without the retry the divider never becomes a section header and
+# every page before the next header is dropped from the book's sections.
+_RETRY_LABELS = {"text", "figure_title", "paragraph_title", "doc_title", "image"}
+_RETRY_MIN_W, _RETRY_MIN_H = 200, 50
+
+
+def _repair_empty_blocks(ocr: PPStructureV3, page_json: Path, bgr: "np.ndarray") -> int:
+    """
+    Second-chance OCR for caption blocks the layout model FOUND but whose
+    text came back empty (seen on the 1945 Acorn: the basketball
+    starting-five caption block existed with a valid bbox but "" content).
+    Each empty text-bearing block's region is cropped, upscaled 2x
+    (nearest-neighbor), and re-OCR'd in isolation; recovered text is patched
+    into the saved page JSON. Returns the number of blocks repaired.
+    """
+    try:
+        data = read_json(page_json)
+    except Exception:
+        return 0
+
+    blocks = data.get("parsing_res_list")
+    if not isinstance(blocks, list):
+        return 0
+
+    repaired = 0
+    h, w = bgr.shape[:2]
+    for blk in blocks:
+        if blk.get("block_label") not in _RETRY_LABELS:
+            continue
+        # "Empty" includes content with no letters or digits at all: the
+        # 1975 Ayantee's full-page "SPORTS" divider (PDF p. 95) came back as
+        # a single image block whose content was just "-", so the divider
+        # never became a section header.
+        if re.search(r"[A-Za-z0-9]", blk.get("block_content") or ""):
+            continue
+        bbox = blk.get("block_bbox")
+        if not (isinstance(bbox, (list, tuple)) and len(bbox) == 4):
+            continue
+        x0, y0, x1, y1 = (int(v) for v in bbox)
+        x0, y0 = max(0, x0), max(0, y0)
+        x1, y1 = min(w, x1), min(h, y1)
+        if x1 - x0 < _RETRY_MIN_W or y1 - y0 < _RETRY_MIN_H:
+            continue
+        crop = bgr[y0:y1, x0:x1]
+        crop2x = np.repeat(np.repeat(crop, 2, axis=0), 2, axis=1)
+        try:
+            res = list(ocr.predict([crop2x]))[0]
+            tmp = page_json.with_suffix(".retry.json")
+            res.save_to_json(save_path=str(tmp))
+            retry = read_json(tmp)
+            tmp.unlink(missing_ok=True)
+            texts = (retry.get("overall_ocr_res") or {}).get("rec_texts") or []
+            recovered = "\n".join(t for t in texts if t and t.strip())
+            if recovered:
+                blk["block_content"] = recovered
+                repaired += 1
+        except Exception as e:
+            print(f"[text] retry: ERROR on empty block {bbox}: {e}", flush=True)
+
+    if repaired:
+        write_json(data, page_json)
+    return repaired
+
+
+def _ocr_missing_pages_incremental(
+    ocr: PPStructureV3,
+    pdf: Path,
+    ocr_json_dir: Path,
+    missing: List[int],
+    page_count: int,
+    dpi: int,
+) -> None:
+    """
+    OCR pages one at a time, saving each page's JSON immediately.
+
+    One page per predict() call, deliberately:
+      - Output for a page cannot depend on which other pages happen to be in
+        the same run (PP-StructureV3's results were observed to vary with
+        batch composition, occasionally dropping whole caption blocks).
+      - Memory stays bounded by a single page (rendered array + result
+        object) instead of accumulating every page and every heavy result
+        for the whole book, which previously grew to multiple GB on long
+        runs and destabilized the process.
+      - A crash or kill loses at most the in-flight page; rerunning skips
+        every page already saved.
     """
     ensure_dir(ocr_json_dir)
 
-    created = 0
-    for i, res in enumerate(results):
-        target = ocr_json_dir / f"page{(i+1):04d}.json"
-        try:
-            if hasattr(res, "save_to_json"):
-                # save_path can be a file path per docs; use deterministic filename
-                res.save_to_json(save_path=str(target))
-            else:
-                write_json({"result": res}, target)
-            created += 1
-            print(f"[text] ocr_json: saved {target.name}", flush=True)
-        except Exception as e:
-            print(f"[text] ocr_json: ERROR saving page {i+1}: {e}", flush=True)
+    doc = fitz.open(pdf)
+    try:
+        for n, i in enumerate(missing, start=1):
+            t_pg = time.time()
+            gray = _render_page_gray(doc, i, dpi=dpi)
+            # PaddleX's current preprocessors expect (H, W, C) input; expand
+            # single-channel grayscale to 3 channels before predicting.
+            bgr = np.repeat(gray[:, :, None], 3, axis=2)
 
-    if created != page_count:
-        print(f"[text] ocr_json: WARN created/confirmed {created}/{page_count} files", flush=True)
+            target = ocr_json_dir / f"page{(i + 1):04d}.json"
+            try:
+                results = list(ocr.predict([bgr]))
+                res = results[0]
+                if hasattr(res, "save_to_json"):
+                    res.save_to_json(save_path=str(target))
+                else:
+                    write_json({"result": res}, target)
+                fixed = _repair_empty_blocks(ocr, target, bgr)
+                print(
+                    f"[text] ocr: page {i+1}/{page_count} saved {target.name} "
+                    f"time={time.time() - t_pg:.2f}s ({n}/{len(missing)} this run)"
+                    + (f" [repaired {fixed} empty block(s)]" if fixed else ""),
+                    flush=True,
+                )
+            except Exception as e:
+                print(f"[text] ocr: ERROR page {i+1}: {e}", flush=True)
+    finally:
+        doc.close()
 
 
 # ------------------------ Compile + Clean ------------------------
@@ -280,18 +638,34 @@ def _extract_headers_index(bundle: Dict[str, Any]) -> List[Dict[str, Any]]:
 def extract_text(
     pdf_path: str,
     out_dir: str,
-    dpi: int = 200,
+    # 400 DPI (up from 200): at 200, PP-StructureV3 missed entire stylized
+    # section titles (e.g. "Golf Team" produced no block at all) and misread
+    # thin glyphs ("Bouler" -> "Boule1"); 400 fixed both on the same pages,
+    # and per-page timing was no worse than at 300.
+    dpi: int = 400,
     lang: str = "en",
     use_gpu: bool = True,
     batch_size: int = 64,
+    page_range: Optional[Tuple[int, int]] = None,
+    layout: bool = True,
 ) -> None:
     """
     Integrated run for Step 1.
     Writes a single file: compiled_ocr.json
 
-    Changes vs previous:
-      - No images are written to disk; pages are rendered to in-memory grayscale arrays.
-      - Per-page OCR JSONs are still written to ocr_json/ for debugging and reproducibility.
+    Pages are rendered and OCR'd ONE AT A TIME (see
+    _ocr_missing_pages_incremental for why), each page's raw JSON saved to
+    ocr_json/ immediately. Pages whose JSON already exists are skipped, so an
+    interrupted run resumes where it left off instead of redoing the book.
+
+    page_range=(first, last) (1-indexed, inclusive) restricts OCR to those
+    pages; pages without a saved JSON simply come out empty in
+    compiled_ocr.json (the whole book is still compiled).
+
+    layout=False skips PP-StructureV3 entirely and saves only the plain-OCR
+    lines (no blocks) — ~10 s/page instead of minutes. Meant for the
+    class-portrait pages that only feed the name index
+    (src/name_resolution.py), never for the sports pages themselves.
     """
     t0 = time.time()
 
@@ -309,23 +683,36 @@ def extract_text(
     print(f"[text] start: {pdf.name} -> {book_dir} (pages={page_count})", flush=True)
     print(f"[text] settings: dpi={dpi}, device={'gpu' if use_gpu else 'cpu'}, batch={batch_size}", flush=True)
 
-    def _expected_stem(i: int) -> str:
-        return f"page{(i + 1):04d}"
-
-    # ---- Step 1: render in memory (always) ----
-    print("[text] render: generating in-memory grayscale arrays...", flush=True)
-    metas = _render_pdf_to_gray_arrays(pdf, dpi=dpi)
-
-    # ---- Step 2: OCR ----
-    existing_ocr_pages = sum((ocr_json_dir / f"{_expected_stem(i)}.json").exists() for i in range(page_count))
-    if existing_ocr_pages == page_count:
+    # ---- Steps 1+2: render + OCR missing pages, one page per predict() ----
+    wanted = range(page_count)
+    if page_range:
+        lo, hi = page_range
+        wanted = range(max(0, lo - 1), min(page_count, hi))
+        print(f"[text] page_range: {lo}-{hi}", flush=True)
+    missing = [
+        i for i in wanted
+        if not (ocr_json_dir / f"page{(i + 1):04d}.json").exists()
+    ]
+    if not layout:
+        _plain_only_pages(pdf, ocr_json_dir, missing, page_count, dpi=dpi)
+        missing = []
+    if not missing:
         print(f"[text] ocr: skip (found {page_count} ocr_json pages)", flush=True)
     else:
-        print(f"[text] ocr: running Paddle on {len(metas)} gray arrays...", flush=True)
+        print(
+            f"[text] ocr: {len(missing)}/{page_count} pages to process "
+            f"(per-page, resumable)",
+            flush=True,
+        )
         t_ocr = time.time()
-        results = _run_paddleocr_batch([m.gray for m in metas], use_gpu=use_gpu, batch_size=batch_size)
+        ocr = _create_ppstructure(use_gpu=use_gpu, batch_size=batch_size)
+        _ocr_missing_pages_incremental(
+            ocr, pdf, ocr_json_dir, missing, page_count, dpi=dpi
+        )
         print(f"[text] ocr: done time={time.time() - t_ocr:.2f}s", flush=True)
-        _save_paddle_jsons(ocr_json_dir, results, page_count)
+
+    # ---- Step 2b: plain-OCR second pass (better line text; resumable) ----
+    _plain_ocr_pass(pdf, ocr_json_dir, page_count, dpi=dpi)
 
     # ---- Step 3: compile clean + tag + meta + headers (single JSON) ----
     compiled_single_path = book_dir / "compiled_ocr.json"

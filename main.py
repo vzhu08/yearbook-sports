@@ -4,9 +4,15 @@
 Per-PDF pipeline with function-based subprocesses.
 
 Order (per PDF):
-  1) src.text_extraction.extract_text
-  2) src.name_correction.run_name_correction
-  3) src.name_extraction.extract_names
+  1) src.text_extraction.extract_text      (PP-StructureV3 layout + plain-OCR pass)
+  1b) src.text_extraction.extract_text     (layout=False: class-portrait pages for the name index)
+  2) src.name_extraction.extract_names
+  3) src.name_resolution.resolve_names     (map partial names against the book's own portraits)
+  4) src.name_correction.run_name_correction (optional; needs data/ corpora)
+
+Page ranges (TX_PAGE_RANGE / TX_PORTRAIT_RANGE) are for quick local runs; on the
+whole-book (HPC) run leave both None: every page is OCR'd with layout and the
+name index is built from all non-sports pages.
 """
 
 from __future__ import annotations
@@ -15,12 +21,14 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 # ---------------- Levers ----------------
-RUN_TEXT_EXTRACTION = False
+RUN_TEXT_EXTRACTION = True
+RUN_PORTRAIT_EXTRACTION = True   # only acts when TX_PORTRAIT_RANGE is set
 RUN_NAME_EXTRACTION = True
-RUN_NAME_CORRECTION = True
+RUN_NAME_RESOLUTION = True
+RUN_NAME_CORRECTION = False      # needs data/first_names_by_decade.json etc.
 
 # ---------------- IO ----------------
 PDF: Optional[str] = None            # e.g., "pdf_input/book.pdf"
@@ -28,10 +36,10 @@ PDF_DIR: Optional[str] = "pdf_input" # or None
 OUT_DIR: str = "output"
 
 # Step 1
-TX_DPI = 200
-TX_FORMAT = "jpg"         # "jpg" | "png"
-TX_JPEG_QUALITY = 90
-TX_USE_GPU = True
+TX_DPI = 400              # 200 loses stylized titles and misreads thin glyphs
+TX_USE_GPU = False        # set True on the HPC/GPU run
+TX_PAGE_RANGE: Optional[Tuple[int, int]] = None      # e.g. (95, 146): sports pages, 1-indexed inclusive
+TX_PORTRAIT_RANGE: Optional[Tuple[int, int]] = None  # e.g. (150, 217): class-portrait pages (plain OCR only)
 
 # Step 2
 NC_YEAR = 1980
@@ -106,7 +114,7 @@ def main() -> None:
     pdf_dir = _norm(PDF_DIR)
 
     for target_pdf in _pdf_iter(pdf, pdf_dir):
-        # 1) text extraction
+        # 1) text extraction (layout + plain-OCR pass), sports pages or whole book
         if RUN_TEXT_EXTRACTION:
             run_func(
                 module="src.text_extraction",
@@ -116,6 +124,22 @@ def main() -> None:
                     out_dir=str(out_root),
                     dpi=TX_DPI,
                     use_gpu=TX_USE_GPU,
+                    page_range=list(TX_PAGE_RANGE) if TX_PAGE_RANGE else None,
+                ),
+            )
+
+        # 1b) class-portrait pages, plain OCR only (fast) — feeds the name index
+        if RUN_PORTRAIT_EXTRACTION and TX_PORTRAIT_RANGE:
+            run_func(
+                module="src.text_extraction",
+                func="extract_text",
+                kwargs=dict(
+                    pdf_path=str(target_pdf),
+                    out_dir=str(out_root),
+                    dpi=TX_DPI,
+                    use_gpu=TX_USE_GPU,
+                    page_range=list(TX_PORTRAIT_RANGE),
+                    layout=False,
                 ),
             )
 
@@ -131,7 +155,23 @@ def main() -> None:
                 ),
             )
 
-        # 3) name correction
+        # 3) partial-name resolution against the book's own portraits
+        if RUN_NAME_RESOLUTION:
+            run_func(
+                module="src.name_resolution",
+                func="resolve_names",
+                kwargs=dict(
+                    sports_pdf_path=str(target_pdf),
+                    portraits_pdf_path=None,
+                    out_dir=str(out_root),
+                    portrait_pages=(
+                        list(range(TX_PORTRAIT_RANGE[0], TX_PORTRAIT_RANGE[1] + 1))
+                        if TX_PORTRAIT_RANGE else None
+                    ),
+                ),
+            )
+
+        # 4) name correction (optional)
         if RUN_NAME_CORRECTION:
             run_func(
                 module="src.name_correction",
