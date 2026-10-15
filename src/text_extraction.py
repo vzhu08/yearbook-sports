@@ -90,10 +90,15 @@ def _create_plain_ocr() -> PaddleOCR:
     faster per page. Layout (blocks/labels/bboxes) still comes from
     PP-StructureV3; only the text is taken from here (see _merge_plain_ocr).
     """
+    # Detection thresholds are LOW on purpose: at box_thresh 0.60 the
+    # detector dropped whole caption lines that it reads perfectly once
+    # detected (1949 Black Bear: "First row: Scotty Rhodarmer, ..." missing
+    # from a roster). Recognition confidence (0.70) still keeps junk out.
     return PaddleOCR(
         text_det_limit_side_len=2000,
         text_det_limit_type="max",
-        text_det_box_thresh=0.60,
+        text_det_thresh=0.20,
+        text_det_box_thresh=0.30,
         text_rec_score_thresh=0.70,
         use_doc_orientation_classify=False,
         use_doc_unwarping=False,
@@ -139,7 +144,7 @@ def _merge_plain_ocr(plain: PaddleOCR, page_json: Path, bgr: "np.ndarray") -> bo
         data = read_json(page_json)
     except Exception:
         return False
-    if data.get(_PLAIN_MERGED_KEY):
+    if data.get(_PLAIN_MERGED_KEY): # if already merged, just skip
         return False
 
     res = list(plain.predict([bgr]))[0]
@@ -151,6 +156,7 @@ def _merge_plain_ocr(plain: PaddleOCR, page_json: Path, bgr: "np.ndarray") -> bo
     new_scores = [float(x) for x in (res.get("rec_scores") or [])]
     new_boxes = _boxes_from_result(res)
     n = min(len(new_texts), len(new_boxes))
+    # combine the results
     new_lines = [
         (new_texts[i], new_scores[i] if i < len(new_scores) else 0.0, new_boxes[i])
         for i in range(n)
@@ -203,9 +209,14 @@ def _merge_plain_ocr(plain: PaddleOCR, page_json: Path, bgr: "np.ndarray") -> bo
         overlapping = [k for k, (_, _, nb) in enumerate(new_lines) if _overlap(ob, nb) >= 0.3]
         if overlapping and _covered(ob) >= 0.5:
             # Same box re-read by the plain pass: it wins unless its read
-            # is degenerate, in which case the old line stays and the
-            # mangled new one goes.
-            if all(_degenerate(new_lines[k][0], str(t)) for k in overlapping):
+            # is degenerate ("aic  oke") or clearly less confident than the
+            # structure pass's ("Eva Parson" 0.80 vs "Eva Patterson" 0.98),
+            # in which case the old line stays and the new one goes. The
+            # margin (0.05) is deliberate: at 0.98 vs 0.99 the plain read
+            # ("McKinney" vs "McKinnev") is the better one.
+            old_sc = float(old_scores[i]) if i < len(old_scores) else 0.0
+            new_sc = max(new_lines[k][1] for k in overlapping)
+            if all(_degenerate(new_lines[k][0], str(t)) for k in overlapping) or old_sc - new_sc >= 0.05:
                 dropped_new.update(overlapping)
             else:
                 continue
@@ -397,9 +408,7 @@ _RETRY_MIN_W, _RETRY_MIN_H = 200, 50
 def _repair_empty_blocks(ocr: PPStructureV3, page_json: Path, bgr: "np.ndarray") -> int:
     """
     Second-chance OCR for caption blocks the layout model FOUND but whose
-    text came back empty (seen on the 1945 Acorn: the basketball
-    starting-five caption block existed with a valid bbox but "" content).
-    Each empty text-bearing block's region is cropped, upscaled 2x
+    text came back empty. Each empty text-bearing block's region is cropped, upscaled 2x
     (nearest-neighbor), and re-OCR'd in isolation; recovered text is patched
     into the saved page JSON. Returns the number of blocks repaired.
     """
@@ -633,6 +642,476 @@ def _extract_headers_index(bundle: Dict[str, Any]) -> List[Dict[str, Any]]:
     return rows
 
 
+# --------------------------- Page-range resolution ---------------------------
+
+_PROBE_DPI = 200
+
+# neither first nor second pass
+def _probe_lines(plain: PaddleOCR, doc: "fitz.Document", i: int, cache_dir: Path) -> Dict[str, Any]:
+    """Cheap plain OCR of one page (200 DPI, ~3 s) for range detection;
+    cached in <book>/probe_json/pageNNNN.json."""
+    ensure_dir(cache_dir)
+    target = cache_dir / f"page{(i + 1):04d}.json"
+    if target.exists():
+        return read_json(target)
+    gray = _render_page_gray(doc, i, dpi=_PROBE_DPI)
+    bgr = np.repeat(gray[:, :, None], 3, axis=2)
+    res = list(plain.predict([bgr]))[0]
+    try:
+        res = res.json["res"] if hasattr(res, "json") else dict(res)
+    except Exception:
+        res = dict(res)
+    texts = [str(t) for t in (res.get("rec_texts") or [])]
+    boxes = _boxes_from_result(res)
+    k = min(len(texts), len(boxes))
+    out = {"page": i + 1, "height": int(gray.shape[0]), "width": int(gray.shape[1]),
+           "lines": [[texts[j], boxes[j]] for j in range(k) if texts[j].strip()]}
+    write_json(out, target)
+    return out
+
+
+def _page_signals(probe: Dict[str, Any]) -> Dict[str, Any]:
+    import re as _re
+    from src.name_extraction import (  # local import: keeps OCR subprocess light
+        _SPORTS_SINGLE_WORD, _SPORTS_MULTI_WORD, _MASCOT_WORDS,
+        _is_non_sports_divider_title, _is_sports_umbrella_title,
+    )
+
+    def _names_sport(t: str) -> bool:
+        # whole words only: "Tracy" is not "track", "Golfredo" is not golf
+        low = t.lower()
+        words = set(_re.findall(r"[a-z]+", low))
+        if words & _SPORTS_SINGLE_WORD:
+            return True
+        # agent/plural forms of a sport word are still that sport
+        # ("SENIOR FOOTBALLERS", "GOLFERS") — but only exact stem+suffix,
+        # so "Golfredo"/"Tracy" still never match
+        for w in words:
+            # "FOOTBALLTEAM": smallcaps titles print with no space
+            for suf in ("ers", "er", "s", "team", "teams"):
+                if w.endswith(suf) and (
+                    w[: -len(suf)] in _SPORTS_SINGLE_WORD
+                    or w[: -len(suf)] + "ing" in _SPORTS_SINGLE_WORD  # wrestlers, swimmers
+                ):
+                    return True
+        return any(kw in low for kw in _SPORTS_MULTI_WORD)
+    H = float(probe.get("height") or 1)
+    sports_title = False
+    divider = False
+    umbrella = False
+    other_title = False
+    vocab_hits: set = set()
+    pos_lines = 0
+    big_sports_title = False
+    mascot_title = False
+    roster_cue = False
+    num_roster = 0
+    digit_lines = 0
+    printed: List[int] = []
+
+    def _is_mascot_word(w: str) -> bool:
+        # "braves"; "bravettes" (girls' team form of a mascot)
+        if w in _MASCOT_WORDS or w.rstrip("s") in _MASCOT_WORDS:
+            return True
+        if w.endswith("ettes"):
+            stem = w[:-5]
+            return stem in _MASCOT_WORDS or stem + "e" in _MASCOT_WORDS
+        return False
+    for text, box in probe.get("lines", []):
+        t = " ".join(str(text).split())
+        words = t.split()
+        h = float(box[3]) - float(box[1])
+        big = h >= 0.018 * H
+        if (
+            1 <= len(words) <= 4 and _names_sport(t) and not any(ch.isdigit() for ch in t)
+            and not _re.match(r"(?i)^(?:mrs?|miss|ms|dr|rev)\.?\s", t)  # "Mrs. Alva Bowling" is a person
+        ):
+            sports_title = True
+            # a BIG lowercase-led line counts only when it is pure
+            # lettering (a single word — jersey/floor print reads
+            # lowercase); "wrestler, but you know" in big autograph-page
+            # handwriting is prose, not a title
+            if big and (t[:1].isupper() or len(words) == 1):
+                big_sports_title = True
+        if _POSITION_LINE_RE.fullmatch(t):
+            pos_lines += 1  # "End", "Guard", "Defensive End" under player photos
+        if _ROSTER_CUE_PROBE_RE.search(t):
+            roster_cue = True  # "Kneeling: Left to right: ..." — a team-photo caption
+        if _re.match(r"\d{1,2}[.)]\s*[A-Z][a-z]", t):
+            num_roster += 1  # "7. Randy Snelson" — numbered team-photo key
+        if _re.fullmatch(r"\d{1,3}", t):
+            digit_lines += 1  # jersey numbers / scores
+        if (
+            big and 1 <= len(words) <= 4 and not any(ch.isdigit() for ch in t)
+            and words and _is_mascot_word(_re.sub(r"[^a-z]", "", words[-1].lower()))
+        ):
+            # a big team-name title ("P. S. C. Braves", "The Bravettes"):
+            # only counts as a sports section when corroborated by nearby
+            # sports vocabulary — see find_sports_pages
+            mascot_title = True
+        if _is_sports_umbrella_title(t) and big:
+            umbrella = True
+        if _is_non_sports_divider_title(t) and big:
+            divider = True
+        if big and 1 <= len(words) <= 4 and not _names_sport(t) and not _is_sports_umbrella_title(t) \
+                and not any(ch.isdigit() for ch in t) and t.upper() == t and sum(ch.isalpha() for ch in t) >= 5:
+            other_title = True
+        if t.isdigit() and len(t) <= 3:
+            cy = (float(box[1]) + float(box[3])) / 2.0
+            if cy < 0.12 * H or cy > 0.88 * H:
+                printed.append(int(t))
+        for m in _SPORTS_VOCAB_RE.finditer(t):
+            vocab_hits.add(m.group(0).lower())
+    # two DIFFERENT sports words on the page ("Coach", "halftime"): sports
+    # coverage; a lone "team" in an advertisement is not
+    sports_words = len(vocab_hits) >= 2 or pos_lines >= 3
+    # A table of contents lists every division of the book — "SPORTS" there
+    # is a pointer, not a section. Detected by the literal phrase (possibly
+    # split across lines) or by a sports umbrella AND a non-sports divider
+    # title AND bare page-number lines sharing one page, which no real
+    # divider page ever has.
+    joined = " ".join(" ".join(str(t).split()) for t, _ in probe.get("lines", [])).lower()
+    num_lines = sum(
+        1 for t, _ in probe.get("lines", [])
+        if re.fullmatch(r"\d{1,3}", " ".join(str(t).split()))
+    )
+    if "table of contents" in joined or (umbrella and divider and num_lines >= 2):
+        sports_title = big_sports_title = umbrella = False
+    return {"sports_title": sports_title, "divider": divider, "umbrella": umbrella,
+            "other_title": other_title, "sports_words": sports_words,
+            "big_sports_title": big_sports_title,
+            "mascot_title": mascot_title, "vocab_n": len(vocab_hits),
+            "pos_lines": pos_lines, "roster_cue": roster_cue,
+            "num_roster": num_roster, "digit_lines": digit_lines,
+            "printed": printed, "n_lines": len(probe.get("lines", []))}
+
+
+_ROSTER_CUE_PROBE_RE = re.compile(
+    r"(?i)(?:left\s+to\s+right|right\s+to\s+left|kneeling|first\s+row|"
+    r"second\s+row|third\s+row|front\s+row|back\s+row|row\s+one|row\s+two)"
+)
+
+_POSITION_LINE_RE = re.compile(
+    r"(?:(?:defensive|offensive|left|right|center|split|tight|wide|first|second|third|short)\s+)?"
+    r"(?:end|guard|tackle|center|forward|halfback|fullback|quarterback|linebacker|back|"
+    r"pitcher|catcher|shortstop|infielder|outfielder|fielder|baseman|goalie|goalkeeper|"
+    r"wing|safety|cornerback|receiver|kicker|punter)\.?",
+    re.IGNORECASE,
+)
+
+# Words that mark a page as sports COVERAGE even without a sport title (action
+# pages between a team's title page and the next section).
+_SPORTS_VOCAB_RE = re.compile(
+    r"\b(?:coach(?:es|ing)?|team|season|score[sd]?|victory|defeat|touchdown|halftime|"
+    r"tournament|championship|players?|practice|opponents?|game|games|athlet\w*|"
+    r"varsity|captain|co-captain|scrimmage|kickoff|inning|quarterback|dribbl\w*|"
+    r"rebound\w*|tackle[sd]?|pitch\w*|batt\w*|serve[sd]?|match(?:es)?|meet|relay|"
+    r"cheerleaders?|homecoming game)\b",
+    re.IGNORECASE,
+)
+
+
+def resolve_sports_range(
+    pdf_path: str,
+    out_dir: str,
+    hint: Tuple[int, int],
+    max_extend: int = 40,
+) -> Tuple[int, int]:
+    """
+    Turn a user-supplied page range into the sports section's actual PDF
+    range, using cheap OCR probes:
+      1. if no page of the hint range shows a sports title, the hint was
+         probably PRINTED page numbers — read the printed folios on those
+         pages, derive the PDF offset and shift the range;
+      2. extend the end forward while sports titles keep appearing (up to
+         two photo-only pages in a row are tolerated), stopping at a big
+         non-sports divider title ("ADVERTISEMENTS", "CLASSES", ...);
+      3. extend the start back over an immediately preceding sports page or
+         "SPORTS"/"ATHLETICS" divider.
+    """
+    pdf = Path(pdf_path)
+    cache = Path(out_dir) / pdf.stem / "probe_json"
+    plain = _create_plain_ocr()
+    doc = fitz.open(pdf)
+    try:
+        n = len(doc)
+        lo, hi = max(1, hint[0]), min(n, hint[1])
+
+        def sig(p: int) -> Dict[str, Any]:
+            return _page_signals(_probe_lines(plain, doc, p - 1, cache))
+
+        sigs = {p: sig(p) for p in range(lo, hi + 1)}
+        if not any(v["sports_title"] or v["umbrella"] for v in sigs.values()):
+            offsets = Counter()
+            for p, v in sigs.items():
+                for pr in v["printed"]:
+                    if 0 <= p - pr <= 30:
+                        offsets[p - pr] += 1
+            if offsets:
+                off, cnt = offsets.most_common(1)[0]
+                if off > 0 and cnt >= 2:
+                    lo2, hi2 = lo + off, min(n, hi + off)
+                    sigs2 = {p: sig(p) for p in range(lo2, hi2 + 1)}
+                    if any(v["sports_title"] or v["umbrella"] for v in sigs2.values()):
+                        print(f"[range] hint {hint} looks like printed page numbers; "
+                              f"PDF offset +{off} -> {lo2}-{hi2}", flush=True)
+                        lo, hi, sigs = lo2, hi2, sigs2
+
+        # forward
+        p, misses, last_hit = hi + 1, 0, hi
+        while p <= n and p - hi <= max_extend and misses < 4:
+            v = sig(p)
+            if v["divider"]:
+                break
+            if v["sports_title"] or v["umbrella"] or v.get("sports_words"):
+                last_hit, misses = p, 0
+            else:
+                misses += 1
+            p += 1
+        if last_hit > hi:
+            print(f"[range] sports content continues past {hi}: extending to {last_hit}", flush=True)
+            hi = last_hit
+        # backward
+        for p in (lo - 1, lo - 2):
+            if p < 1:
+                break
+            v = sig(p)
+            if v["umbrella"] or v["sports_title"]:
+                lo = p
+            else:
+                break
+        print(f"[range] resolved sports pages: {lo}-{hi} (hint {hint})", flush=True)
+        _save_sports_pages(out_dir, pdf.stem, [(lo, hi)])
+        return (lo, hi)
+    finally:
+        doc.close()
+
+
+def _save_sports_pages(out_dir: str, stem: str, ranges: List[Tuple[int, int]]) -> None:
+    """Record the detected sports page ranges for name_extraction: every
+    section lying inside them is a sports section even when its own title is
+    a headline ("Braves Have A Disappointing Season") rather than a sport."""
+    book_dir = Path(out_dir) / stem
+    ensure_dir(book_dir)
+    prev: List[List[int]] = []
+    fp = book_dir / "sports_pages.json"
+    if fp.exists():
+        try:
+            prev = read_json(fp).get("ranges", [])
+        except Exception:
+            prev = []
+    merged = sorted({tuple(r) for r in prev} | {tuple(r) for r in ranges})
+    write_json({"ranges": [list(r) for r in merged]}, fp)
+
+
+_BRIDGE_MAX_GAP = 30
+
+
+def find_sports_pages(pdf_path: str, out_dir: str, gap: int = 2) -> List[Tuple[int, int]]:
+    """
+    Whole-book scan for sports pages when no range is known (sports may be
+    scattered: fall sports up front, basketball mid-book, spring sports at
+    the back). Probes EVERY page cheaply and returns the page ranges that
+    carry sports titles, merged when at most `gap` non-sports pages
+    separate them and widened to include an adjacent "SPORTS"/"ATHLETICS"
+    divider. Layout OCR then only runs on those pages.
+    """
+    pdf = Path(pdf_path)
+    cache = Path(out_dir) / pdf.stem / "probe_json"
+    plain = _create_plain_ocr()
+    doc = fitz.open(pdf)
+    try:
+        n = len(doc)
+        sigs: Dict[int, Dict[str, Any]] = {}
+        for p in range(1, n + 1):
+            sigs[p] = _page_signals(_probe_lines(plain, doc, p - 1, cache))
+    finally:
+        doc.close()
+    out = _build_sports_ranges(sigs, n, gap)
+    if not out:
+        # FALLBACK, only when nothing at all was found: a big team-name
+        # (mascot) title stands in for a sports title when a page within 2
+        # carries sports vocabulary or position labels — the 1954
+        # Indianhead's basketball pages are titled only "P. S. C. Braves" /
+        # "The Bravettes". Never applied when regular titles exist: mascot
+        # titles also head pep/homecoming pages.
+        for p, v in sigs.items():
+            if v.get("mascot_title") and not v["sports_title"] and any(
+                sigs.get(q, {}).get("vocab_n", 0) >= 1 or sigs.get(q, {}).get("pos_lines", 0) >= 1
+                for q in range(p - 2, p + 3)
+            ):
+                v["sports_title"] = True
+                v["big_sports_title"] = True
+        out = _build_sports_ranges(sigs, n, gap)
+    if not out:
+        # LAST fallback: a dense cluster of sports-coverage pages whose
+        # section titles never name a sport at all (1964 Nuhosca headlines
+        # its athletics block "Big Eleven", "Letter Men", "Time Out!") —
+        # runs of sports_words pages (gaps of at most 2 pages) at least 4
+        # pages long that contain at least one sports_title hit. Senior
+        # activity-list pages ("Basketball—1, 2, 3") never qualify: their
+        # coverage is scattered singles and their digit-bearing lines
+        # yield no sports_title.
+        runs: List[List[int]] = []
+        for p in range(1, n + 1):
+            if sigs[p].get("sports_words"):
+                if runs and p - runs[-1][-1] <= 3:
+                    runs[-1].append(p)
+                else:
+                    runs.append([p])
+        out = [
+            (r[0], r[-1]) for r in runs
+            if len(r) >= 4
+            and any(sigs[q]["sports_title"] for q in range(r[0], r[-1] + 1))
+        ]
+    print(f"[range] sports pages found: {out}", flush=True)
+    _save_sports_pages(out_dir, pdf.stem, out)
+    return out
+
+
+def _build_sports_ranges(
+    sigs: Dict[int, Dict[str, Any]], n: int, gap: int
+) -> List[Tuple[int, int]]:
+    # a page carrying a big NON-sports division title ("Juniors") is a
+    # class/divider page whatever else is printed on it (the 1972
+    # Indianhead's junior-class activity calendar prints "Baseball" big) —
+    # never a sports hit
+    hits = [p for p, v in sigs.items() if v["sports_title"] and not v["divider"]]
+    # a lone page whose only signal is a small line with a sport word in it
+    # ("Golf" in a staff member's title) is not a sports page
+    hits = [
+        p for p in hits
+        if sigs[p]["sports_words"] or sigs[p]["big_sports_title"] or sigs[p]["umbrella"]
+        or (p - 1 in sigs and sigs[p - 1]["sports_title"]) or (p + 1 in sigs and sigs[p + 1]["sports_title"])
+    ]
+    ranges: List[Tuple[int, int]] = []
+    for p in hits:
+        if ranges and p - ranges[-1][1] <= gap + 1:
+            ranges[-1] = (ranges[-1][0], p)
+        else:
+            ranges.append((p, p))
+    # A range with no BIG sports title and no umbrella page anywhere in it
+    # is small-print incidental sports vocabulary, not a sports section (the
+    # 1976 Falcon's Senior Directory lists "Org: Basketball Team" under
+    # every other portrait) — UNLESS it bridges to a strong range below
+    # (headline-style section titles — "HHS Golfers Fall Short of Season
+    # Expectations" — never yield a big title, yet sit right beside pages
+    # that do). Tag instead of dropping; the bridge step keeps only groups
+    # holding at least one strong range.
+    strong_ranges = {
+        (lo, hi) for lo, hi in ranges
+        if any(sigs[p]["big_sports_title"] or sigs[p]["umbrella"] for p in range(lo, hi + 1))
+    }
+    out: List[Tuple[int, int]] = []
+    out_strong: List[bool] = []
+    for lo, hi in ranges:
+        rng_strong = (lo, hi) in strong_ranges
+        # a run of sports titles is followed by its photo/action pages: keep
+        # going over pages without any heading (up to two in a row) until a
+        # non-sports title or divider shows up
+        p, misses = hi + 1, 0
+        cue_used = False
+        while p <= n and misses < 5:
+            v = sigs.get(p)
+            if v is None:
+                break
+            if v["divider"] and v.get("digit_lines", 0) < 3:
+                # a digit-heavy "divider" is a scoreboard/jersey spread
+                # ("ATOMICS -VS- FACULTY"), not a division page
+                break
+            if v.get("roster_cue") and p == hi + 1 and not cue_used:
+                # a team-photo caption ("Kneeling: Left to right: ...")
+                # DIRECTLY continuing the range is the section's roster
+                # spilling onto the next page (1972 Indianhead wrestling).
+                # ONE page only, and only direct continuation — every club
+                # photo in the book has such a caption too, and unlimited
+                # cue-chaining would walk straight through the club section
+                # (1969 Chowanoka's Y.W.A./B.S.U. pages)
+                cue_used = True
+                hi, misses = p, 0
+                p += 1
+                continue
+            if v["other_title"] and v.get("digit_lines", 0) < 3 and not (
+                v["sports_title"] or v["umbrella"] or v.get("sports_words")
+            ):
+                # a big non-sports title with NO sports coverage at all —
+                # the next division has begun (1974 Highlander: the senior
+                # portrait grids right after girls' basketball would
+                # otherwise flood the last sports section). Digit-heavy
+                # pages are jersey/score spreads, never division starts.
+                break
+            if (
+                v["sports_title"] or v["umbrella"] or v.get("sports_words")
+                or v.get("num_roster", 0) >= 3
+            ):
+                # a numbered team-photo key ("1. Kenny Ball ... 12. Mike
+                # Norman", 1977 Mountain Tech basketball) is roster coverage
+                hi, misses = p, 0
+            else:
+                misses += 1
+            p += 1
+        # walk BACKWARD the same way: section titles that never name the
+        # sport ("Eagles Break Jinx" football pages) still carry sports
+        # coverage; stop at a divider or a titled non-sports page
+        p, misses = lo - 1, 0
+        while p >= 1 and misses < 5:
+            v = sigs.get(p)
+            if v is None:
+                break
+            if v["divider"] and v.get("digit_lines", 0) < 3:
+                break
+            if v["other_title"] and v.get("digit_lines", 0) < 3 and not (
+                v["sports_title"] or v["umbrella"] or v.get("sports_words")
+            ):
+                break
+            if (
+                v["sports_title"] or v["umbrella"] or v.get("sports_words")
+                or v.get("num_roster", 0) >= 3
+            ):
+                lo, misses = p, 0
+            else:
+                misses += 1
+            p -= 1
+        while lo - 1 >= 1 and sigs[lo - 1]["umbrella"]:
+            lo -= 1
+        if out and lo - out[-1][1] <= gap + 1:
+            out[-1] = (out[-1][0], max(hi, out[-1][1]))
+            out_strong[-1] = out_strong[-1] or rng_strong
+        else:
+            out.append((lo, hi))
+            out_strong.append(rng_strong)
+    # Bridge two runs when nothing but sports coverage can lie between them:
+    # no divider and no non-sports section title in the gap (photo spreads,
+    # scoreboards and jersey lettering carry no titles at all — the 1978
+    # ECSU's football/basketball pages split the athletics section into
+    # five islands). Jersey caps do fire "other_title", so a gap page only
+    # blocks bridging when its big title is a real phrase (two+ words or 8+
+    # letters without digits nearby was too fiddly — instead: divider pages
+    # and pages whose big title is in the divider vocabulary block, plus a
+    # hard cap on the gap).
+    merged: List[Tuple[int, int]] = []
+    merged_strong: List[bool] = []
+    for (lo, hi), rng_strong in zip(out, out_strong):
+        # the long bridge is for STRONG islands only (ECSU's five football/
+        # basketball islands); a weak range must sit adjacent to a strong
+        # one (handled above) or it is incidental vocabulary — the 1947
+        # Green Lights' "Sports Editor" line on the annual-staff page must
+        # not drag the whole club block into the sports range.
+        if merged and rng_strong and merged_strong[-1] and lo - merged[-1][1] - 1 <= _BRIDGE_MAX_GAP and not any(
+            # a "divider" page that also carries sports coverage is a
+            # sports headline misread ("Seniors and Juniors Compose Team"
+            # over a girls' basketball spread) — it doesn't block
+            sigs.get(p, {}).get("divider") and not sigs.get(p, {}).get("sports_words")
+            for p in range(merged[-1][1] + 1, lo)
+        ):
+            merged[-1] = (merged[-1][0], hi)
+            merged_strong[-1] = merged_strong[-1] or rng_strong
+        else:
+            merged.append((lo, hi))
+            merged_strong.append(rng_strong)
+    return [r for r, s in zip(merged, merged_strong) if s]
+
+
 # ------------------------------- Entry Point -------------------------------
 
 def extract_text(
@@ -740,6 +1219,7 @@ def extract_text(
         "pages": cleaned_paged.get("pages", []),
     }
 
+    # write as a json file
     write_json(final_bundle, compiled_single_path)
 
     def _count_texts(bundle: Dict[str, Any]) -> int:

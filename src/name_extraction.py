@@ -63,6 +63,8 @@ _SPORTS_SINGLE_WORD = {
     "sports",
     "varsity",
     "jv",
+    "intramurals",
+    "intramural",
     "baseball",
     "softball",
     "basketball",
@@ -92,6 +94,7 @@ _SPORTS_SINGLE_WORD = {
     "track",
 }
 _SPORTS_MULTI_WORD = {
+    "soft ball", "base ball", "basket ball", "foot ball", "volley ball",
     "junior varsity",
     "cross country",
     "track and field",
@@ -106,11 +109,31 @@ def _normalize_space(s: str) -> str:
     # NFKC folds OCR'd full-width Unicode glyphs (e.g. "Ａ" -> "A") to their
     # normal ASCII form, so downstream keyword matching and NER see plain text.
     s = unicodedata.normalize("NFKC", s or "")
+    # OCR-invented diacritics ("Marílyn", "Terì", "Eddíe") -> plain letters
+    s = "".join(
+        ch for ch in unicodedata.normalize("NFKD", s) if not unicodedata.combining(ch)
+    )
     # OCR sometimes reads the gap in a spaced-out name as "_" ("LoIs_Cox");
     # underscores never appear in real yearbook text. (Header detection
     # checks the RAW text for "_" before this runs, so it's unaffected.)
     s = s.replace("_", " ")
-    return re.sub(r"\s+", " ", s.strip())
+    s = re.sub(r"\s+", " ", s.strip())
+    # OCR reads "Mc" as "Me" and detaches it ("Tom Me Guirt", "Todd Me
+    # Connell"): restore the prefix and re-glue it
+    s = re.sub(r"\b(?:Me|Mc)\s+(?=[A-Z][a-z])", "Mc", s)
+    s = re.sub(r"\bMe(?=[A-Z][a-z])", "Mc", s)
+    # column-break hyphenation inside a Mc/Mac surname: "A. Mc- Gee",
+    # "Mike Mc- Dowell"
+    s = re.sub(r"\b(Mc|Mac)-\s+(?=[A-Z][a-z])", r"\1", s)
+    # A word hyphenated across a line break, rejoined with a space by the
+    # OCR ("Wayne Haw- kins", "Billie Mor- gan"), or with the hyphen read as
+    # a period ("Wilma Sue Craw. ford"): a lowercase continuation never
+    # starts a new word after "-"/"." in caption text.
+    s = re.sub(r"(?<=[A-Za-z])- (?=[a-z]{2,})", "", s)
+    s = re.sub(r"(?<=[A-Za-z]{3})\. (?=[a-z]{3,})", "", s)
+    # a stray bracket/bar the detector boxed on its own ("Kelly ( Clatterbuck")
+    s = re.sub(r"(?:^|\s)[()\[\]{}|\\/]+(?=\s|$)", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
 
 
 _ORPHAN_MIN_SCORE = 0.8
@@ -121,17 +144,6 @@ def _orphan_line_blocks(page: Dict[str, Any], blocks: List[Dict[str, Any]]) -> L
     Synthetic caption blocks for OCR lines the layout model left OUTSIDE
     every block (label "figure_title", so they flow through the same
     caption/title paths as real captions).
-
-    PP-StructureV3's overall_ocr_res covers the whole page, but its layout
-    pass regularly fails to wrap small captions in any block: on the 1975
-    Ayantee the BASEBALL page (PDF p. 140) had six player captions and the
-    "BASEBALL" title recognized in overall_ocr_res while parsing_res_list held
-    ONE of them; the wrestling pages lost "Darnell Glover"/"Horace McDonald"
-    the same way, and the 1972 Belles Memoires lost three cheerleaders. Only
-    lines whose centre lies outside every block bbox are taken, so nothing
-    already inside a block (table rows, image lettering, captions) can enter
-    twice. Lines with fewer than two letters (page numbers, jersey digits)
-    are skipped.
 
     Lines on one visual row are re-joined left-to-right ONLY when nearly
     touching (gap <= row height): a multi-word title OCR'd word by word ("The"
@@ -269,15 +281,8 @@ def _is_ignored_header_text(text: str) -> bool:
 _QUOTE_CHARS = "\"'“”‘’"
 
 
+# whether it looks like a person's name or not
 def _is_person_name_shaped_header(text: str) -> bool:
-    """
-    True for a title block that is really a PLAYER'S NAME, not a section
-    title (1975 Ayantee: each player-profile page uses the player's name as
-    its paragraph_title, e.g. "Al Holland", "Artis Stanfield"). Such blocks
-    must not become section markers — and their text should flow into the
-    enclosing sport's section so the name is extracted as a name.
-    Requires 2-3 capitalized alphabetic tokens, no digits, no sports match.
-    """
     t = _normalize_space(text)
     if not t or re.search(r"\d", t):
         return False
@@ -301,7 +306,8 @@ def _is_junk_section_header(text: str) -> bool:
     Headers that are layout noise, never real sections:
       - 1-2 characters ("S" from a stylized SPORTS divider)
       - digit-bearing non-sports titles ("6-4, 245 lb. Senior Defensive
-        End") — real sports titles with years ("Wrestling '69",
+        End") 
+      — real sports titles with years ("Wrestling '69",
         "...BASKETBALLTEAM 1975") survive via the sports match.
     """
     t = _normalize_space(text)
@@ -318,10 +324,7 @@ def _is_junk_section_header(text: str) -> bool:
 def _is_caption_like_header_text(text: str) -> bool:
     """
     True when a header-labeled block is really a photo caption, not a
-    section title (1970 Archway labels captions as header/doc_title):
-    it ends like a sentence ("Wilson carries for gain of yards.") or is a
-    "Label: ..." line ("Seniors: F. Sauls, K. Bryan.", "Coach: D. Scott").
-    Real yearbook section titles never end with sentence punctuation and
+    section title. Real yearbook section titles never end with sentence punctuation and
     never contain a colon. A caption-like block is NOT a section marker;
     list-like ones re-enter the section's text so their rosters survive.
 
@@ -351,14 +354,17 @@ _PREFIX_EXCEPTIONS = ("Mc", "Mac", "O")
 # by a quote ('Charles Davis-"Dancing to the music."', "DEBRA CLONTZ -
 # Senior - Chief") — never inside a hyphenated name ("Co-Captain",
 # "Lower-the-Boom").
-_SPLIT_ON_PUNCT = re.compile(r"[.,\"“”]+|\s[-–—]+\s|[-–—]+(?=[\"“”'‘’])|[-–—]+$")
+_SPLIT_ON_PUNCT = re.compile(r"[.,;:：\"“”]+|\s[-–—]+\s|[-–—]+(?=[\"“”'‘’])|[-–—]+$")
 
 # A single letter followed by "." (an initial, e.g. "R." in "R. E. Foard")
 # would otherwise be torn apart by _SPLIT_ON_PUNCT into meaningless
 # single-letter fragments. We temporarily swap that period for a placeholder
 # before splitting, then restore it (with a following space, since OCR often
 # drops the space after an initial, e.g. "E.Foard") once chunking is done.
-_INITIAL_DOT_RE = re.compile(r"\b([A-Za-z])\.(?=\s?[A-Za-z])")
+# Also name particles/suffixes whose period is not a sentence/list break:
+# "Frances St. Clair", "John Smith Jr.", "Mt. Airy" ("St" alone stays a
+# single unit; the placeholder is restored to ". " afterwards).
+_INITIAL_DOT_RE = re.compile(r"\b([A-Za-z]|St|Ste|Mt|Jr|Sr)\.(?=\s?[A-Za-z])")
 _INITIAL_DOT_PLACEHOLDER = "\x00"
 
 
@@ -455,11 +461,21 @@ def _split_joined_capitals_left_to_right(s: str) -> str:
                     start = i
                 i += 1
             segments.append(tok[start:])
-            rebuilt.append(" ".join(seg for seg in segments if seg))
+            if any(len(seg) < 3 for seg in segments if seg):
+                rebuilt.append(tok)  # "UpChurch" -> keep whole, not "Up Church"
+            else:
+                rebuilt.append(" ".join(seg for seg in segments if seg))
 
         out.append("".join(rebuilt))
 
     return "".join(out)
+
+
+# positions attach to names
+_GLUED_POSITION_RE = re.compile(
+    r"([A-Z][a-z]{2,})(outfielder|infielder|pitcher|catcher|shortstop|short|guard|forward|center|"
+    r"tackle|halfback|fullback|quarterback|linebacker|manager|captain|coach|end)\b"
+)
 
 
 def _correct_candidate_text_pre_ner(s: str) -> str:
@@ -471,6 +487,9 @@ def _correct_candidate_text_pre_ner(s: str) -> str:
     s = _normalize_space(s)
     if not s:
         return s
+    # a position glued onto the surname by OCR ("Ronnie Johnsonoutfielder",
+    # "Jim Cherwapitcher", "Fred Meleanshort")
+    s = _GLUED_POSITION_RE.sub(r"\1 \2", s)
     if len(s.split()) <= 4:
         s = _join_split_fragments(s)  # "James Jeff ries" -> "James Jeffries"
     if _looks_all_caps(s):
@@ -490,7 +509,7 @@ def _correct_header_text(s: str) -> str:
     s = _collapse_spaced_letters(s)
     if not s:
         return s
-    if _looks_all_caps(s):
+    if _looks_all_caps(s):  # if all caps, just return
         return s
     return _split_joined_capitals_left_to_right(s)
 
@@ -508,7 +527,7 @@ _INLINE_SPORTS_LABEL_RE = re.compile(r"^\s*([A-Z][A-Z .&'\-]{1,40}?)\s*[:：]")
 def _inline_sports_label(text: str) -> Optional[re.Match]:
     """Match an inline sports sub-team label prefix, else None."""
     m = _INLINE_SPORTS_LABEL_RE.match(text or "")
-    if m and _is_sports_section_header(m.group(1)):
+    if m and _is_sports_section_header(m.group(1)):    # group(1) get rid of :
         return m
     return None
 
@@ -546,6 +565,7 @@ def _split_sport_labelled_block(raw: str) -> List[Tuple[str, str]]:
     if len(segs) < 2:
         return []
     out: List[Tuple[str, str]] = []
+    # examine every segment
     for label, words in segs:
         if not (1 <= len(words) <= 4) or not all(w[0].isupper() for w in words):
             return []
@@ -556,21 +576,44 @@ def _split_sport_labelled_block(raw: str) -> List[Tuple[str, str]]:
     return out
 
 
+# organizations we want to exclude 
+_ORG_TITLE_RE = re.compile(
+    r"(?i)\b(?:club|choir|chorus|band|council|society|societies|staff|scouts?|"
+    r"f\.?h\.?a|f\.?f\.?a|4-?h|fraternity|sorority|y-teens|tri-hi-y|hi-y|beta|"
+    r"glee|library|dramatics?|debat\w*|annual|newspaper|yearbook)\b"
+)
+# organizations that ARE athletics (letter clubs, spirit squads)
+_SPORTS_ORG_RE = re.compile(r"(?i)\b(?:monogram|varsity|letterm[ae]n|pep|cheer\w*|athletic\w*|block)\b")
+
+
+# actual judgement
+def _is_org_title_block(text: str) -> bool:
+    """A short NON-sports organization title ("Music Club-1952", "Glee
+    Club"): breaks a sports section and never counts as sports itself."""
+    t = _normalize_space(text)
+    if not t or len(t.split()) > 5:
+        return False
+    if not _ORG_TITLE_RE.search(t):
+        return False
+    if _SPORTS_ORG_RE.search(t) or _is_sports_section_header(t):
+        return False
+    return True
+
+
 def _looks_like_sports_title_block(text: str) -> bool:
     """
     True for a short title-like block naming a sport — used to promote
-    figure_title blocks to section markers. The 1970 Archway's script
-    section titles are labeled figure_title and OCR'd loosely ("restling",
-    "Bolf", "Harsity Cheer leaders"), so they'd otherwise never start a
-    section. Requires ≤3 words, no colon, no sentence-ending punctuation;
-    then matches sports keywords with a slightly looser fuzzy rule (words
-    down to 4 letters, 1 edit) than _is_sports_section_header — safe here
-    because the whole block must already look like a bare title, which a
-    caption sentence or a person's name in a roster never does.
+    figure_title blocks to section markers. Requires ≤3 words, no colon, 
+    no sentence-ending punctuation; then matches sports keywords with a 
+    slightly looser fuzzy rule (words down to 4 letters, 1 edit) than 
+    _is_sports_section_header — safe here because the whole block must 
+    already look like a bare title, which a caption sentence or a person's 
+    name in a roster never does.
     """
     t = _normalize_space(text)
     if not t or ":" in t or "：" in t:
         return False
+    # no entire sentence
     if t.rstrip(_QUOTE_CHARS).endswith((".", "!", "?")):
         return False
     words = re.sub(r"[^a-z0-9\s]+", " ", t.lower()).split()
@@ -657,10 +700,8 @@ def _marker_kind(text: str, blk: Dict[str, Any], lettered_blocks: List[Dict[str,
 
     Yearbooks open each big division with a title-only page ("ATHLETICS" over
     a drawing, "SPORTS" over a photo collage) and then run sub-sections whose
-    titles need not name a sport at all (1972 Belles Memoires: "The Head
-    Bulldog", "Striving Seniors", "in Action" for its football pages). Every
-    section between a sports divider and the next non-sports divider is
-    therefore a sports section, whatever its own title says.
+    titles need not name a sport at all. Every section between a sports divider 
+    and the next non-sports divider is therefore a sports section, whatever its own title says.
 
     A divider is a marker whose block is the ONLY lettered block on its page
     (page numbers and empty photo blocks aside), so a titled photo-collage
@@ -698,9 +739,12 @@ def _collect_headers_with_pos(compiled_clean: Dict[str, Any]) -> List[Dict[str, 
             key = txt.casefold()
             if any(m["text"].casefold() == key for m in page_markers):
                 return  # same title seen twice on the page (image lettering + orphan line)
+            bbox = blk.get("block_bbox") or [None, None, None, None]
             page_markers.append({
                 "page": page_idx, "y": _y1(blk) if y is None else y, "text": txt,
                 "kind": _marker_kind(txt, blk, lettered),
+                "x0": float(bbox[0]) if bbox[0] is not None else None,
+                "x1": float(bbox[2]) if bbox[2] is not None else None,
             })
 
         for blk in blocks:
@@ -708,7 +752,26 @@ def _collect_headers_with_pos(compiled_clean: Dict[str, Any]) -> List[Dict[str, 
             if lbl == "figure_title":
                 raw = blk.get("block_content", "")
                 txt = _correct_header_text(raw if isinstance(raw, str) else "")
-                if txt and _looks_like_sports_title_block(txt):
+                if txt and _is_org_title_block(txt) and not blk.get("orphan"):
+                    _add(txt, blk)
+                    continue
+                if (
+                    txt
+                    and len(txt.split()) <= 5
+                    and _ORG_TITLE_RE.search(txt)
+                    and _SPORTS_ORG_RE.search(txt)
+                    and not blk.get("orphan")
+                ):
+                    # A sports-org club title ("MONOGRAM CLUB", "VARSITY
+                    # CLUB") names no sport, so the sports-title match below
+                    # misses it — but it heads its own section all the same.
+                    _add(txt, blk)
+                    continue
+                if txt and _looks_like_sports_title_block(txt) and not (
+                    len(txt.split()) > 7 and txt.count(",") >= 2
+                ):
+                    # (a long comma-listed caption naming a sport is a
+                    # ROSTER, not a section title)
                     # An orphan OCR line (see _orphan_line_blocks) is not a
                     # layout-detected caption, so it doesn't get the fuzzy
                     # sports match real figure_titles do ("RUBY POOLE" ~
@@ -749,6 +812,9 @@ def _collect_headers_with_pos(compiled_clean: Dict[str, Any]) -> List[Dict[str, 
                     and not _is_caption_like_header_text(txt)
                     and not _is_person_name_shaped_header(txt)
                     and not _is_junk_section_header(txt)
+                    # "Mrs. JOSEPHINE PARKER Sponsor": a staff caption, not a
+                    # section title
+                    and not (len(txt.split()) <= 6 and _ROLE_WORD_RE.search(txt) and not _is_sports_section_header(txt))
                 ):
                     _add(txt, blk)
                 continue
@@ -804,9 +870,10 @@ def _looks_like_grid_block(raw_content: str, block_bbox: Any, page_width: Any) -
         toks = line.split()
         if any(t[0].islower() for t in toks):
             return False
-    return True
+    return True     # need to satisfy all 5 conditions to be True
 
 
+# get the leftmost coordinate
 def _x0(block: Dict[str, Any]) -> float:
     bbox = block.get("block_bbox")
     try:
@@ -901,12 +968,7 @@ def _recover_table_block_lines(
 
     text_extraction builds the pipeline with use_table_recognition=False, so a
     detected table region comes back with empty block_content even though every
-    line inside it was recognized — the 1975 Ayantee's football roster (printed
-    p. 95) is one empty table block sitting over 416 recognized strings. Those
-    lines survive in overall_ocr_res, which covers the WHOLE page, so only
-    boxes whose centre falls inside this block's bbox are taken; without that
-    test the page's headers, footers and prose would leak into section text.
-
+    line inside it was recognized
     Only name-shaped cells are returned, so the neighbouring columns (numbers,
     positions, heights, hometowns) never reach NER.
     """
@@ -1040,22 +1102,22 @@ _DOT_LEADER_RE = re.compile(r"(?:\.\s*){2,}|…")
 def _dot_leader_names(raw: str) -> List[str]:
     """
     Right-hand sides of a dot-leader list block, one per line, or [] when
-    the block isn't one. The 1975 Ayantee's "ATHLETIC AWARDS SPECIAL" page
-    is a single "content" block of ~40 such lines; read as one paragraph it
-    is comma-free prose and gets dropped, and split blindly its labels
-    ("Most Valuable") are name-shaped enough to be rescued as people. Needs
-    >= 3 lines with a leader in at least half of them.
+    the block isn't one.
     """
     lines = [ln.strip() for ln in raw.split("\n") if ln.strip()]
     if len(lines) < 3:
         return []
     rhs_of: List[Optional[str]] = []
+    lhs_of: List[Optional[str]] = []
     n_leader = 0
     for ln in lines:
         if _DOT_LEADER_RE.search(ln):
-            rhs_of.append(_normalize_space(_DOT_LEADER_RE.split(ln, maxsplit=1)[-1]))
+            parts = _DOT_LEADER_RE.split(ln, maxsplit=1)
+            rhs_of.append(_normalize_space(parts[-1]))
+            lhs_of.append(_normalize_space(parts[0]))
             n_leader += 1
             continue
+        lhs_of.append(None)
         # OCR often collapses the leader to one period: "Hustle. Raymond
         # Perry" — a short label, a period, then a 2-3 token name.
         m = _SINGLE_DOT_LEADER_RE.match(ln)
@@ -1071,7 +1133,57 @@ def _dot_leader_names(raw: str) -> List[str]:
     n_bare = sum(1 for r in rhs_of if r is not None) - n_leader
     if n_leader < 3 or (n_leader + n_bare) * 2 < len(lines):
         return []
+    # a "Name.....Position" roster (1954 Indianhead Bravettes: "Narva
+    # Lowry.. ..Forward") reads names on the LEFT: when at least half the
+    # leader right-hand sides are position labels, return the left sides
+    def _is_pos(s: str) -> bool:
+        toks = [t.strip(".,-").lower() for t in s.split() if t.strip(".,-")]
+        return bool(toks) and all(
+            t in _POSITION_WORDS or "-" in s and all(
+                x in _POSITION_WORDS for x in t.split("-")
+            ) for t in toks
+        )
+    pos_rhs = sum(1 for r in rhs_of if r and _is_pos(r))
+    if pos_rhs * 2 >= n_leader:
+        return [
+            l.strip(" .·•") for l in lhs_of
+            if l and re.search(r"[A-Za-z]", l.strip(" .·•"))
+        ]
     return [r for r in rhs_of if r and re.search(r"[A-Za-z]", r)]
+
+
+_STAT_LINE_RE = re.compile(r"^([A-Z][A-Za-z.'’\-]+(?:\s+[A-Z][A-Za-z.'’\-]+){1,3})\s*[-–—.:]*\s*-?\d[\d.,-]*$")
+
+
+def _stat_line_names(raw: str) -> List[str]:
+    """Names from a per-player statistics block ("Name Points / Betty Sue
+    Hardee -258 / Betty Dorman 237 ..."): >= 3 lines, at least half of them
+    a capitalized name followed by a number."""
+    lines = [ln.strip() for ln in raw.split("\n") if ln.strip()]
+    if len(lines) < 3:
+        return []
+    with_num = [bool(_STAT_LINE_RE.match(ln)) for ln in lines]
+    # a "Name/Points"-style header plus >=3 numbered rows qualifies the
+    # block even when the number column runs dry lower down
+    has_header = any(
+        re.search(r"(?i)\b(name|points?|poin|total|scoring)\b", ln) for ln in lines[:2]
+    )
+    if sum(with_num) < 3 or (not has_header and sum(with_num) * 2 < len(lines)):
+        return []
+    # qualified: keep the name of every row — the number column often runs
+    # dry near the bottom ("Walter Harmon", "Lacy Nunnery" with no points)
+    out: List[str] = []
+    for ln in lines:
+        m = _STAT_LINE_RE.match(ln)
+        if m:
+            out.append(m.group(1))
+            continue
+        t = re.sub(r"[\s\-–—.·一〇]*[\d.,\-一]*$", "", ln).strip()
+        toks = t.split()
+        if 2 <= len(toks) <= 4 and all(re.fullmatch(r"[A-Z][A-Za-z.'’\-]*", x) for x in toks) \
+                and not any(x.strip(".").lower() in ("name", "points", "point", "total") for x in toks):
+            out.append(t)
+    return out
 
 
 _BARE_LABEL_NAME_RE = re.compile(
@@ -1103,7 +1215,7 @@ def _image_caps_lines(raw: str) -> List[str]:
     rejoined into one word."""
     out: List[str] = []
     run: List[str] = []
-
+    # combine into a word
     def _flush() -> None:
         if len(run) >= 3:
             out.append("".join(run))
@@ -1149,8 +1261,7 @@ def _is_decorative_caps(tok: str, book_counts: Counter) -> bool:
 
 def _image_caps_names(raw: str, book_counts: Counter) -> List[str]:
     """
-    First names printed as the only caption of a photo INSIDE an image block
-    (1975 Ayantee cheerleader pages: "CASSANDRA", "ROBIN", vertical "REBA").
+    First names printed as the only caption of a photo INSIDE an image block.
     A word is a candidate only when it appears ONCE in the whole book's
     image lettering — decorative words recur (school name, "AGGIES" on every
     jersey) while a person's caption doesn't — and is not near (<= 1 edit,
@@ -1165,6 +1276,15 @@ def _image_caps_names(raw: str, book_counts: Counter) -> List[str]:
         if _POSITION_MARKER_RE.match(tok) or low in _PANEL_TRAILING_WORDS:
             continue
         if _is_decorative_caps(tok, book_counts):
+            continue
+        # a lone word lettered on a photo is only a caption NAME when it is
+        # (near) a known first name — "PRCERTE"/"CLLE" fragments are not
+        low_t = tok.lower()
+        if not any(
+            low_t == w or (len(low_t) >= 4 and len(w) >= 4 and abs(len(low_t) - len(w)) <= 1
+                           and Levenshtein.distance(low_t, w, score_cutoff=1) <= 1)
+            for w in _COMMON_FIRST_NAMES
+        ) and low_t not in _NICKNAMES:
             continue
         out.append(tok)
     # A page of individually captioned photos carries several such names
@@ -1182,12 +1302,211 @@ def _image_caps_names(raw: str, book_counts: Counter) -> List[str]:
     return [t.title() for t in out]
 
 
-def _collect_text_blocks_by_page(compiled_clean: Dict[str, Any]) -> Dict[int, List[Dict[str, Any]]]:
-    """Collect textual blocks per page, excluding headers/titles/footers/images."""
+def _stacked_row_names(raw: str) -> List[str]:
+    """
+    Names from a photo strip whose lettering pairs a row of FIRST names with
+    a row of SURNAMES above the position labels. Also accepts a single line of mixed-case 
+    full names directly above a positions-only line ("Agnes Mangum Edna L. Page
+    ... / Forward Forward ...") — that line is returned whole for NER.
+    Requires a positions-only line in the block so ordinary lettering can
+    never match.
+    """
+    lines = [_normalize_space(l) for l in raw.split("\n") if _normalize_space(l)]
+    if len(lines) < 2:
+        return []
+
+    def _is_positions(ln: str) -> bool:
+        toks = ln.split()
+        return len(toks) >= 2 and all(_POSITION_LINE_TOKEN_RE.fullmatch(t) for t in toks)
+
+    if not any(_is_positions(l) for l in lines):
+        return []
+    out: List[str] = []
+    i = 0
+    while i < len(lines):
+        a = lines[i]
+        b = lines[i + 1] if i + 1 < len(lines) else ""
+        ta, tb = a.split(), b.split()
+        if (
+            ta and len(ta) == len(tb) and len(ta) >= 3
+            and _looks_all_caps(a) and _looks_all_caps(b)
+            and all(t.isalpha() for t in ta + tb)
+            and not _is_positions(a) and not _is_positions(b)
+        ):
+            for first, last in zip(ta, tb):
+                out.append(f"{first.title()} {last.title()}")
+            i += 2
+            continue
+        if (
+            not _is_positions(a) and i + 1 < len(lines)
+            and len(ta) >= 4 and not re.search(r"\d", a)
+            and sum(1 for t in ta if t[0].isupper()) >= 0.6 * len(ta)
+        ):
+            if _is_positions(b) and sum(1 for t in ta if t.lower() in _COMMON_FIRST_NAMES) >= 2:
+                out.append(a)  # mixed-case full-name run; NER splits it
+            elif not _is_positions(b) and tb and i + 2 <= len(lines):
+                # firsts row over surnames row in TITLE case, with compound
+                # given names ("Celia Gretchen Betty Sue Mary Joe Ann Gail
+                # Jo Ann" over "Johnson Matthews Hardee Howard Weaver
+                # Gregory Tysinger")
+                pairs = _zip_grouped_firsts(ta, tb)
+                if pairs:
+                    out.extend(pairs)
+                    i += 2
+                    continue
+        i += 1
+    return out
+
+
+_COMPOUND_FIRSTS = {
+    "betty sue", "mary joe", "mary jo", "jo ann", "jo anne", "mary lou",
+    "sarah ann", "betty jo", "anna jean", "billie jo", "bobby jo", "peggy jo",
+    "mary ann", "mary anne", "sue ellen", "lou ann", "emma lou", "annie lou",
+    "betty ann", "ruth ann", "carol ann", "wilma sue", "betty lou", "rosa lee",
+}
+
+
+def _zip_grouped_firsts(firsts: List[str], lasts: List[str]) -> List[str]:
+    """Zip a firsts row against a surnames row when compound given names
+    make the rows unequal in tokens but equal in PEOPLE."""
+    k = len(lasts)
+    if not (3 <= k <= len(firsts) <= 2 * k):
+        return []
+    if any(not t[0].isupper() or re.search(r"\d", t) for t in firsts + lasts):
+        return []
+    if sum(1 for t in lasts if t.lower() in _COMMON_FIRST_NAMES) > k // 2:
+        return []
+    groups: List[str] = []
+    i = 0
+    for remaining in range(k, 0, -1):
+        if i >= len(firsts):
+            return []
+        spare = len(firsts) - i - remaining
+        if spare >= 1 and i + 1 < len(firsts) and f"{firsts[i].lower()} {firsts[i+1].lower()}" in _COMPOUND_FIRSTS:
+            groups.append(f"{firsts[i]} {firsts[i+1]}")
+            i += 2
+        else:
+            groups.append(firsts[i])
+            i += 1
+    if i != len(firsts):
+        return []
+    if sum(1 for g in groups if g.split()[0].lower() in _COMMON_FIRST_NAMES) < k * 0.6:
+        return []
+    return [f"{g} {l}" for g, l in zip(groups, lasts)]
+
+
+_POS_EXTRA = {"co-captain", "captain", "manager", "managei", "linbackei", "linbacker", "defensive", "offensive", "kicker", "quarterback"}
+
+
+def _interleaved_names_positions(raw: str) -> List[str]:
+    """
+    Names from lettering that interleaves people with their positions
+    ("Steve Driscoll Quarterback Johu Sullivan Halfback ... Don Hines
+    Managei" — 1969 Chowanoka football strips): each position token closes
+    the last 2-3 capitalized tokens as one person; leftover pairs at the
+    end are people too. Needs >= 2 position tokens and >= 4 name tokens.
+    """
+    t = _normalize_space(raw)
+    toks = [x for x in t.split() if not re.fullmatch(r"\d+", x)]
+
+    def _is_pos(w: str) -> bool:
+        w = w.strip(",.()").lower()
+        return bool(_POSITION_LINE_TOKEN_RE.fullmatch(w)) or bool(_POSITION_MISREAD_RE.fullmatch(w)) or w in _POS_EXTRA
+
+    n_pos = sum(1 for w in toks if _is_pos(w))
+    names_toks = [w for w in toks if not _is_pos(w)]
+    if n_pos < 2 or len(names_toks) < 4:
+        return []
+    if not all(w[0].isupper() or w[0] in "(\"'" for w in names_toks):
+        return []
+    out: List[str] = []
+    buf: List[str] = []
+    for w in toks:
+        if _is_pos(w):
+            if len(buf) >= 2:
+                take = 3 if len(buf) >= 3 and buf[-3][0] == "(" else 2
+                out.append(" ".join(buf[-take:]))
+                del buf[-take:]
+        else:
+            buf.append(w.strip(",."))
+    while len(buf) >= 2:
+        out.append(" ".join(buf[:2]))
+        del buf[:2]
+    return [n for n in out if not _is_junk_name(n)]
+
+
+def _single_line_names_positions(raw: str) -> Optional[str]:
+    """One lettering line that runs several full names and then their
+    position labels ("Charles Bradshaw Gene Parker Horace Hudson ... Don
+    Kern Fullback Fullback Guard, Center ..."): return the name run."""
+    t = _normalize_space(raw)
+    toks = t.split()
+    if len(toks) < 8 or re.search(r"\d", t):
+        return None
+    i = len(toks)
+    while i > 0 and (
+        _POSITION_LINE_TOKEN_RE.fullmatch(toks[i - 1].strip(",."))
+        or _POSITION_MISREAD_RE.fullmatch(toks[i - 1].strip(",."))
+    ):
+        i -= 1
+    n_pos = len(toks) - i
+    if n_pos < 3 or i < 4:
+        return None
+    name_part = toks[:i]
+    if not all(w[0].isupper() for w in name_part):
+        return None
+    # ALL-CAPS run of k first names followed by k surnames ("BETTYSUE BETTY
+    # ... INEZ HARDEE DORMAN ... NORRIS"): zip the halves
+    if len(name_part) % 2 == 0 and all(w.isupper() for w in name_part):
+        k = len(name_part) // 2
+        firsts, lasts = name_part[:k], name_part[k:]
+        n_common = sum(1 for w in firsts if w.lower() in _COMMON_FIRST_NAMES)
+        lasts_ok = sum(1 for w in lasts if w.lower() not in _COMMON_FIRST_NAMES)
+        if n_common >= k * 0.6 and lasts_ok >= k * 0.6:
+            return ", ".join(f"{f.title()} {l.title()}" for f, l in zip(firsts, lasts))
+    return " ".join(name_part)
+
+
+_POSITION_LINE_TOKEN_RE = re.compile(
+    r"(?i)(?:forward|center|centre|guard|tackle|end|halfback|fullback|quarterback|linebacker|"
+    r"pitcher|catcher|shortstop|infielder|outfielder|fielder|baseman|goalie|manager|captain|"
+    r"def|off|defensive|offensive|left|right|split|tight|wide|back|safety|cornerback)\.?"
+)
+
+
+def _collect_text_blocks_by_page(
+    compiled_clean: Dict[str, Any],
+    allowed_pages: Optional[Set[int]] = None,
+) -> Dict[int, List[Dict[str, Any]]]:
+    """Collect textual blocks per page, excluding headers/titles/footers/images.
+
+    allowed_pages: when the OCR step identified the book's sports pages
+    (sports_pages.json), only those pages contribute text — a section is
+    never padded with a neighbouring non-sports page's content (the 1976
+    Falcon's Senior Directory sat between two detected ranges and its 200
+    portrait entries flooded the TRACK section)."""
     out: Dict[int, List[Dict[str, Any]]] = {}
     caps_counts = _image_caps_tokens_book(compiled_clean)
 
+    # A header/footer text repeated across the book is a running head (the
+    # book's own title — "GREEN LIGHTS" — or the school name), even when it
+    # is shaped like a person's name; never route it into section text.
+    head_counts: Dict[str, int] = {}
+    for page in compiled_clean.get("pages", []):
+        seen_on_page: Set[str] = set()
+        for blk in _page_blocks(page):
+            if str(blk.get("block_label", "")).lower() in ("header", "footer", "doc_title"):
+                raw = blk.get("block_content", "")
+                t = _normalize_space(raw if isinstance(raw, str) else "").casefold()
+                if t and t not in seen_on_page:
+                    seen_on_page.add(t)
+                    head_counts[t] = head_counts.get(t, 0) + 1
+    running_heads = {t for t, n in head_counts.items() if n >= 4}
+
     for page_idx, page in enumerate(compiled_clean.get("pages", []), start=1):
+        if allowed_pages is not None and page_idx not in allowed_pages:
+            out[page_idx] = []
+            continue
         lst: List[Dict[str, Any]] = []
         page_width = page.get("width") if isinstance(page, dict) else None
         for blk in _page_blocks(page):
@@ -1203,17 +1522,89 @@ def _collect_text_blocks_by_page(compiled_clean: Dict[str, Any]) -> Dict[int, Li
 
             # A photo with the player's name printed over it.
             if label == "image" and isinstance(raw, str) and raw.strip():
-                text = _image_block_heading(raw)
+                # position-cued caption names ("Left: Cindy Lance,
+                # co-captain" / "Above: Nancy Coward") lettered per line —
+                # unambiguous, so they preempt the messier photo paths
+                cue_names = []
+                for line in raw.split("\n"):
+                    for m in re.finditer(
+                        r"(?:Left|Right|Above|Below|Top|Bottom|Center|Middle)"
+                        r"(?:\s+\w+)?:\s*([A-Z][A-Za-z'’\".]+(?:\s+[A-Z][A-Za-z'’\".]+)+)",
+                        _normalize_space(line),
+                    ):
+                        cue_names.append(m.group(1))
+                if len(cue_names) >= 1:
+                    for text in cue_names:
+                        lst.append({"text": text, "y": _y1(blk), "x": _x0(blk), "label": "figure_title"})
+                    continue
+                comma_names = len(re.findall(r"[A-Z][a-z]+ [A-Z][a-z]+,", raw))
+                text = "" if comma_names >= 3 else _image_block_heading(raw)
                 if text:
                     lst.append({"text": text, "y": _y1(blk), "x": _x0(blk), "label": "figure_title"})
                 else:
-                    for tok in _image_caps_names(raw, caps_counts):
-                        lst.append({"text": tok, "y": _y1(blk), "x": _x0(blk), "label": "figure_title"})
+                    emitted = False
+                    for nm in _stacked_row_names(raw):
+                        lst.append({"text": nm, "y": _y1(blk), "x": _x0(blk), "label": "figure_title"})
+                        emitted = True
+                    if not emitted and (
+                        _ROSTER_CUE_RE.search(raw)
+                        or len(re.findall(r"[A-Z][a-z]+ [A-Z][a-z]+,", raw)) >= 3
+                    ):
+                        # a roster caption swallowed into the photo's block
+                        # ("Members of the track team are, front row,
+                        # kneeling: ...")
+                        for line in raw.split("\n"):
+                            t = _normalize_space(line)
+                            if t and len(re.findall(r"[A-Za-z]", t)) >= 4:
+                                lst.append({"text": t, "y": _y1(blk), "x": _x0(blk), "label": "figure_title"})
+                                emitted = True
+                    if not emitted:
+                        for nm in _interleaved_names_positions(raw):
+                            lst.append({"text": nm, "y": _y1(blk), "x": _x0(blk), "label": "figure_title"})
+                            emitted = True
+                    if not emitted:
+                        nm_part = _single_line_names_positions(raw)
+                        if nm_part:
+                            lst.append({"text": nm_part, "y": _y1(blk), "x": _x0(blk), "label": "figure_title"})
+                            emitted = True
+                    if not emitted:
+                        # a numbered team-photo key ("1. Kenny Ball ...
+                        # 12. Mike Norman", keys often glued mid-line) or
+                        # position-cued caption names ("Left: Cindy Lance,
+                        # co-captain") lettered around a photo — the 1977
+                        # Mountain Tech prints whole rosters this way
+                        keyed: List[str] = []
+                        norm_all = _normalize_space(raw)
+                        for m in re.finditer(
+                            r"\b\d{1,2}[.)]\s*([A-Z][A-Za-z\"'’.]+(?:\s+[A-Z][A-Za-z\"'’.]+){0,2})",
+                            norm_all,
+                        ):
+                            keyed.append(m.group(1))
+                        cue_names = []
+                        for line in raw.split("\n"):
+                            m = re.match(
+                                r"(?:Left|Right|Above|Below|Top|Bottom|Center|Middle)"
+                                r"(?:\s+\w+)?:\s*([A-Z][A-Za-z].+)",
+                                _normalize_space(line),
+                            )
+                            if m:
+                                cue_names.append(m.group(1))
+                        if len(keyed) < 3:
+                            keyed = []
+                        if len(cue_names) >= 2:
+                            keyed.extend(cue_names)
+                        for text in keyed:
+                            lst.append({"text": text, "y": _y1(blk), "x": _x0(blk), "label": "figure_title"})
+                            emitted = True
+                    if not emitted:
+                        for tok in _image_caps_names(raw, caps_counts):
+                            lst.append({"text": tok, "y": _y1(blk), "x": _x0(blk), "label": "caps_name"})
                 continue
 
-            # An awards/honours dot-leader list: one name per line.
+            # An awards/honours dot-leader list, or a scoring table
+            # ("Betty Sue Hardee -258"): one name per line.
             if isinstance(raw, str) and label not in EXCLUDE_TEXT_LABELS:
-                leader_names = _dot_leader_names(raw)
+                leader_names = _dot_leader_names(raw) or _stat_line_names(raw)
                 if leader_names:
                     for text in leader_names:
                         lst.append({"text": text, "y": _y1(blk), "x": _x0(blk), "label": label})
@@ -1229,7 +1620,7 @@ def _collect_text_blocks_by_page(compiled_clean: Dict[str, Any]) -> Dict[int, Li
                     t = _normalize_space(raw)
                     if _is_caption_like_header_text(t) and ("," in t or ":" in t or "：" in t):
                         lst.append({"text": t, "y": _y1(blk), "x": _x0(blk), "label": "figure_title"})
-                    elif _is_person_name_shaped_header(t):
+                    elif _is_person_name_shaped_header(t) and t.casefold() not in running_heads:
                         # a player's name used as a page title (1975
                         # Ayantee profile pages) — it's roster data
                         lst.append({"text": t, "y": _y1(blk), "x": _x0(blk), "label": "figure_title"})
@@ -1257,8 +1648,51 @@ def _collect_text_blocks_by_page(compiled_clean: Dict[str, Any]) -> Dict[int, Li
                     text = text[m.end():].strip()
                 if text:
                     lst.append({"text": text, "y": _y1(blk), "x": _x0(blk), "label": label})
-        out[page_idx] = _sort_reading_order(lst)
+        out[page_idx] = _pair_stacked_names(_sort_reading_order(lst))
 
+    return out
+
+
+_STACK_MAX_DY = 160.0   # px between the tops of two stacked caption lines
+_STACK_MAX_DX = 300.0
+
+
+def _pair_stacked_names(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Re-join a name printed on two lines, given name over surname, 
+    which otherwise reaches NER as unrelated one-word rows. Two consecutive
+    rows are paired only when both are single alphabetic tokens, stacked
+    (small dy, same column), and the UPPER one is a common given name while
+    the lower one is not — so a vertical list of surnames ("Smith" /
+    "Jones") is never glued into a fake person.
+    """
+    def _single(r: Dict[str, Any]) -> Optional[str]:
+        t = r["text"].strip(" .,")
+        return t if re.fullmatch(r"[A-Za-z][A-Za-z'’\-]{1,}", t) else None
+
+    out: List[Dict[str, Any]] = []
+    i = 0
+    while i < len(rows):
+        a = rows[i]
+        if i + 1 < len(rows):
+            b = rows[i + 1]
+            ta, tb = _single(a), _single(b)
+            if (
+                ta and tb
+                and a.get("label") != "caps_name" and b.get("label") != "caps_name"
+                and ta.lower() in (_COMMON_FIRST_NAMES | set(_NICKNAMES))
+                and tb.lower() not in _COMMON_FIRST_NAMES
+                and tb.lower() not in _ROSTER_NOISE_WORDS
+                and 0 <= b["y"] - a["y"] <= _STACK_MAX_DY  # 0: lines of one grid block
+                and abs(b.get("x", 0.0) - a.get("x", 0.0)) <= _STACK_MAX_DX
+            ):
+                merged = dict(a)
+                merged["text"] = f"{ta} {tb}"
+                out.append(merged)
+                i += 2
+                continue
+        out.append(a)
+        i += 1
     return out
 
 
@@ -1277,13 +1711,26 @@ def _slice_section_texts(
     texts: List[str] = []
     pages_involved: Set[int] = set()
 
+    # Side-by-side titles ("BOYS VARSITY BASKETBALL TEAM" left, "GIRLS
+    # VARSITY BASKETBALL TEAM" right, same row): each takes only the rows
+    # of its own column on that page (see _assign_columns).
+    col_lo = start_marker.get("col_lo")
+    col_hi = start_marker.get("col_hi")
+
+    def _in_col(r: Dict[str, Any], p: int) -> bool:
+        if col_lo is None:
+            return True
+        if p != start_p:
+            return col_hi == float("inf")  # later pages belong to the last column
+        return col_lo <= r.get("x", 0.0) < col_hi
+
     if end_p is None:
         for p in sorted(texts_by_page.keys()):
             if p < start_p:
                 continue
             if p == start_p:
                 for r in texts_by_page.get(p, []):
-                    if r["y"] >= start_y:
+                    if r["y"] >= start_y and _in_col(r, p):
                         texts.append(r["text"])
                         pages_involved.add(p)
             else:
@@ -1297,12 +1744,12 @@ def _slice_section_texts(
             continue
         if p == start_p and p == end_p:
             for r in texts_by_page.get(p, []):
-                if r["y"] >= start_y and r["y"] < (end_y or float("inf")):
+                if r["y"] >= start_y and r["y"] < (end_y or float("inf")) and _in_col(r, p):
                     texts.append(r["text"])
                     pages_involved.add(p)
         elif p == start_p:
             for r in texts_by_page.get(p, []):
-                if r["y"] >= start_y:
+                if r["y"] >= start_y and _in_col(r, p):
                     texts.append(r["text"])
                     pages_involved.add(p)
         elif p == end_p:
@@ -1318,14 +1765,47 @@ def _slice_section_texts(
     return texts, sorted(pages_involved)
 
 
+def _assign_columns(markers: List[Dict[str, Any]]) -> None:
+    """
+    Mark side-by-side section titles as columns. Two or more markers on one
+    page whose tops lie within _ROW_BAND_PX and whose x-ranges don't overlap
+    are one row of columns (1949 Black Bear: boys' and girls' basketball
+    captions side by side). Each gets [col_lo, col_hi) split at the midpoints
+    between neighbours, its y is set to the row's top so ordering is
+    left-to-right, and each column's slice runs to the first marker AFTER
+    the whole row (siblings are skipped as "next marker" by _build_sections).
+    """
+    i = 0
+    while i < len(markers):
+        j = i + 1
+        while (
+            j < len(markers)
+            and markers[j]["page"] == markers[i]["page"]
+            and abs(markers[j]["y"] - markers[i]["y"]) <= _ROW_BAND_PX
+        ):
+            j += 1
+        group = markers[i:j]
+        if len(group) >= 2 and all(m.get("x0") is not None and m.get("x1") is not None for m in group):
+            group.sort(key=lambda m: m["x0"])
+            disjoint = all(group[k]["x1"] <= group[k + 1]["x0"] for k in range(len(group) - 1))
+            if disjoint:
+                top = min(m["y"] for m in group)
+                for k, m in enumerate(group):
+                    m["y"] = top + k * 0.001
+                    m["col_lo"] = float("-inf") if k == 0 else (group[k - 1]["x1"] + m["x0"]) / 2.0
+                    m["col_hi"] = float("inf") if k == len(group) - 1 else (m["x1"] + group[k + 1]["x0"]) / 2.0
+                    m["col_group_end"] = j
+                markers[i:j] = group
+        i = j
+
+
 def _reassign_captions_above_headers(
     markers: List[Dict[str, Any]],
     texts_by_page: Dict[int, List[Dict[str, Any]]],
 ) -> None:
     """
     A photo + its figure_title caption often sit ABOVE the section title on
-    the same page (1969 Acorn: tennis caption above "Tennis Team", wrestling
-    caption above "Senior Grapplers"). Reading-order slicing would hand that
+    the same page. Reading-order slicing would hand that
     caption to the PRECEDING section, misattributing every name in it.
 
     For the FIRST marker on a page, if the nearest text row above it is a
@@ -1346,10 +1826,22 @@ def _reassign_captions_above_headers(
             r["y"] = mk["y"]
 
 
-def _build_sections(compiled_clean: Dict[str, Any]) -> List[Dict[str, Any]]:
+def _build_sections(
+    compiled_clean: Dict[str, Any],
+    allowed_pages: Optional[Set[int]] = None,
+    range_starts: Optional[List[int]] = None,
+) -> List[Dict[str, Any]]:
     """Build sections with header, page span, and collected texts."""
     markers = _collect_headers_with_pos(compiled_clean)
-    texts_by_page = _collect_text_blocks_by_page(compiled_clean)
+    # A detected sports range opens a section of its own, so content on its
+    # first pages can never attach to the preceding (non-sports) section
+    # and be lost (1978 ECSU: pp. 103-104 football captions sat before the
+    # first header on p. 105). kind sports_divider also opens the zone.
+    for lo in (range_starts or []):
+        if not any(m["page"] == lo and m["y"] <= 0 for m in markers):
+            markers.append({"page": lo, "y": -1.0, "text": "SPORTS", "kind": "sports_divider", "x0": None, "x1": None})
+    markers.sort(key=lambda m: (m["page"], m["y"]))
+    texts_by_page = _collect_text_blocks_by_page(compiled_clean, allowed_pages)
     _reassign_captions_above_headers(markers, texts_by_page)
 
     sections: List[Dict[str, Any]] = []
@@ -1372,8 +1864,10 @@ def _build_sections(compiled_clean: Dict[str, Any]) -> List[Dict[str, Any]]:
             })
         return sections
 
+    _assign_columns(markers)
     for i, start in enumerate(markers):
-        nxt = markers[i + 1] if i + 1 < len(markers) else None
+        nxt_i = start.get("col_group_end", i + 1)
+        nxt = markers[nxt_i] if nxt_i < len(markers) else None
         texts, pages = _slice_section_texts(texts_by_page, start, nxt)
         if not texts and not pages:
             pages = [start["page"]]
@@ -1401,10 +1895,18 @@ _DANGLING_NAME_END_RE = re.compile(r",\s*[A-Z][A-Za-z'’\-]*$")
 # Staff roles whose "Role: Name(s)" caption lists non-players only. Kept
 # separate from _ROSTER_NOISE_WORDS because some of those words ("members",
 # "captain") label actual players.
+# Ranks held by SQUAD MEMBERS (user rule: captains and cheer chiefs are
+# players) — a chunk or role-tail made only of these never removes its
+# name the way a staff role ("coach", "manager") does.
+_MEMBER_RANK_WORDS = {
+    "chief", "co-chief", "captain", "co-captain", "tri-captain",
+    "captains", "assistant", "asst", "asst.",
+}
+
 _NON_PLAYER_ROLES = {
     "coach", "manager", "advisor", "adviser", "sponsor", "director",
     "coordinator", "trainer", "instructor", "scorer", "statistician",
-    "statistian", "assistant",
+    "statistian", "assistant", "scorekeeper",
 }
 
 # Honorific titles marking adults (coaches/faculty) in rosters. Punctuation
@@ -1429,8 +1931,20 @@ _POSITION_MARKER_RE = re.compile(
     r"(?:FIRST|SECOND|THIRD|FOURTH|FIFTH|SIXTH|FRONT|BACK|TOP|BOTTOM|MIDDLE)\s*ROW\s*\d*"
     r"|ROW\s*\d*(?=\s*(?:[:：;–—-]|$))"
     r"|STANDING|KNEELING|SITTING|SEATED"
-    r"|(?:CENTER|CENTRE|LEFT|RIGHT)\s*TO\s*(?:RIGHT|LEFT)"
+    r"|(?:CENTER|CENTRE|LEFT|LETT|LEF|RIGHT)\s*TO\s*(?:RIGHT|LEFT)"
     r")\s*(?:[:：;,.–—-]+\s*|\s+|$)",
+    re.IGNORECASE,
+)
+
+
+# "left fielder: ", "first baseman: ", "third and outfielder: ", "pitcher: and "
+_POSITION_LABEL_PREFIX_RE = re.compile(
+    r"^(?:(?:first|second|third|left|right|center|centre|short|and|&|utility|relief|starting)\s+)*"
+    r"(?:fielder|baseman|catcher|pitcher|shortstop|infielder|outfielder|guard|forward|center|tackle|"
+    r"end|halfback|fullback|quarterback|linebacker|manager|captain|goalie|goalkeeper|sub|substitute)"
+    r"(?:\s+(?:and|&)\s+(?:fielder|baseman|catcher|pitcher|shortstop|infielder|outfielder|guard|forward|"
+    r"center|tackle|end|halfback|fullback|quarterback|linebacker|manager|captain))?"
+    r"\s*[:：]\s*(?:and\s+)?",
     re.IGNORECASE,
 )
 
@@ -1485,7 +1999,9 @@ def _is_single_role_word_caption(text: str) -> bool:
     # Secondary nd Director of Scoutng") — a staff member's photo caption,
     # drop the whole block. Only scans tokens after the first two (the name)
     # so a student named e.g. "Coach Smith" doesn't false-positive.
-    if len(words) >= 3:
+    # only for SHORT captions — a long roster that ends "...and Coach Sam
+    # Green" is a roster, handled chunk by chunk
+    if 3 <= len(words) <= 9:
         for w in words[2:]:
             if any(w.lower() in (r, r + "s", r + "es") for r in _NON_PLAYER_ROLES):
                 return True
@@ -1517,8 +2033,19 @@ def _is_role_caption_clause(clause: str) -> bool:
     role_part = _normalize_space(role_part).lower()
     if not role_part:
         return False
+    # a role made only of MEMBER ranks is a player's title, not staff:
+    # "Marjorie Thore, assistant chief" stays (1951 Knob Whispers)
+    if all(w in _MEMBER_RANK_WORDS for w in role_part.replace(";", "").split()):
+        return False
     return any(w in role_part for w in _ROSTER_NOISE_WORDS)
 
+
+_PHOTO_CUE_RE = re.compile(
+    r"^\(?\s*(?:clockwise|counter-?clockwise|above|below|left|right|top|bottom|"
+    r"opposite|far\s+left|far\s+right|center|centre|inset|upper|lower)\b"
+    r"(?!\s*to\s+(?:right|left))",  # not the roster marker "LEFT TO RIGHT:"
+    re.IGNORECASE,
+)
 
 _PROSE_MIN_WORDS = 25
 _PROSE_MAX_WORDS_PER_COMMA = 8
@@ -1547,6 +2074,13 @@ def _looks_like_prose_block(text: str) -> bool:
     words = len(text.split())
     if words <= 8:
         return False
+    if len(re.findall(r"\(\d+\)", text)) >= 1:
+        # jersey numbers: an action caption naming players, never prose
+        return False
+    # a roster cue anywhere ("left to right:", "Row 2:", "members of the
+    # team are", "kneeling:") means a caption listing people, however long
+    if _ROSTER_CUE_RE.search(text):
+        return False
     # Short sentence heuristic: 10+ words, starts with a prose word, ends
     # with sentence punctuation → almost certainly a bio/narrative sentence,
     # never a roster line.
@@ -1558,8 +2092,38 @@ def _looks_like_prose_block(text: str) -> bool:
         return True
     if words <= _PROSE_MIN_WORDS:
         return False
-    commas = text.count(",") + text.count("，")
+    commas = text.count(",") + text.count("，") + text.count(";") + text.count(":")
+    # periods that separate NAMES count too ("Robert Saunders. Dean
+    # Twitty. James Emerson. ..."): a capitalized word on each side
+    commas += len(re.findall(r"\b[A-Z][a-z]+\.\s+(?=[A-Z][a-z]+\b)", text))
     return commas == 0 or words / commas > _PROSE_MAX_WORDS_PER_COMMA
+
+
+_ROSTER_CUE_RE = re.compile(
+    r"(?:left\s+to\s+right|right\s+to\s+left|\brow\s*\d|first\s+row|second\s+row|third\s+row|"
+    r"front\s+row|back\s+row|kneeling|standing|seated|sitting|members\s+(?:of|are|were)|"
+    r"\bteam\s+(?:members\s+)?(?:are|were|is|includes?)|squad\s+(?:are|were)|"
+    r"\bteam\s+consisted\s+of|\bwith\s+members\b|"
+    r"\binclude[sd]?\s+the\s+following\b|\bconsists?\s+of\s+the\s+following\b|"
+    r"\b(?:top\s+)?players\s+were\b)",
+    re.IGNORECASE,
+)
+
+
+_STATE_ABBREVS = {
+    "NC", "SC", "NJ", "NY", "NH", "NM", "ND", "SD", "WV", "DC", "RI", "VA",
+    "GA", "FL", "AL", "TN", "KY", "OH", "PA", "MD", "DE", "TX", "LA", "MS",
+    "AR", "MO", "OK", "CA", "US", "USA",
+}
+
+_PAREN_STAFF_RE = re.compile(
+    # ",? " — "Jim Cushing, (manager)" (1973 Hanoverian) puts a comma
+    # between the name and its role paren
+    r"(?:[A-Z][A-Za-z.'’-]*\s+){0,3}[A-Z][A-Za-z.'’-]*,?\s*"
+    r"\((?i:\s*(?:(?:head|assistant|asst\.?|student)\s+){0,2}"
+    r"(?:coach(?:es)?|manager[s]?|mgr[s]?\.?|trainer[s]?|sponsor[s]?|"
+    r"advisor[s]?|adviser[s]?|statistician[s]?|scorekeeper[s]?)\s*)\)"
+)
 
 
 def _chunk_candidates(texts: List[str], header: str = "") -> List[str]:
@@ -1593,10 +2157,59 @@ def _chunk_candidates(texts: List[str], header: str = "") -> List[str]:
         t = _normalize_space(t)
         if not t:
             continue
+        # "R. B. Starling (coach)", "Leroy Hardee (manager)": a
+        # parenthesized staff role marks the run of capitalized tokens
+        # right before it as staff — cut the whole span. (Captains stay:
+        # "(co-captain)" is not a staff role.)
+        t = _PAREN_STAFF_RE.sub("", t)
+        t = _SCHEDULE_CUE_RE.sub("", t)
+        # a quoted single-word nickname before a surname ('"Speedy"
+        # Sideris') is one person — drop the quotes so the pair survives
+        # punctuation splitting; quoted phrases/mottoes and jersey-name
+        # lists ('"Hank," "Suzie,"') have spaces or punctuation inside the
+        # quotes and never match
+        # (not after a word: 'Roy "Tojo" Waddell' keeps its printed
+        # mid-name quotes and takes the existing paren path)
+        t = re.sub(r'(?<![A-Za-z]\s)["“”]([A-Z][A-Za-z]+)["“”](?=\s+[A-Z][a-z])', r"\1", t)
+        # dot-leader roster lines ("Narva Lowry.. ..Forward"): collapse any
+        # run of 2+ leader dots/middots to a plain chunk separator
+        t = re.sub(r"(?:[.·•]\s*){2,}", ". ", t)
+        # "Williams, C.", "Huffstetler, A. C." — surname-first initial
+        # rosters (1938 Hollyhawk): rewrite to "C. Williams" so the initial
+        # survives comma-splitting and distinguishes teammates sharing a
+        # surname; only when the initials run straight into a delimiter,
+        # so "Vaughn, J. Madden" (next person) is never touched. State
+        # abbreviations ("Chapel Hill, N. C.", "Neptune, N. J.") collide
+        # with real initials ("Huffstetler, N. H."), so: when EVERY pair in
+        # the text is state-like it is address prose (no rewrite); one
+        # non-state pair anywhere marks a roster and all pairs rewrite.
+        _init_re = re.compile(
+            r"\b([A-Z][A-Za-z'’-]+),\s+([A-Z]\.(?:\s*[A-Z]\.)*)(?=\s*(?:,|;|$)|\.\s)"
+        )
+        pairs = _init_re.findall(t)
+        if pairs and any(
+            re.sub(r"[\s.]", "", ini) not in _STATE_ABBREVS for _, ini in pairs
+        ):
+            t = _init_re.sub(lambda m: f"{m.group(2)} {m.group(1)}", t)
         if merged and _DANGLING_NAME_END_RE.search(merged[-1]) and t[:1].isupper():
             merged[-1] = merged[-1] + " " + t
         else:
             merged.append(t)
+
+    # A multi-photo caption ("(Clockwise from below) Paul Kolody throws it
+    # home. Sam Flowers catches Paul's throw. ...") reads as prose but is a
+    # run of one-sentence captions: split it into sentences first.
+    expanded: List[str] = []
+    for t in merged:
+        if _PHOTO_CUE_RE.match(t):
+            expanded.extend(
+                # split after a sentence end (a lowercase letter + period),
+                # never after an initial ("V. J. Day")
+                x.strip() for x in re.split(r"(?<=[a-z][.!?])\s+(?=[A-Z(])", t) if x.strip()
+            )
+        else:
+            expanded.append(t)
+    merged = expanded
 
     cands: List[str] = []
     for t in merged:
@@ -1606,21 +2219,65 @@ def _chunk_candidates(texts: List[str], header: str = "") -> List[str]:
             continue
         if _looks_like_prose_block(t):
             continue
+        pos_prefix_roster = sum(
+            1 for c in _SPLIT_ON_PUNCT.split(_protect_initials(t))
+            if _POSITION_LABEL_PREFIX_RE.match(_normalize_space(_restore_initials(c)))
+        ) >= 3
         for clause in _CLAUSE_SPLIT_RE.split(t):
             clause = _normalize_space(clause)
             if not clause or _is_role_caption_clause(clause):
                 continue
             clause_start = len(cands)
             protected = _protect_initials(clause)
+            # a role word starting a NEW SENTENCE ("... Scott Sowers.
+            # Coach: Terry Pettit.") names staff forward — it must not pop
+            # the player who happened to end the previous sentence; mark
+            # the boundary so the bare-role pop below stays comma-scoped
+            protected = re.sub(
+                r"(\.\s+)(?=(?:Head\s+)?(?:Coach|Coaches|Manager|Managers|"
+                r"Trainer|Trainers|Sponsor|Sponsors|Advisor|Adviser)s?\s*[:：])",
+                r"\1¤", protected)
             skip_after_honorific = False
-            for chunk in _SPLIT_ON_PUNCT.split(protected):
-                chunk = _normalize_space(_restore_initials(chunk))
+            prev_iter_appended = False
+            raw_chunks = [
+                _normalize_space(_restore_initials(c)).lstrip("'‘’\"“”")
+                for c in _SPLIT_ON_PUNCT.split(protected)
+            ]
+            # "Name, position: Name, position: ..." rosters (1969 Chowanoka
+            # baseball: "Guss Roberson, first baseman: Danny Knighton,
+            # catcher: Pete Carpenter"): the label before each ':' belongs to
+            # the PREVIOUS player, so strip it and keep the name after it —
+            # but only when the caption uses that shape repeatedly.
+            if pos_prefix_roster:
+                raw_chunks = [_POSITION_LABEL_PREFIX_RE.sub("", c) for c in raw_chunks]
+            for chunk in raw_chunks:
+                sentence_start_role = chunk.startswith("¤")
+                chunk = chunk.lstrip("¤").strip()
                 chunk = _strip_position_markers(chunk)
+                # a generational suffix severed by its comma ("Junius Rose,
+                # Jr., Mahlon Tucker") belongs to the name just appended —
+                # re-attach it in the printed form instead of junking it
+                _sfx = re.fullmatch(r"(Jr|Sr|II|III|IV)\.?", chunk.strip())
+                if _sfx and prev_iter_appended and cands and len(cands[-1].split()) >= 2:
+                    s = _sfx.group(1)
+                    cands[-1] += f", {s}." if s in ("Jr", "Sr") else f", {s}"
+                    continue
+                # roster prose with class years and hometowns ("Durham:
+                # freshman Martin Aderhold of Ridgewood", "sophomore Hugh
+                # Wade of Newport News"): drop the place label, the class
+                # word, and the hometown tail
+                chunk = re.sub(r"^[A-Z][A-Za-z .]{0,20}[:：]\s*", "", chunk)
+                _cls = re.sub(r"^(?:(?:freshman|sophomore|junior|senior|frosh)\s+)+", "", chunk, flags=re.IGNORECASE)
+                if len(_cls.split()) >= 2:
+                    chunk = _cls  # keep "Junior Mease": Junior is his name
+                chunk = re.sub(r"\s+(?:of|from)\s+[A-Z].*$", "", chunk)
                 if not chunk:
+                    prev_iter_appended = False
                     continue
                 if skip_after_honorific:
                     # Surname of an "Mr./Mrs. X" adult — not a student.
                     skip_after_honorific = False
+                    prev_iter_appended = False
                     continue
                 chunk_toks = chunk.split()
                 if (
@@ -1637,23 +2294,75 @@ def _chunk_candidates(texts: List[str], header: str = "") -> List[str]:
                 ):
                     # Next chunk opens with that adult's name — skip it.
                     skip_after_honorific = True
+                    prev_iter_appended = False
                     continue
                 first_word = _ROLE_WORD_SPLIT_RE.split(chunk, maxsplit=1)[0].lower()
-                if first_word in _ROSTER_NOISE_WORDS:
+                if first_word in ("captain", "co-captain", "cocaptain", "co-captains", "captains", "capt", "co-capt", "cocapt"):
+                    # captains are players: drop the title, keep the name(s)
+                    chunk = chunk.split(None, 1)[1] if " " in chunk else ""
+                    if not chunk:
+                        prev_iter_appended = False
+                        continue
+                    chunk_toks = chunk.split()
+                    first_word = _ROLE_WORD_SPLIT_RE.split(chunk, maxsplit=1)[0].lower()
+                if first_word in _ROSTER_NOISE_WORDS and first_word in ("members", "member", "squad", "team", "club"):
+                    # "Members of this year's squad were: Yolanda Rucker" —
+                    # a roster label; keep what follows the ':' / "were"
+                    m_lbl = re.search(r"(?:[:：]|\b(?:were|are|is|was|include[sd]?)\b)\s*(.+)$", chunk, re.IGNORECASE)
+                    if m_lbl and m_lbl.group(1).strip():
+                        chunk = m_lbl.group(1).strip()
+                        chunk_toks = chunk.split()
+                        first_word = _ROLE_WORD_SPLIT_RE.split(chunk, maxsplit=1)[0].lower()
+                if first_word in _ROSTER_NOISE_WORDS or first_word in _NON_PLAYER_ROLES:
                     # A bare role word ("manager") is the role of the
-                    # preceding comma-separated name ("Tommy Shaw,manager")
-                    # — drop that name too. A role word starting a longer
-                    # chunk ("Coach Campbell") names a non-player; drop the
-                    # chunk but keep prior candidates.
-                    if chunk.lower() in _ROSTER_NOISE_WORDS and len(cands) > clause_start:
+                    # IMMEDIATELY preceding comma-separated name ("Tommy
+                    # Shaw,manager") — drop that name too; but not when
+                    # other chunks were skipped in between ("Bill Moore.
+                    # Second Row: Mr. Livengood, Coach" must keep Moore).
+                    if (
+                        all(
+                            w in _ROSTER_NOISE_WORDS or w in _NON_PLAYER_ROLES
+                            or w in ("asst", "asst.", "student")
+                            for w in chunk.lower().split()
+                        )
+                        # a MEMBER RANK is not staff: "Helen Keye, chief"
+                        # (1951 Knob Whispers cheer squad) and "Name,
+                        # Captain" keep their holder — never pop for a
+                        # chunk made only of rank words
+                        and not all(
+                            w in _MEMBER_RANK_WORDS for w in chunk.lower().split()
+                        )
+                        and len(cands) > clause_start
+                        and prev_iter_appended
+                        and not sentence_start_role
+                    ):
+                        # "Tommy Shaw,manager" and "Jack Juber — assistant
+                        # coach" alike: the whole chunk is role words, so
+                        # the preceding name is the role-holder
                         cands.pop()
+                    prev_iter_appended = False
                     continue
                 if chunk_toks and chunk_toks[-1].lower() in _NON_PLAYER_ROLES:
-                    # "...basketball coach, Pete Campbell, fielded..." —
-                    # the chunk after a role-word-final chunk is that staff
-                    # member's name. (Checked AFTER the bare-role-word pop
-                    # above, which must win for "Name,manager" chunks.)
-                    skip_after_honorific = True
+                    # A role-word-final chunk. Two shapes:
+                    #   "Jay Massey — coach" / "Mary Lynn Hinsley — manager"
+                    #     — the chunk CONTAINS the staff member's name:
+                    #     drop it, but the NEXT chunk is a player (1981 Oak
+                    #     Leaves rosters mark every coach this way inline);
+                    #   "...basketball coach" — role words only: the chunk
+                    #     AFTER it is that staff member's name — skip it.
+                    lead = chunk_toks[:-1]
+                    while lead and lead[-1].lower() in _NON_PLAYER_ROLES.union(
+                        {"head", "assistant", "asst.", "asst", "student", "—", "-", "student"}
+                    ):
+                        lead.pop()
+                    named_inline = (
+                        len(lead) >= 2
+                        and all(t[:1].isupper() for t in lead[-2:])
+                        and not any(t[0].islower() for t in lead)
+                    )
+                    if not named_inline:
+                        skip_after_honorific = True
+                    prev_iter_appended = False
                     continue
                 # An ALL-CAPS comma-free row of an even number of alphabetic
                 # tokens (>=4) is a photo-caption grid row of First-Last
@@ -1677,8 +2386,15 @@ def _chunk_candidates(texts: List[str], header: str = "") -> List[str]:
                         ))
                     continue
                 chunk = _strip_trailing_role_words(chunk)
+                chunk = re.sub(r"\s+[a-z]{1,2}$", "", chunk)  # truncated tail ("Pat Henry a")
+                # a hyphenation fragment glued to the front ("tain George
+                # Cross" from "Cap-/tain")
+                chunk = re.sub(r"^[a-z]{1,5}[- ]+(?=[A-Z])", "", chunk)
                 if chunk:
                     cands.append(_correct_candidate_text_pre_ner(chunk))
+                    prev_iter_appended = True
+                else:
+                    prev_iter_appended = False
     return cands
 
 
@@ -1689,16 +2405,40 @@ def _chunk_candidates(texts: List[str], header: str = "") -> List[str]:
 # Forward").
 # Everything after one of these words in a caption names the OPPONENT
 # ("...tosses in two points against George Hildebran").
-_OPPONENT_CUE_RE = re.compile(r"\s(?:against|vs\.?|versus)\s.*$", re.IGNORECASE)
+# cut only to the end of the clause: a later sentence can name teammates
+# ("...against Ft. Bragg. Lester Farrington and Mike Barnette watch play.")
+_OPPONENT_CUE_RE = re.compile(r"\s(?:against|vs\.?|versus)\s[^.;:]*", re.IGNORECASE)
+
+# "...planned to play Efland, Pittsboro, Lowes Grove, and Cary." — a whole
+# SCHEDULE clause of opponent towns. Cut BEFORE comma-splitting (the towns
+# are otherwise separate chunks); requires the to-play/will-play form so a
+# bio's "Playing center, Sam Ross..." is never touched.
+_SCHEDULE_CUE_RE = re.compile(
+    r"\s(?:(?:planned|plans|hoped|hopes)\s+to\s+(?:play|meet|face)|"
+    r"will\s+(?:play|meet|face))\s[^.;:]*",
+    re.IGNORECASE,
+)
 
 
 def _strip_trailing_role_words(chunk: str) -> str:
     chunk = _OPPONENT_CUE_RE.sub("", chunk).strip()
     toks = chunk.split()
-    # never strip a two-token chunk down to one: "Bill Strong" is a name
-    while len(toks) > 2 and toks[-1].strip(".,").lower() in _POSITION_WORDS:
+    # leading position words too, misreads included ("Taclke Don Young")
+    while len(toks) > 2 and (
+        toks[0].strip(".,").lower() in _POSITION_WORDS
+        or _POSITION_MISREAD_RE.fullmatch(toks[0].strip(",."))
+    ):
+        toks.pop(0)
+    # never strip a two-token chunk down to one ("Bill Strong" is a name)
+    # unless what remains is a glued ALL-CAPS name ("REIDROGERS Guard")
+    while len(toks) >= 2 and toks[-1].strip(".,").lower() in _POSITION_WORDS:
+        if len(toks) == 2 and not re.fullmatch(r"[A-Z]{7,}", toks[0]):
+            break
         toks.pop()
     return " ".join(toks)
+
+
+_POSITION_MISREAD_RE = re.compile(r"(?i)(?:taclke|tacke|tackel|gaurd|hallback|halback|linebacke)")
 
 
 # --------------------------- Sports header matching ---------------------------
@@ -1723,9 +2463,15 @@ def _is_sports_section_header(header_text: str) -> bool:
         if kw in norm:
             return True
 
-    # partial match for single-word sports keys
+    # partial match for single-word sports keys — at WORD BOUNDARIES, plus
+    # glued forms ("trackandfield", "basketballers") where the keyword
+    # sits inside a clearly longer word. A bare substring hit is not
+    # enough: the surname "Crews" contains "crew" and junked Kenneth
+    # Crews from two 1950 Retrospect rosters.
     for kw in _SPORTS_SINGLE_WORD:
-        if kw in norm:
+        if re.search(rf"\b{re.escape(kw)}\b", norm):
+            return True
+        if any(kw in w and len(w) >= len(kw) + 3 for w in norm.split()):
             return True
 
     # Fuzzy per-word match for misOCR'd stylized titles (1970 Archway's
@@ -1735,6 +2481,11 @@ def _is_sports_section_header(header_text: str) -> bool:
     # for keywords of 9+ letters).
     for word in norm.split():
         if len(word) < 6:
+            continue
+        if word in _COMMON_FIRST_NAMES or word in _COMMON_SURNAMES:
+            # a PERSON'S name must never fuzz onto a sport: "Dennis" is one
+            # edit from "tennis", which silently junked every Dennis in
+            # every roster (Musser/Strickland, 1966 Gohisca)
             continue
         for kw in _SPORTS_SINGLE_WORD:
             if len(kw) < 6:
@@ -1830,10 +2581,26 @@ _POSITION_WORDS = {
     "def", "off", "defensive", "offensive", "end", "back", "line", "wing",
     "split", "tight", "wide", "half", "full", "receiver", "linebacker",
     "nose", "corner", "free", "strong", "flanker", "utility", "chief",
+    "base", "first", "second", "third", "short", "stop", "shortstop", "field",
+    "catcher", "pitcher", "outfield", "infield", "sub", "substitute", "reserve",
     "co-captain", "captain", "manager", "coach", "trainer",
     "senior", "junior", "sophomore", "freshman", "seniors", "juniors",
     "sophomores", "freshmen",
 }
+
+
+# "Firstroe", "Secondrote", "Thirdroc" — glued misreads of "First row:" etc.
+_GLUED_ROW_RE = re.compile(
+    r"(?i)(?:first|second|third|fourth|fifth|front|back)\s*ro[a-z]{0,3}"
+)
+
+_SPELLED_NUM_TENS = r"(?:twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)"
+_SPELLED_NUM_ONES = r"(?:one|two|three|four|five|six|seven|eight|nine)"
+_SPELLED_PAGE_NUM_RE = re.compile(
+    rf"(?i)^(?:one\s+hundred(?:\s+(?:and\s+)?{_SPELLED_NUM_TENS})?(?:[-\s]{_SPELLED_NUM_ONES})?"
+    rf"|{_SPELLED_NUM_TENS}(?:[-\s]{_SPELLED_NUM_ONES})?"
+    rf"|(?:thir|four|fif|six|seven|eigh|nine)teen|ten|eleven|twelve)$"
+)
 
 
 def _is_junk_name(name: str) -> bool:
@@ -1851,6 +2618,12 @@ def _is_junk_name(name: str) -> bool:
         return True
     if any(t[0].islower() for t in toks):
         return True
+    if re.search(r"[;:/\d&@#%*=+<>|\\]", name):
+        return True  # "Secretary-treasurer; Murray", "Rich & Thompson"
+    if any(t.endswith("-") for t in toks):
+        return True  # unhealed column-break fragment ("Stand- Ing")
+    if any(t.count("-") >= 2 for t in toks):
+        return True  # spelled-out cheer lettering ("S-u-p-e-r")
     if name.lower() in _POSITION_LABELS:
         return True
     # a lone 1-2 letter token ("Pa" from "Philadelphia, Pa.") is never a name
@@ -1861,10 +2634,23 @@ def _is_junk_name(name: str) -> bool:
     lows = [t.strip(".,").lower() for t in toks]
     if all(t in _POSITION_WORDS for t in lows):
         return True
-    if any(t in _CLASS_YEAR_WORDS for t in lows):
+    # a class-year word as the LAST token ("Striving Seniors", "Bob Smith
+    # Junior") — but "Junior Mease" is a person's given name
+    if lows[-1] in _CLASS_YEAR_WORDS:
         return True
-    # a team mascot NER took for a person ("Panther clings on for life")
+    if any(t in _JUNK_NAME_TOKENS for t in lows):
+        return True
+    # a spelled-out page number used as a page footer ("Sixty-one",
+    # "Seventy-three") — old yearbooks number pages in words
+    if _SPELLED_PAGE_NUM_RE.match(name.strip(" .")):
+        return True
+    if _GLUED_ROW_RE.fullmatch(name.strip(" .")):
+        return True
+    # a team mascot NER took for a person ("Panther clings on for life",
+    # "Chowan Braves")
     if len(toks) == 1 and lows[0] in _MASCOT_WORDS:
+        return True
+    if len(toks) == 2 and lows[-1] in _MASCOT_WORDS:
         return True
     return _is_sports_section_header(name)
 
@@ -1889,9 +2675,33 @@ _MASCOT_WORDS = {
     "ranger", "rangers", "chief", "chiefs", "brave", "braves",
     "mountaineer", "mountaineers", "miner", "miners", "yellowjacket",
     "yellowjackets", "greenwave", "bluedevil", "bluedevils", "dog", "dogs",
-    "cat", "cats", "pup", "pups", "puppettes",
+    "cat", "cats", "pup", "pups", "puppettes", "kitten", "kittens",
+    "jackets",
 }
 
+
+# a word seen this often across the book is the school/mascot/place, never a
+# person's bare surname
+_FREQUENT_WORD_MIN = 8
+
+# publications / organisations NER sometimes tags as people ("Pfeiffer News")
+_JUNK_NAME_TOKENS = {
+    "news", "press", "times", "journal", "yearbook", "staff", "club", "team", "squad",
+    "college", "university", "school", "academy", "institute", "cleaners", "company",
+    "inc", "store", "stores", "bank", "motors", "insurance", "hardware", "supply",
+    "dairy", "cafe", "hotel", "drug", "drugs", "market", "mills", "mill", "shop",
+    "potato", "braves", "bulldogs", "aggies", "tigers", "eagles", "panthers",
+    "heels", "conference", "league", "association", "tournament",
+    "state", "tech", "univ", "wesleyan", "ciaa", "ncaa", "meac", "division",
+    "championship", "champs", "playoff", "playoffs", "invitational",
+    "commissioner", "capt", "relayteam", "intramural", "intramurals", "monogram", "starters", "starter", "rowone", "rowtwo", "rowthree", "rowfour",
+    "istrow", "administration", "introduction", "jayvees", "jayvee",
+    "injuries", "tension", "defeat", "relief", "independence",
+    "substitutes", "substitute", "rwo", "reserves", "absent", "visit", "often",
+    "spansor", "cooch", "caach",
+    "alpha", "beta", "gamma", "delta", "epsilon", "sigma", "theta", "kappa",
+    "lambda", "omega", "phi", "psi", "chi", "rho", "vs",
+}
 
 _CLASS_YEAR_WORDS = {
     "senior", "seniors", "junior", "juniors", "sophomore", "sophomores",
@@ -1948,6 +2758,11 @@ def _merge_ocr_variant_names(sections_names: List[Dict[str, Any]]) -> None:
         return None
 
     for sec in sections_names:
+        if sec.get("surname_mode"):
+            # a surname-only roster: near-identical short surnames are
+            # usually DIFFERENT people (1942 Doe-Wah-Jack: Boser and Bason
+            # both play) — never merge here
+            continue
         names = sec.get("names", [])
         drop: Set[str] = set()
         for i, a in enumerate(names):
@@ -1958,6 +2773,29 @@ def _merge_ocr_variant_names(sections_names: List[Dict[str, Any]]) -> None:
                 if len(ta) != len(tb):
                     continue
                 if any(x[0].lower() != y[0].lower() for x, y in zip(ta, tb)):
+                    continue
+                ga, gb = ta[0].lower(), tb[0].lower()
+                if (
+                    ga != gb
+                    and [t.lower() for t in ta[1:]] == [t.lower() for t in tb[1:]]
+                    and (ga in _COMMON_FIRST_NAMES or ga in _NICKNAMES)
+                    and (gb in _COMMON_FIRST_NAMES or gb in _NICKNAMES)
+                ):
+                    # "Ed Smith" and "Earl Smith" (1973 Hanoverian JV
+                    # baseball) are teammates, not OCR variants: two
+                    # DIFFERENT legitimate given names on one surname
+                    # never merge here (the nickname/formal rule below
+                    # still handles "Ray"/"Raymond")
+                    continue
+                sa, sb = ta[-1].lower(), tb[-1].lower()
+                if (
+                    sa != sb
+                    and [t.lower() for t in ta[:-1]] == [t.lower() for t in tb[:-1]]
+                    and sa in _COMMON_SURNAMES and sb in _COMMON_SURNAMES
+                ):
+                    # same guard on the surname side: "James Martin" and
+                    # "James Morris" (1956 Pricean basketball) are two
+                    # teammates, not misreads of one name
                     continue
                 dist = Levenshtein.distance(a, b)
                 if not (1 <= dist <= _VARIANT_MAX_EDIT_DISTANCE):
@@ -2097,6 +2935,7 @@ def _resolve_partial_names(
     full_by_sec: Dict[int, List[str]] = {
         i: [n for n in sections_names[i].get("names", []) if _full(n)] for i in sports_idx
     }
+    book_full: List[str] = [n for i in sports_idx for n in full_by_sec[i]]
     order = {i: k for k, i in enumerate(sports_idx)}
 
     def _neighbour_pool(i: int) -> List[str]:
@@ -2163,9 +3002,17 @@ def _resolve_partial_names(
                 changed = True
             if len(toks) == 1:
                 tok = _POSSESSIVE_RE.sub("", toks[0])
-                for pool in pools:
+                for k, pool in enumerate(pools):
+                    # a bare surname is matched in its OWN section, or next
+                    # door only when the whole book knows exactly one person
+                    # of that surname ("Beck" -> "Eddie Beck"; but the
+                    # neighbouring team's "Joe Brookshire" is not the girls'
+                    # "Brookshire" when Norma and Kenney Brookshire exist);
+                    # a given name / nickname may look next door ("Jimmy" ->
+                    # "James Avery")
+                    surname_ok = k == 0 or _pick(_matches(book_full, tok, None, None)) is not None
                     new = (
-                        _pick(_matches(pool, tok, None, None))
+                        (_pick(_matches(pool, tok, None, None)) if surname_ok else None)
                         or _pick(_matches(pool, None, tok, None))
                         or _glued(tok, pool)
                     )
@@ -2203,7 +3050,7 @@ def _resolve_partial_names(
 # ("Margan" -> "Morgan", "Raberts" -> "Roberts", "Jerame" -> "Jerome"). Only
 # ever consulted for a token that is NOT itself in this list and whose a/o
 # variant is; nothing else is touched.
-_COMMON_NAME_TOKENS = set("""
+_COMMON_FIRST_NAMES = set("""
 james john robert michael william david richard charles joseph thomas
 christopher daniel paul mark donald george kenneth steven edward brian
 ronald anthony kevin jason matthew gary timothy jose larry jeffrey frank
@@ -2305,7 +3152,12 @@ debora cherie polly dina jewell fay jillian dorothea nell trudy esperanza
 patrica kimberley shanna helena carolina cleo stefanie rosario ola janine
 mollie lupe alisa lou maribel susanne bette susana elise cecile isabelle
 lesley jocelyn paige joni rachelle leola daphne alta ester petra graciela
-imogene jolene keisha lacey glenna gabriela cecelia carmela nona margarita
+imogene jolene keisha lacey glenna gabriela cecelia carmela nona margarita aubrey aileen
+beryl bettye betti berta reta zelma verla arvella madge zola alene
+cordelia clementine eartha ercell hulda ludie treva vada winona
+""".split())
+
+_COMMON_SURNAMES = set("""
 smith johnson williams brown jones miller davis garcia rodriguez wilson
 martinez anderson taylor thomas hernandez moore martin jackson thompson
 white lopez lee gonzalez harris clark lewis robinson walker perez hall
@@ -2370,6 +3222,8 @@ porchia simpson christian jones medley mckie bell aiken merrick pridgen
 crosby simmons wall pride bennett fuller alston bostick tuck king jackson
 """.split())
 
+_COMMON_NAME_TOKENS = _COMMON_FIRST_NAMES | _COMMON_SURNAMES
+
 
 def _ao_variants(word: str) -> List[str]:
     """All words obtained by flipping any subset of a/o letters (bounded)."""
@@ -2386,7 +3240,44 @@ def _ao_variants(word: str) -> List[str]:
     return out
 
 
-def _vote_correct_ao(sections_names: List[Dict[str, Any]], sports_idx: List[int]) -> None:
+_CLEAR_READ_SCORE = 0.97
+
+
+def _token_read_quality_counts(compiled_clean: Dict[str, Any]) -> Dict[str, Tuple[float, int]]:
+    """(best OCR confidence, occurrence count) per word, book-wide."""
+    q = _token_read_quality(compiled_clean)
+    cnt: Dict[str, int] = {}
+    for page in compiled_clean.get("pages", []):
+        ocr = page.get("overall_ocr_res") or {}
+        for t in ocr.get("rec_texts") or []:
+            for w in re.findall(r"[A-Za-z]{3,}", str(t)):
+                w = w.lower()
+                cnt[w] = cnt.get(w, 0) + 1
+    return {w: (q.get(w, 0.0), cnt.get(w, 0)) for w in set(q) | set(cnt)}
+
+
+def _token_read_quality(compiled_clean: Dict[str, Any]) -> Dict[str, float]:
+    """Best OCR confidence any line containing each word was read with."""
+    q: Dict[str, float] = {}
+    for page in compiled_clean.get("pages", []):
+        ocr = page.get("overall_ocr_res") or {}
+        for t, sc in zip(ocr.get("rec_texts") or [], ocr.get("rec_scores") or []):
+            try:
+                sc = float(sc)
+            except Exception:
+                continue
+            for w in re.findall(r"[A-Za-z]{3,}", str(t)):
+                w = w.lower()
+                if sc > q.get(w, 0.0):
+                    q[w] = sc
+    return q
+
+
+def _vote_correct_ao(
+    sections_names: List[Dict[str, Any]],
+    sports_idx: List[int],
+    read_quality: Optional[Dict[str, float]] = None,
+) -> None:
     """
     Fix the one OCR confusion the italic roster type produces constantly —
     'a' read for 'o' or vice versa ("Thamas", "Baone", "Halland") — using
@@ -2414,18 +3305,43 @@ def _vote_correct_ao(sections_names: List[Dict[str, Any]], sports_idx: List[int]
     for tok, c in token_counts.items():
         if c != 1 or len(tok) < 4:
             continue
+        if tok.lower() in _COMMON_NAME_TOKENS:
+            continue  # a real name in its own right ("Tammy" is not a misread "Tommy")
         cands = [t for t in by_key.get(_ao_key(tok), []) if t != tok and t[0] == tok[0]]
         if len(cands) == 1:
             fixes[tok] = cands[0]
             continue
-        if cands or tok.lower() in _COMMON_NAME_TOKENS or not re.fullmatch(r"[A-Z][a-z]+", tok):
+        if cands or not re.fullmatch(r"[A-Z][a-z]+", tok):
             continue
-        # No evidence in the book: "common sense" — the token isn't a name
-        # anyone has, but exactly one a/o variant of it is a common name.
-        variants = _ao_variants(tok.lower())
-        common = [v for v in variants if v in _COMMON_NAME_TOKENS]
+        # "Common sense" fallback ONLY for an unclear read: a token that is
+        # not a name anyone has, whose single a/o variant is a common name,
+        # and which the OCR never read with high confidence anywhere.
+        # Clear reads are trusted as printed — "Kirk Marino" (0.995),
+        # "Michelle Odoms" (0.98), "Amonda Bentley" (0.99) stay.
+        if read_quality is None or read_quality.get(tok.lower(), 1.0) >= _CLEAR_READ_SCORE:
+            continue
+        common = [v for v in _ao_variants(tok.lower()) if v in _COMMON_NAME_TOKENS]
         if len(common) == 1:
             fixes[tok] = common[0].capitalize()
+    # Low-confidence misreads of COMMON names ("Campbelf", "Glovet",
+    # "Waston"): a once-seen token that is not itself a name anyone has,
+    # was never read confidently, and has exactly one common name within
+    # one edit. Clear reads always stay as printed.
+    if read_quality is not None:
+        for tok, c in token_counts.items():
+            if tok in fixes or c != 1 or not re.fullmatch(r"[A-Z][a-z]{4,}", tok):
+                continue
+            low = tok.lower()
+            if low in _COMMON_NAME_TOKENS or read_quality.get(low, 1.0) >= _CLEAR_READ_SCORE:
+                continue
+            cands2 = {
+                w for w in _COMMON_NAME_TOKENS
+                if len(w) >= 5 and abs(len(w) - len(low)) <= 1
+                and w[:1] == low[:1]
+                and Levenshtein.distance(w, low, score_cutoff=1) <= 1
+            }
+            if len(cands2) == 1:
+                fixes[tok] = cands2.pop().capitalize()
     if not fixes:
         return
     for i in sports_idx:
@@ -2438,14 +3354,14 @@ def _vote_correct_ao(sections_names: List[Dict[str, Any]], sports_idx: List[int]
 # ------------------------------ Staff exclusion ------------------------------
 
 _ROLE_WORD_RE = re.compile(
-    r"\b(?:head\s+)?(?:coach|coaches|coached|manager|managers|trainer|trainers|sponsor|sponsors|"
+    r"\b(?:head\s+)?(?:coach|cooch|caach|eoaeh|coaches|coached|manager|managers|mgr|mgrs|trainer|trainers|sponsor|spansor|sponsors|"
     r"advisor|advisors|adviser|advisers|instructor|instructors|director|directors|"
     r"statistician|statistian|scorer|coordinator|coordinators)\b",
     re.IGNORECASE,
 )
 
 
-def _collect_staff_candidates(compiled_clean: Dict[str, Any]) -> List[str]:
+def _collect_staff_candidates(compiled_clean: Dict[str, Any]) -> List[Tuple[str, int]]:
     """
     Text spans anywhere in the book that name STAFF: any block/line
     containing a role word ("Hornsby Howell Head Coach", "Coach: Mel
@@ -2456,16 +3372,38 @@ def _collect_staff_candidates(compiled_clean: Dict[str, Any]) -> List[str]:
     _drop_staff_names removes from every sports section, so a coach never
     lands in a roster just because one page prints him without his title.
     """
-    out: List[str] = []
-    for page in compiled_clean.get("pages", []):
+    out: List[Tuple[str, int]] = []
+    for page_idx, page in enumerate(compiled_clean.get("pages", []), start=1):
         for blk in _page_blocks(page):
             raw = blk.get("block_content", "")
             if not isinstance(raw, str) or not raw.strip():
                 continue
             for _label, text in _split_sport_labelled_block(raw):
-                out.append(text)
-            for line in raw.split("\n"):
-                out.extend(_staff_spans(_normalize_space(line)))
+                out.append((text, page_idx))
+            # A prose CAPTION's wrapped lines join BEFORE finding staff
+            # spans: wrapping as "... Roger Frisbee, Coach\nMorrow;"
+            # (1974 Highlander football) makes a line END in a bare role
+            # word and the backward attach eats the player before it —
+            # joined, "Coach Morrow;" binds forward as printed. An
+            # image-lettering block stays PER-LINE: its lines are separate
+            # labels ("Ken Driver,\nAssistant Coach\n7. Randy Snelson",
+            # 1977 Mountain Tech), and joining them puts players inside
+            # the role-word window.
+            if blk.get("block_label") == "image":
+                pieces = [_normalize_space(x) for x in raw.split("\n")]
+            else:
+                pieces = [_normalize_space(raw.replace("-\n", "").replace("\n", " "))]
+            for norm in pieces:
+                if not norm:
+                    continue
+                # pull "Name (coach)" spans out FIRST, each as its own
+                # isolated staff span; leaving "(coach)," inline would make
+                # _staff_spans attach the NEXT player forward ("Ed Lewis
+                # (coach), Tim Williets" must not sweep Tim Williets)
+                for m in _PAREN_STAFF_RE.finditer(norm):
+                    out.append((m.group(0), page_idx))
+                cleaned = _PAREN_STAFF_RE.sub("", norm)
+                out.extend((sp, page_idx) for sp in _staff_spans(cleaned))
     return out
 
 
@@ -2493,6 +3431,53 @@ def _staff_spans(text: str) -> List[str]:
         if tok.lower().startswith("scorer") and prev in ("leading", "top", "high", "second", "third", "best", "our"):
             continue  # "Leading scorer Ricky Whisnant" is a player
         after = toks[i + 1] if i + 1 < len(toks) else ""
+        prev_tok = toks[i - 1] if i > 0 else ""
+        if after.lower() == "by":
+            # "..., coached by Robert Long" (1974 Hickory Log JV): the
+            # role binds FORWARD past "by" to the agent — never backward
+            # to the player named before the comma
+            hi = i + 2
+            while hi < len(toks) and hi - (i + 2) < 4:
+                w = toks[hi]
+                hi += 1
+                if w.endswith((",", ";", ".", ":")):
+                    break
+            spans.append(" ".join(toks[i:hi]))
+            continue
+        if prev_tok.endswith(",") and prev_tok[:1].isupper() and (
+            tok.rstrip()[-1:] in ":;,." or i == len(toks) - 1 or not (after[:1].isupper())
+        ):
+            # backward attach needs a NAME before the comma ("Bob Stroupe,
+            # Manager") — "golf team, coached by Larry Wittenburg" must
+            # fall through to the window branch instead
+            # "Bob Stroupe, Manager: Jim Fair..." — the role belongs to the
+            # PRECEDING name (an honorific-led one, "Mr. Livengood, Coach",
+            # stops at the honorific so the player listed before it is
+            # never swept in); never sweep the names that follow
+            lo = max(0, i - 4)
+            for j in range(i - 1, lo - 1, -1):
+                if re.fullmatch(r"(?i)(?:mr|mrs|ms|miss|dr|rev)\.?,?", toks[j]):
+                    lo = j
+                    break
+            while lo < i and not (toks[lo][0].isupper() or toks[lo][0].isdigit()):
+                lo += 1
+            # the role binds to ONE preceding name: in "... Susie Orr,
+            # Debbie Eye, Manager" (1974 Highlander) only Debbie Eye is
+            # the manager — trim the window to start after the last
+            # comma/semicolon (periods stay: "C. W. Haney" keeps its
+            # initials)
+            for j in range(i - 2, lo - 1, -1):
+                if toks[j].endswith((",", ";")):
+                    lo = j + 1
+                    break
+            # "C. W. Haney and Delmer Wood, Managers": include the partner
+            while lo >= 2 and toks[lo - 1].lower() == "and":
+                lo = max(0, lo - 4)
+                while lo < i and not toks[lo][0].isupper():
+                    lo += 1
+                break
+            spans.append(" ".join(toks[lo:i + 1]))
+            continue
         if tok.endswith(":") or after.lower() in ("are", "is", "were", "was", "-") or after in (":", "-"):
             start = i + 1 + (0 if tok.endswith(":") else 1)
             end = start
@@ -2502,17 +3487,67 @@ def _staff_spans(text: str) -> List[str]:
                     break  # next "Manager: ..." label
                 end += 1
             spans.append(" ".join(toks[start:end]))
+        elif tok.rstrip(":,").endswith("s") and after and after[0].isupper():
+            # PLURAL role introducing its names ("Coaches Bob Taylor and
+            # Lawrence Gibbs, finished..."): sweep the capitalized run and
+            # its and-joiners; stop at the first lowercase word
+            hi = i + 1
+            while hi < len(toks) and hi - (i + 1) < _STAFF_LIST_MAX:
+                w = toks[hi]
+                core = w.strip(",.;:()")
+                if not (core[:1].isupper() or core.lower() == "and"):
+                    break
+                hi += 1
+                if w.endswith((";", ".", ":")):
+                    break
+            spans.append(" ".join(toks[i:hi]))
+        elif (
+            not tok.rstrip(":").endswith("s") and not tok.endswith(",")
+            and after and after[0].isupper()
+            # "George Williams. Coach. David Norris": a capitalized name
+            # period-linked BEFORE the role is its holder — bind backward
+            # (window branch below); "Marcus Elam, Coach Bob Lutz" (comma)
+            # still binds forward
+            and not (i > 0 and prev_tok[:1].isupper() and prev_tok.endswith("."))
+        ):
+            # SINGULAR role before a name ("Manager Johnson, Little, ..."):
+            # only that one name is staff — stop at the first comma so the
+            # players listed after it survive
+            hi = i + 1
+            while hi < len(toks) and hi - (i + 1) < 4:
+                w = toks[hi]
+                hi += 1
+                if w.endswith((",", ";", ".", ":")):
+                    break
+            spans.append(" ".join(toks[i:hi]))
         else:
             # window around the role word, never across a ';' and, after
             # the role, only across the comma that directly follows it
             # ("his coach, Warren Reynolds") — "Mr. Davis, coach; Stan
             # Patterson" and "Burkhead, Manager; Wiles, Patterson" list
-            # players after the separator.
+            # players after the separator. A role word FOLLOWED by a
+            # capitalized name ("Coach Bob Lutz", "Trainer Barry Whitaker")
+            # names forward only — the players listed before it ("Marcus
+            # Elam, Coach Bob Lutz") are not staff.
+            forward_only = bool(after) and after[0].isupper() and after.strip(",.;:") .isalpha() and not tok.endswith((",", ";", ".", ":"))
             lo = i
-            while lo > 0 and i - lo < _STAFF_WINDOW and not toks[lo - 1].endswith(";"):
-                lo -= 1
+            if not forward_only:
+                while lo > 0 and i - lo < _STAFF_WINDOW and not toks[lo - 1].endswith(";"):
+                    lo -= 1
+                    if toks[lo].endswith(",") and lo < i - 1:
+                        lo += 1
+                        break
+            # When the backward window already holds the staff member's
+            # NAME ("Jay Massey — coach," / "Mary Lynn Hinsley — manager,"),
+            # the role is self-contained: what follows the comma is the
+            # next PLAYER in the roster, never part of this span (1981 Oak
+            # Leaves marks every coach inline this way).
+            named_backward = sum(
+                1 for w in toks[lo:i]
+                if w[:1].isupper() and w.strip(",.—–-").isalpha()
+            ) >= 2
             hi = i + 1
-            if not tok.endswith((";", ".")):
+            if not tok.endswith((";", ".")) and not (named_backward and tok.endswith(",")):
                 while hi < len(toks) and hi - (i + 1) < _STAFF_WINDOW:
                     hi += 1
                     prev_tok = toks[hi - 1]
@@ -2524,21 +3559,38 @@ def _staff_spans(text: str) -> List[str]:
     return [sp for sp in spans if sp.strip()]
 
 
-def _drop_staff_names(sections_names: List[Dict[str, Any]], sports_idx: List[int], staff: Set[str]) -> None:
-    """Remove staff (see _collect_staff_candidates) from the sports sections:
+def _drop_staff_names(
+    sections_names: List[Dict[str, Any]],
+    sports_idx: List[int],
+    staff: Dict[str, Set[int]],
+) -> None:
+    """
+    Remove staff (see _collect_staff_candidates) from the sports sections —
     exact full-name matches, and one-token names equal to a staff member's
-    surname or given name."""
+    surname or given name — but only in the SECTION(S) whose pages carry the
+    staff mention. A person is staff for one team and a player elsewhere
+    (1990 Chimes: "Coach Rob Murray" of cross country plays soccer; "Manager
+    Laura Anderson" of women's basketball plays field hockey and softball),
+    so a book-wide ban was wrong.
+    """
     if not staff:
         return
-    full = {n.lower() for n in staff}
-    parts = {tok.lower() for n in staff for tok in n.split() if len(tok) > 2}
     for i in sports_idx:
         sec = sections_names[i]
+        pages = set(sec.get("pages") or [])
+        local = {n for n, pgs in staff.items() if pgs & pages}
+        if not local:
+            continue
+        def _key(n: str) -> str:  # first + last token: "Terry L. Rogers" == "Terry Rogers"
+            t = n.lower().split()
+            return f"{t[0]} {t[-1]}" if len(t) >= 2 else n.lower()
+
+        full = {_key(n) for n in local}
+        parts = {tok.lower() for n in local for tok in n.split() if len(tok) > 2}
         kept = []
         for n in sec.get("names", []):
-            low = n.lower()
-            toks = low.split()
-            if low in full or (len(toks) == 1 and toks[0] in parts):
+            toks = n.lower().split()
+            if _key(n) in full or (len(toks) == 1 and toks[0] in parts):
                 continue
             kept.append(n)
         if len(kept) != len(sec.get("names", [])):
@@ -2563,8 +3615,29 @@ def extract_names(pdf_path: str, out_dir: str, verbose_ner: bool = False) -> Dic
 
     compiled_clean = read_json(compiled_clean_path)
 
+    # Pages the OCR step identified as sports coverage (see below); when
+    # present they also bound section text collection.
+    _sports_pages_early: Optional[Set[int]] = None
+    _sp_path = book_dir / "sports_pages.json"
+    if _sp_path.exists():
+        try:
+            _sports_pages_early = set()
+            for lo, hi in read_json(_sp_path).get("ranges", []):
+                _sports_pages_early.update(range(int(lo), int(hi) + 1))
+        except Exception:
+            _sports_pages_early = None
+
+    _range_starts: List[int] = []
+    if _sp_path.exists():
+        try:
+            _range_starts = [int(lo) for lo, _hi in read_json(_sp_path).get("ranges", [])]
+        except Exception:
+            _range_starts = []
+
     # Build sections with texts
-    sections = _build_sections(compiled_clean)
+    sections = _build_sections(
+        compiled_clean, allowed_pages=_sports_pages_early, range_starts=_range_starts
+    )
     sections_text_path = book_dir / "sections_with_text.json"
     write_json(
         {"sections": [{k: v for k, v in sec.items() if k != "kind"} for sec in sections]},
@@ -2577,6 +3650,21 @@ def extract_names(pdf_path: str, out_dir: str, verbose_ner: bool = False) -> Dic
     # inside the book's sports zone: after a title-only "SPORTS"/"ATHLETICS"
     # divider page and before the next title-only non-sports divider
     # ("CLASSES", "ORGANIZATIONS", ...). See _marker_kind.
+    # Pages the OCR step identified as sports coverage (text_extraction's
+    # resolve_sports_range / find_sports_pages -> sports_pages.json): a
+    # section whose pages all lie inside them is sports even when its title
+    # is a headline ("Braves Have A Disappointing Season", "Basketball ... a
+    # wrap-up") — with no umbrella divider on the page such sections would
+    # otherwise be dropped with every name on them.
+    sports_pages: Set[int] = set()
+    sp_path = book_dir / "sports_pages.json"
+    if sp_path.exists():
+        try:
+            for lo, hi in read_json(sp_path).get("ranges", []):
+                sports_pages.update(range(int(lo), int(hi) + 1))
+        except Exception:
+            sports_pages = set()
+
     sports_section_mask: List[bool] = []
     in_sports_zone = False
     for sec in sections:
@@ -2585,10 +3673,16 @@ def extract_names(pdf_path: str, out_dir: str, verbose_ner: bool = False) -> Dic
             in_sports_zone = True
         elif kind == "other_divider":
             in_sports_zone = False
+        pages = set(sec.get("pages") or [])
+        hdr = sec.get("header", "")
         sports_section_mask.append(
-            in_sports_zone
-            or _is_sports_section_header(sec.get("header", ""))
-            or _looks_like_sports_title_block(sec.get("header", ""))
+            not _is_org_title_block(hdr)
+            and (
+                in_sports_zone
+                or _is_sports_section_header(hdr)
+                or _looks_like_sports_title_block(hdr)
+                or bool(pages and pages <= sports_pages)
+            )
         )
     sports_section_indices: List[int] = [i for i, is_sports in enumerate(sports_section_mask) if is_sports]
 
@@ -2608,7 +3702,7 @@ def extract_names(pdf_path: str, out_dir: str, verbose_ner: bool = False) -> Dic
     # Staff spans (coaches, managers, ...) — NER'd in the same batch and
     # excluded from every sports section afterwards.
     staff_candidates = _collect_staff_candidates(compiled_clean)
-    staff_names: Set[str] = set()
+    staff_names: Dict[str, Set[int]] = {}
 
     # Run NER once over sports candidates (or skip if none)
     section_names_raw: List[List[str]] = [[] for _ in sections]
@@ -2616,21 +3710,59 @@ def extract_names(pdf_path: str, out_dir: str, verbose_ner: bool = False) -> Dic
     # (see _resolve_partial_names: kept only if they resolve to a person)
     caps_singles: Dict[int, Set[str]] = {}
     caps_counts = _image_caps_tokens_book(compiled_clean)
+    # words that recur all over the book (school name, mascot: "Pfeiffer",
+    # "Aggies") — a one-token "name" equal to one of them is not a person
+    word_counts: Counter = Counter()
+    for page in compiled_clean.get("pages", []):
+        for blk in _page_blocks(page):
+            raw = blk.get("block_content", "")
+            if isinstance(raw, str):
+                word_counts.update(w.lower() for w in re.findall(r"[A-Za-z]{3,}", raw))
+    frequent_words = {w for w, c in word_counts.items() if c >= _FREQUENT_WORD_MIN}
+    # surname-roster mode per section: when most candidates are bare
+    # capitalized singles (1942-style rosters), NER's inconsistency on
+    # isolated surnames must not decide who survives
+    single_ratio: Dict[int, float] = {}
+    from collections import Counter as _C
+    tot: _C = _C(); sing: _C = _C()
+    for cand, idx in zip(flat_candidates, flat_section_idx):
+        tot[idx] += 1
+        if re.fullmatch(r"[A-Z][A-Za-z.'’\-]{2,}|[A-Z]\. ?[A-Z][A-Za-z'’\-]{2,}", cand) \
+                and cand.lower() not in _COMMON_FIRST_NAMES and cand.lower() not in _NICKNAMES:
+            sing[idx] += 1  # bare SURNAMES only — a first-name roster (cheerleaders) is not surname mode
+    for idx in tot:
+        single_ratio[idx] = sing[idx] / tot[idx]
+
     if flat_candidates:
         names_per_candidate = extract_person_names_per_candidate(
-            flat_candidates + staff_candidates, verbose=verbose_ner
+            flat_candidates + [t for t, _ in staff_candidates], verbose=verbose_ner
         )
-        for names_here in names_per_candidate[len(flat_candidates):]:
+        for (_t, pg), names_here in zip(staff_candidates, names_per_candidate[len(flat_candidates):]):
             for n in names_here:
                 if not _is_junk_name(n):
-                    staff_names.add(_normalize_name_casing(n))
+                    staff_names.setdefault(_normalize_name_casing(n), set()).add(pg)
         names_per_candidate = names_per_candidate[: len(flat_candidates)]
 
         # Group back to original section indices
         for cand, idx, names_here in zip(flat_candidates, flat_section_idx, names_per_candidate):
-            kept = [
-                _normalize_name_casing(n) for n in names_here if not _is_junk_name(n)
+            kept0 = [
+                _normalize_name_casing(n) for n in names_here
+                if not _is_junk_name(n)
+                and not (len(n.split()) == 1 and n.lower() in frequent_words)
             ]
+            kept = []
+            for n in kept0:
+                tk = n.split()
+                if (
+                    len(tk) == 4
+                    and tk[0].lower() in _COMMON_FIRST_NAMES and tk[2].lower() in _COMMON_FIRST_NAMES
+                    and tk[1].lower() not in _COMMON_FIRST_NAMES and tk[3].lower() not in _COMMON_FIRST_NAMES
+                ):
+                    # two First+Last people run together ("Henry Howard
+                    # Woody UpChurch", "Pat Harmon Stewart McLamb")
+                    kept.extend([f"{tk[0]} {tk[1]}", f"{tk[2]} {tk[3]}"])
+                else:
+                    kept.append(n)
             if (
                 kept
                 and _looks_all_caps(cand)
@@ -2646,8 +3778,26 @@ def extract_names(pdf_path: str, out_dir: str, verbose_ner: bool = False) -> Dic
                         caps_singles.setdefault(idx, set()).add(n)
             if (
                 not kept
+                and single_ratio.get(idx, 0.0) >= 0.5
+                and re.fullmatch(r"[A-Z][a-z'’\-]{3,}", cand)
+                and cand.lower() not in _ROSTER_NOISE_WORDS
+                and cand.lower() not in _MASCOT_WORDS
+                and cand.lower() not in _POSITION_WORDS
+                and not _is_sports_section_header(cand)
+                # NOT full _is_junk_name: its business-word list ("Mills")
+                # would eat real bare surnames — only spelled page numbers
+                # and a tiny caption-word blocklist
+                and not _SPELLED_PAGE_NUM_RE.match(cand)
+                and not _GLUED_ROW_RE.fullmatch(cand)
+                and cand.lower() not in ("absent", "visit", "often", "spansor")
+            ):
+                kept = [cand]  # bare surname in a surname roster
+            if (
+                not kept
                 and _looks_like_glued_caps_name(cand)
                 and not _is_decorative_caps(cand, caps_counts)
+                and not any(w in cand.lower() for w in frequent_words if len(w) >= 5)
+                and not _is_junk_name(cand.capitalize())
             ):
                 # A single glued ALL-CAPS token in a roster line
                 # ("MIMIGADD" for "MIMI GADD") — keep it (normalized) so
@@ -2655,6 +3805,50 @@ def extract_names(pdf_path: str, out_dir: str, verbose_ner: bool = False) -> Dic
                 # resolution step can split it against real full names.
                 kept = [cand.capitalize()]
             section_names_raw[idx].extend(kept)
+
+    # Caption-lead members (user-verified convention, 1978 ECSU style):
+    #   (a) "(left) Johnson blocks ..." — a short parenthesized cue before a
+    #       capitalized name marks a team member;
+    #   (b) "Blue pops in field goal ..." — the name STARTING a photo
+    #       caption is the member pictured;
+    #   (c) "Biue (54) and Johnson (42) ..." — a name followed by a jersey
+    #       number in parentheses.
+    # Leads are appended as names directly (they are usually bare surnames
+    # NER is unreliable on); junk/staff/frequent-word guards keep captions
+    # like "The mack attack." or "Chowan defeated ..." out, and the staff
+    # filter still removes coaches named this way ("Vaughan gets his point
+    # across").
+    caption_leads: Dict[int, List[str]] = {}
+    for i in sports_section_indices:
+        leads: List[str] = []
+        for t in sections[i].get("texts", []):
+            t = _normalize_space(t)
+            for m in re.finditer(r"\(([a-z][a-z ]{2,12})\)\s+([A-Z][A-Za-z'’\-]+)", t):
+                leads.append(m.group(2))
+            m = re.match(r"([A-Z][A-Za-z'’\-]{3,}(?:\s+[A-Z][A-Za-z'’\-]{2,})?)\s+[a-z]{3,}", t)
+            if m:
+                leads.append(m.group(1))
+            for m in re.finditer(r"\b([A-Z][A-Za-z'’\-]{3,})\s*\(\d{1,2}\)", t):
+                leads.append(m.group(1))
+        kept_leads: List[str] = []
+        for nm in leads:
+            if "'" in nm or "’" in nm:
+                continue  # "ECSU's Relay ..." is not a person
+            toks_l = [w.lower() for w in nm.split()]
+            if any(
+                w in _CAPTION_STOPWORDS or w in _ROSTER_NOISE_WORDS or w in _MASCOT_WORDS
+                or w in _POSITION_WORDS or w in frequent_words or w in _JUNK_NAME_TOKENS
+                for w in toks_l
+            ):
+                continue
+            if _is_junk_name(nm) or _is_sports_section_header(nm):
+                continue
+            kept_leads.append(_normalize_name_casing(nm))
+        if kept_leads:
+            caption_leads[i] = kept_leads
+
+    for i, extra in caption_leads.items():
+        section_names_raw[i].extend(extra)
 
     # Per-section dedupe (nested-name removal, etc.)
     sections_names: List[Dict[str, Any]] = []
@@ -2667,10 +3861,43 @@ def extract_names(pdf_path: str, out_dir: str, verbose_ner: bool = False) -> Dic
             "pages": sec["pages"],
             "names": names,
         })
+    for i, sec in enumerate(sections_names):
+        if single_ratio.get(i, 0.0) >= 0.5:
+            sec["surname_mode"] = True
+
+    # Flag sections whose source text is heavily garbled (handwriting/ink
+    # over the print, damaged scan): tokens with impossible shapes —
+    # mid-word '/'|';', chaotic case ("PaynPh/llípVice", "BStearnSqat"),
+    # or long vowel-less runs ("Belewpponso" fails differently: 11 letters
+    # is fine, so also count mixed-case chaos). Such sections keep whatever
+    # was salvaged but are marked for HUMAN CHECK.
+    for i, sec in enumerate(sections):
+        garbled = 0
+        total_toks = 0
+        for t in sec.get("texts", []):
+            for tok in t.split():
+                total_toks += 1
+                core = tok.strip(".,;:()\"'")
+                if len(core) < 4:
+                    continue
+                if "/" in core or ";" in core:
+                    garbled += 1
+                elif re.search(r"[a-z][A-Z][a-z]*[A-Z]", core) and not re.match(r"(?:Mc|Mac|O')", core):
+                    garbled += 1
+                elif len(core) >= 7 and not re.search(r"[aeiouyAEIOUY]", core):
+                    garbled += 1
+                elif re.search(r"(?i)[bcdfghjklmnpqrstvwxz]{4}", core) and core.lower() not in ("ncaa",):
+                    garbled += 1
+        if garbled >= 3 and total_toks and garbled / total_toks >= 0.03:
+            sections_names[i]["human_check"] = True
+            sections_names[i]["human_check_reason"] = (
+                f"{garbled} garbled tokens in {total_toks} — print likely obscured "
+                "(handwriting/ink/damage); verify against the page"
+            )
 
     _merge_ocr_variant_names(sections_names)
     _resolve_partial_names(sections_names, sports_section_indices, caps_singles)
-    _vote_correct_ao(sections_names, sports_section_indices)
+    _vote_correct_ao(sections_names, sports_section_indices, _token_read_quality(compiled_clean))
     _drop_staff_names(sections_names, sports_section_indices, staff_names)
 
     sections_names_path = book_dir / "sections_with_names.json"

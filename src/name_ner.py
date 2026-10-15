@@ -98,6 +98,10 @@ def _post_filter_name_str(name: str) -> Optional[str]:
     name = _normalize_space(name).strip(".,;:()[]{}")
     if not name:
         return None
+    # the strip above also eats the period of a generational suffix
+    # ("Joe Grady, Jr.") — restore it, the suffix is part of the printed name
+    if re.search(r", (?:Jr|Sr)$", name):
+        name += "."
 
     if name.isupper():
         name = name.title()
@@ -130,6 +134,11 @@ _ROSTER_NOISE_WORDS = {
     "sponsor", "advisor", "adviser", "manager", "director", "mascot",
     "assistant", "coordinator", "trainer", "instructor", "scorer",
     "statistician", "statistian",  # incl. common OCR/print misspelling
+    # advertisement words; NOTE: words here also drop a whole "LABEL: names"
+    # clause when they appear in the label — never add caption-position
+    # words ("opposite") or "absent" ("ABSENT: Bob Phillips, ..." lists
+    # the absent PLAYERS)
+    "visit", "often", "welcome",
 }
 
 # Function words and caption vocabulary that never occur inside a person's
@@ -155,7 +164,17 @@ _CAPTION_STOPWORDS = {
     "hard", "hitting", "gifted", "striving", "winning", "leading",
     "leaders", "champions", "champs", "varsity", "spirit", "heart",
     "boys", "girls", "men", "women", "school", "high", "class", "club",
+    "special", "thanks", "moment", "power", "defense", "offense", "finesse",
+    "librarian", "refreshments", "congratulations", "welcome",
     "candidate", "secondary", "all-american", "director", "coordinator",
+    "points", "point", "name", "names", "total", "totals", "scoring", "scores",
+    "individual", "champion", "champions", "record", "average", "starting",
+    "while", "though", "although", "since", "because", "as", "if",
+    "following", "pounding", "jayvees", "jayvee", "despite", "meanwhile",
+    "among", "standing", "seated", "kneeling", "sitting", "opposite",
+    "middle", "rising", "absent", "looping", "handling", "standout",
+    "playing", "visit", "often", "wearing", "touchdowns", "jump",
+    "practice", "steady",
 }
 
 _FALLBACK_MIN_TOKENS = 2
@@ -321,6 +340,7 @@ def extract_person_names_per_candidate(candidates: List[str], verbose: bool = Fa
     with nlp.select_pipes(disable=disable):
         for doc in nlp.pipe(candidates, batch_size=bsz, n_process=n_proc):
             spans = [(ent.start_char, ent.end_char) for ent in doc.ents if ent.label_ == "PERSON"]
+            # this do the overlapping merge
             spans = _merge_overlapping_spans(spans)
 
             names_here: List[str] = []

@@ -31,14 +31,17 @@ RUN_NAME_RESOLUTION = True
 RUN_NAME_CORRECTION = False      # needs data/first_names_by_decade.json etc.
 
 # ---------------- IO ----------------
-PDF: Optional[str] = None            # e.g., "pdf_input/book.pdf"
-PDF_DIR: Optional[str] = "pdf_input" # or None
-OUT_DIR: str = "output"
+# Env vars (for HPC scripts / array jobs) override the constants; unset, the
+# local defaults below apply unchanged.
+PDF: Optional[str] = os.environ.get("YB_PDF") or None            # e.g., "pdf_input/book.pdf"
+PDF_DIR: Optional[str] = os.environ.get("YB_PDF_DIR") or "pdf_input"  # or None
+OUT_DIR: str = os.environ.get("YB_OUT_DIR") or "output"
 
 # Step 1
 TX_DPI = 400              # 200 loses stylized titles and misreads thin glyphs
-TX_USE_GPU = False        # set True on the HPC/GPU run
+TX_USE_GPU = os.environ.get("YB_USE_GPU", "") in ("1", "true", "True")  # set True (or YB_USE_GPU=1) on the HPC/GPU run
 TX_PAGE_RANGE: Optional[Tuple[int, int]] = None      # e.g. (95, 146): sports pages, 1-indexed inclusive
+TX_AUTO_RANGE = True      # verify/extend TX_PAGE_RANGE with cheap OCR probes (printed-vs-PDF offset, section end)
 TX_PORTRAIT_RANGE: Optional[Tuple[int, int]] = None  # e.g. (150, 217): class-portrait pages (plain OCR only)
 
 # Step 2
@@ -114,19 +117,44 @@ def main() -> None:
     pdf_dir = _norm(PDF_DIR)
 
     for target_pdf in _pdf_iter(pdf, pdf_dir):
-        # 1) text extraction (layout + plain-OCR pass), sports pages or whole book
+        # 0) sports page ranges: verify/extend the hint, or scan the whole book
+        ranges = [list(TX_PAGE_RANGE)] if TX_PAGE_RANGE else []
+        if RUN_TEXT_EXTRACTION and TX_AUTO_RANGE:
+            from src.text_extraction import resolve_sports_range, find_sports_pages  # cheap probes
+            if TX_PAGE_RANGE:
+                ranges = [list(resolve_sports_range(str(target_pdf), str(out_root), tuple(TX_PAGE_RANGE)))]
+            else:
+                ranges = [list(r) for r in find_sports_pages(str(target_pdf), str(out_root))]
+
+        # 1) text extraction (layout + plain-OCR pass) on the sports pages, or
+        #    the whole book when nothing was found / auto-range is off
         if RUN_TEXT_EXTRACTION:
-            run_func(
-                module="src.text_extraction",
-                func="extract_text",
-                kwargs=dict(
-                    pdf_path=str(target_pdf),
-                    out_dir=str(out_root),
-                    dpi=TX_DPI,
-                    use_gpu=TX_USE_GPU,
-                    page_range=list(TX_PAGE_RANGE) if TX_PAGE_RANGE else None,
-                ),
-            )
+            for rng in (ranges or [None]):
+                run_func(
+                    module="src.text_extraction",
+                    func="extract_text",
+                    kwargs=dict(
+                        pdf_path=str(target_pdf),
+                        out_dir=str(out_root),
+                        dpi=TX_DPI,
+                        use_gpu=TX_USE_GPU,
+                        page_range=rng,
+                    ),
+                )
+            # every other page, plain OCR only: the name index for mapping
+            if ranges and not TX_PORTRAIT_RANGE:
+                run_func(
+                    module="src.text_extraction",
+                    func="extract_text",
+                    kwargs=dict(
+                        pdf_path=str(target_pdf),
+                        out_dir=str(out_root),
+                        dpi=TX_DPI,
+                        use_gpu=TX_USE_GPU,
+                        page_range=None,
+                        layout=False,
+                    ),
+                )
 
         # 1b) class-portrait pages, plain OCR only (fast) — feeds the name index
         if RUN_PORTRAIT_EXTRACTION and TX_PORTRAIT_RANGE:
